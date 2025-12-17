@@ -9,6 +9,8 @@ import (
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // ========== 数据结构（保持与前端兼容） ==========
@@ -185,4 +187,57 @@ func (a *App) GetSettings() (Settings, error) {
 // SaveSettings 保存用户设置
 func (a *App) SaveSettings(s Settings) error {
 	return a.settingsService.Save(settings.Settings{Theme: s.Theme})
+}
+
+// ========== 外部文件编辑 ==========
+
+// ExternalFile 外部文件信息
+type ExternalFile struct {
+	Path    string `json:"path"`
+	Name    string `json:"name"`
+	Content string `json:"content"`
+}
+
+// OpenExternalFile 打开外部文件对话框并读取内容
+func (a *App) OpenExternalFile() (ExternalFile, error) {
+	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "打开文件",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "Text Files (*.txt, *.md)", Pattern: "*.txt;*.md"},
+			{DisplayName: "Markdown Files (*.md)", Pattern: "*.md"},
+			{DisplayName: "Text Files (*.txt)", Pattern: "*.txt"},
+			{DisplayName: "All Files (*.*)", Pattern: "*.*"},
+		},
+	})
+	if err != nil {
+		return ExternalFile{}, err
+	}
+	if filePath == "" {
+		return ExternalFile{}, nil // 用户取消
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return ExternalFile{}, err
+	}
+
+	return ExternalFile{
+		Path:    filePath,
+		Name:    filepath.Base(filePath),
+		Content: string(data),
+	}, nil
+}
+
+// SaveExternalFile 保存内容到外部文件
+func (a *App) SaveExternalFile(path string, content string) error {
+	return os.WriteFile(path, []byte(content), 0644)
+}
+
+// LoadExternalFile 读取指定路径的文件内容
+func (a *App) LoadExternalFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

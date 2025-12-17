@@ -16,9 +16,15 @@ export function ImportMarkdownFile():Promise<string>;
 
 export function LoadDocumentContent(arg1:string):Promise<string>;
 
+export function LoadExternalFile(arg1:string):Promise<string>;
+
+export function OpenExternalFile():Promise<main.ExternalFile>;
+
 export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
+
+export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;
 
 export function SaveSettings(arg1:main.Settings):Promise<void>;
 

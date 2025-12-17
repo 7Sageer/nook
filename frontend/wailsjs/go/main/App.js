@@ -30,12 +30,24 @@ export function LoadDocumentContent(arg1) {
   return window['go']['main']['App']['LoadDocumentContent'](arg1);
 }
 
+export function LoadExternalFile(arg1) {
+  return window['go']['main']['App']['LoadExternalFile'](arg1);
+}
+
+export function OpenExternalFile() {
+  return window['go']['main']['App']['OpenExternalFile']();
+}
+
 export function RenameDocument(arg1, arg2) {
   return window['go']['main']['App']['RenameDocument'](arg1, arg2);
 }
 
 export function SaveDocumentContent(arg1, arg2) {
   return window['go']['main']['App']['SaveDocumentContent'](arg1, arg2);
+}
+
+export function SaveExternalFile(arg1, arg2) {
+  return window['go']['main']['App']['SaveExternalFile'](arg1, arg2);
 }
 
 export function SaveSettings(arg1) {

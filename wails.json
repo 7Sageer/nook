@@ -9,5 +9,25 @@
   "author": {
     "name": "7Sageer",
     "email": "12210216@mail.sustech.edu.cn"
+  },
+  "info": {
+    "productName": "Nostalgia",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024 7Sageer",
+    "comments": "A simple and elegant local note-taking app",
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown Document",
+        "role": "Editor",
+        "iconName": "iconfile"
+      },
+      {
+        "ext": "txt",
+        "name": "Text Document",
+        "role": "Editor",
+        "iconName": "iconfile"
+      }
+    ]
   }
 }

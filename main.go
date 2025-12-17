@@ -33,6 +33,9 @@ func main() {
 	FileMenu.AddText("新建文档", keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:new-document")
 	})
+	FileMenu.AddText("打开文件", keys.Combo("o", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:open-external")
+	})
 	FileMenu.AddSeparator()
 	FileMenu.AddText("导入 Markdown", keys.CmdOrCtrl("o"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:import")
@@ -77,6 +80,10 @@ func main() {
 		},
 		Mac: &mac.Options{
 			Appearance: mac.DefaultAppearance, // 跟随系统主题
+			OnFileOpen: func(filePath string) {
+				// 当用户通过 Finder 双击文件打开应用时触发
+				runtime.EventsEmit(app.ctx, "file:open-external", filePath)
+			},
 		},
 	})
 

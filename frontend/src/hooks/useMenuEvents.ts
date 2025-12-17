@@ -8,6 +8,7 @@ interface MenuEventsOptions {
     onToggleSidebar: () => void;
     onToggleTheme: () => void;
     onAbout: () => void;
+    onOpenExternal?: () => void;
 }
 
 export function useMenuEvents({
@@ -17,6 +18,7 @@ export function useMenuEvents({
     onToggleSidebar,
     onToggleTheme,
     onAbout,
+    onOpenExternal,
 }: MenuEventsOptions) {
     useEffect(() => {
         const unsubscribers = [
@@ -28,8 +30,12 @@ export function useMenuEvents({
             EventsOn('menu:about', onAbout),
         ];
 
+        if (onOpenExternal) {
+            unsubscribers.push(EventsOn('menu:open-external', onOpenExternal));
+        }
+
         return () => {
             unsubscribers.forEach((unsubscribe) => unsubscribe());
         };
-    }, [onNewDocument, onImport, onExport, onToggleSidebar, onToggleTheme, onAbout]);
+    }, [onNewDocument, onImport, onExport, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
 }

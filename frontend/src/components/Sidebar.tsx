@@ -1,9 +1,10 @@
 import { DocumentMeta } from '../types/document';
+import { ExternalFileInfo } from '../hooks/useExternalFile';
 import { useTheme } from '../contexts/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
-import { Plus, Upload, Download, Moon, Sun, Search, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Plus, Upload, Download, Moon, Sun, Search, PanelLeftClose, PanelLeft, FileText, X } from 'lucide-react';
 
 interface SidebarProps {
   documents: DocumentMeta[];
@@ -16,6 +17,9 @@ interface SidebarProps {
   onExport: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  externalFile?: ExternalFileInfo | null;
+  onCloseExternal?: () => void;
+  isExternalMode?: boolean;
 }
 
 export function Sidebar({
@@ -29,6 +33,9 @@ export function Sidebar({
   onExport,
   collapsed = false,
   onToggleCollapse,
+  externalFile,
+  onCloseExternal,
+  isExternalMode = false,
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
   const { query, results, setQuery } = useSearch();
@@ -100,6 +107,37 @@ export function Sidebar({
           />
         </div>
 
+        {/* 外部文件标签 */}
+        {externalFile && (
+          <div className="external-file-section">
+            <div className="section-label">外部文件</div>
+            <div
+              className={`external-file-item ${isExternalMode ? 'active' : ''}`}
+            >
+              <FileText size={16} />
+              <span className="external-file-name" title={externalFile.path}>
+                {externalFile.name}
+              </span>
+              {onCloseExternal && (
+                <button
+                  className="close-external-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCloseExternal();
+                  }}
+                  title="关闭外部文件"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 文档列表 */}
+        {documents.length > 0 && (
+          <div className="section-label">文档</div>
+        )}
         <ul className="document-list">
           <DocumentList
             items={displayList}
