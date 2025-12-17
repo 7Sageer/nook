@@ -64,9 +64,12 @@ body,
 
 .sidebar-header {
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
+  min-height: 69px;
+  box-sizing: border-box;
 }
 
 .sidebar.dark .sidebar-header {
@@ -359,6 +362,8 @@ body,
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
   -webkit-app-region: drag;
+  min-height: 69px;
+  box-sizing: border-box;
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
