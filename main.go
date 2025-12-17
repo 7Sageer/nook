@@ -11,6 +11,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"notion-lite/internal/constant"
 )
 
 //go:embed all:frontend/dist
@@ -29,18 +31,18 @@ func main() {
 	}
 
 	// Add File menu
-	FileMenu := AppMenu.AddSubmenu("文件")
-	FileMenu.AddText("新建文档", keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
+	FileMenu := AppMenu.AddSubmenu(constant.MenuFile)
+	FileMenu.AddText(constant.MenuFileNewDoc, keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:new-document")
 	})
-	FileMenu.AddText("打开文件", keys.Combo("o", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
+	FileMenu.AddText(constant.MenuFileOpen, keys.Combo("o", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:open-external")
 	})
 	FileMenu.AddSeparator()
-	FileMenu.AddText("导入 Markdown", keys.CmdOrCtrl("o"), func(_ *menu.CallbackData) {
+	FileMenu.AddText(constant.MenuFileImport, keys.CmdOrCtrl("o"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:import")
 	})
-	FileMenu.AddText("导出 Markdown", keys.Combo("e", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
+	FileMenu.AddText(constant.MenuFileExport, keys.Combo("e", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:export")
 	})
 
@@ -50,23 +52,23 @@ func main() {
 	}
 
 	// Add View menu
-	ViewMenu := AppMenu.AddSubmenu("视图")
-	ViewMenu.AddText("切换侧边栏", keys.CmdOrCtrl("b"), func(_ *menu.CallbackData) {
+	ViewMenu := AppMenu.AddSubmenu(constant.MenuView)
+	ViewMenu.AddText(constant.MenuViewToggleSidebar, keys.CmdOrCtrl("b"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:toggle-sidebar")
 	})
-	ViewMenu.AddText("切换深色模式", keys.CmdOrCtrl("d"), func(_ *menu.CallbackData) {
+	ViewMenu.AddText(constant.MenuViewToggleTheme, keys.CmdOrCtrl("d"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:toggle-theme")
 	})
 
 	// Add Help menu
-	HelpMenu := AppMenu.AddSubmenu("帮助")
-	HelpMenu.AddText("关于 Nostalgia", nil, func(_ *menu.CallbackData) {
+	HelpMenu := AppMenu.AddSubmenu(constant.MenuHelp)
+	HelpMenu.AddText(constant.MenuHelpAbout, nil, func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:about")
 	})
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "Nostalgia",
+		Title:  constant.AppTitle,
 		Width:  1024,
 		Height: 768,
 		Menu:   AppMenu,

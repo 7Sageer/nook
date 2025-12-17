@@ -18,4 +18,23 @@ const (
 
 	// Search
 	SearchTitleMatch = "Title Match"
+
+	// App Info
+	AppTitle = "Nostalgia"
+
+	// Menu - File
+	MenuFile       = "File"
+	MenuFileNewDoc = "New Document"
+	MenuFileOpen   = "Open File"
+	MenuFileImport = "Import Markdown"
+	MenuFileExport = "Export Markdown"
+
+	// Menu - View
+	MenuView              = "View"
+	MenuViewToggleSidebar = "Toggle Sidebar"
+	MenuViewToggleTheme   = "Toggle Dark Mode"
+
+	// Menu - Help
+	MenuHelp      = "Help"
+	MenuHelpAbout = "About Nostalgia"
 )
