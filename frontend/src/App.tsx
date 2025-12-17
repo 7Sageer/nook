@@ -7,7 +7,7 @@ import { useDocuments } from "./hooks/useDocuments";
 import { useImportExport } from "./hooks/useImportExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
-import { EventsOn } from "../wailsjs/runtime/runtime";
+import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
 import { Block, BlockNoteEditor } from "@blocknote/core";
 import "./App.css";
 
@@ -39,6 +39,8 @@ function AppContent() {
     openExternal,
     openExternalByPath,
     saveExternal,
+    activateExternal,
+    deactivateExternal,
     closeExternal,
     isExternalMode,
   } = useExternalFile();
@@ -53,9 +55,14 @@ function AppContent() {
   });
 
   // 菜单事件处理
-  const handleNewDocument = useCallback(() => {
+  const handleCreateInternalDocument = useCallback(() => {
+    deactivateExternal();
     createDoc();
-  }, [createDoc]);
+  }, [createDoc, deactivateExternal]);
+
+  const handleNewDocument = useCallback(() => {
+    handleCreateInternalDocument();
+  }, [handleCreateInternalDocument]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
@@ -65,19 +72,30 @@ function AppContent() {
     alert("Nostalgia v1.0.0\n\n一个简洁优雅的本地笔记应用");
   }, []);
 
+  const parseMarkdownToBlocks = useCallback((markdownText: string) => {
+    const editor = editorRef.current ?? BlockNoteEditor.create();
+    return editor.tryParseMarkdownToBlocks(markdownText);
+  }, []);
+
   // 打开外部文件
   const handleOpenExternal = useCallback(async () => {
     const file = await openExternal();
-    if (file && editorRef.current) {
-      try {
-        const blocks = await editorRef.current.tryParseMarkdownToBlocks(file.content);
-        setContent(blocks);
-        setEditorKey(`external-${file.path}`);
-      } catch (e) {
-        console.error('解析文件失败:', e);
-      }
+    if (!file) return;
+
+    setContentLoading(true);
+    try {
+      const blocks = parseMarkdownToBlocks(file.content);
+      setContent(blocks);
+      setEditorKey(`external-${file.path}`);
+      activateExternal();
+    } catch (e) {
+      console.error('解析文件失败:', e);
+      setEditorKey(`external-${file.path}`);
+      activateExternal();
+    } finally {
+      setContentLoading(false);
     }
-  }, [openExternal]);
+  }, [activateExternal, openExternal, parseMarkdownToBlocks]);
 
   // 监听菜单事件
   useMenuEvents({
@@ -93,6 +111,7 @@ function AppContent() {
   // 监听系统文件打开事件（macOS Finder 双击打开）
   useEffect(() => {
     const unsubscribe = EventsOn('file:open-external', async (filePath: string) => {
+      setContentLoading(true);
       try {
         // 通过后端读取文件内容
         const { LoadExternalFile } = await import('../wailsjs/go/main/App');
@@ -100,19 +119,22 @@ function AppContent() {
 
         openExternalByPath(filePath, content);
 
-        // 如果编辑器已准备好，解析 Markdown
-        if (editorRef.current) {
-          const blocks = await editorRef.current.tryParseMarkdownToBlocks(content);
-          setContent(blocks);
-          setEditorKey(`external-${filePath}`);
-        }
+        // 无论编辑器是否已初始化，都解析并展示
+        const blocks = parseMarkdownToBlocks(content);
+        setContent(blocks);
+        setEditorKey(`external-${filePath}`);
       } catch (e) {
         console.error('打开文件失败:', e);
+      } finally {
+        setContentLoading(false);
       }
     });
 
+    // 通知后端：前端已注册文件打开事件监听器，可安全 flush 启动时的待处理打开请求
+    EventsEmit('app:frontend-ready');
+
     return () => unsubscribe();
-  }, [openExternalByPath]);
+  }, [openExternalByPath, parseMarkdownToBlocks]);
 
   // 加载当前文档内容（带动画）
   useEffect(() => {
@@ -171,9 +193,29 @@ function AppContent() {
 
   // 切换回内部文档
   const handleSwitchToInternal = useCallback((id: string) => {
-    closeExternal();
+    deactivateExternal();
     switchDoc(id);
-  }, [closeExternal, switchDoc]);
+  }, [deactivateExternal, switchDoc]);
+
+  // 重新激活外部文件
+  const handleSwitchToExternal = useCallback(async () => {
+    if (!externalFile) return;
+    setContentLoading(true);
+    try {
+      const { LoadExternalFile } = await import('../wailsjs/go/main/App');
+      const content = await LoadExternalFile(externalFile.path);
+
+      openExternalByPath(externalFile.path, content);
+      const blocks = parseMarkdownToBlocks(content);
+      setContent(blocks);
+      setEditorKey(`external-${externalFile.path}`);
+      activateExternal();
+    } catch (e) {
+      console.error('打开外部文件失败:', e);
+    } finally {
+      setContentLoading(false);
+    }
+  }, [activateExternal, externalFile, openExternalByPath, parseMarkdownToBlocks]);
 
   const activeDoc = documents.find((d) => d.id === activeId);
 
@@ -188,7 +230,8 @@ function AppContent() {
         documents={documents}
         activeId={isExternalMode ? null : activeId}
         onSelect={handleSwitchToInternal}
-        onCreate={() => createDoc()}
+        onSelectExternal={handleSwitchToExternal}
+        onCreate={handleCreateInternalDocument}
         onDelete={deleteDoc}
         onRename={renameDoc}
         onImport={handleImport}
@@ -216,7 +259,7 @@ function AppContent() {
           ) : (
             <div className="empty-state">
               <p>暂无文档</p>
-              <button onClick={() => createDoc()}>创建新文档</button>
+              <button onClick={handleCreateInternalDocument}>创建新文档</button>
             </div>
           )}
         </main>

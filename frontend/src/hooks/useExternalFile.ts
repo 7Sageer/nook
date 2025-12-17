@@ -9,12 +9,13 @@ export interface ExternalFileInfo {
 
 // 从路径中提取文件名
 function getFileName(path: string): string {
-    const parts = path.split('/');
+    const parts = path.split(/[/\\]/);
     return parts[parts.length - 1] || path;
 }
 
 export function useExternalFile() {
     const [externalFile, setExternalFile] = useState<ExternalFileInfo | null>(null);
+    const [isExternalActive, setIsExternalActive] = useState(false);
 
     const openExternal = useCallback(async () => {
         const file = await OpenExternalFile();
@@ -24,6 +25,7 @@ export function useExternalFile() {
                 name: file.name,
                 content: file.content,
             });
+            setIsExternalActive(true);
             return file;
         }
         return null;
@@ -36,16 +38,27 @@ export function useExternalFile() {
             name: getFileName(path),
             content: content,
         });
+        setIsExternalActive(true);
     }, []);
 
     const saveExternal = useCallback(async (content: string) => {
         if (externalFile) {
             await SaveExternalFile(externalFile.path, content);
+            setExternalFile((prev) => (prev ? { ...prev, content } : prev));
         }
     }, [externalFile]);
 
+    const activateExternal = useCallback(() => {
+        if (externalFile) setIsExternalActive(true);
+    }, [externalFile]);
+
+    const deactivateExternal = useCallback(() => {
+        setIsExternalActive(false);
+    }, []);
+
     const closeExternal = useCallback(() => {
         setExternalFile(null);
+        setIsExternalActive(false);
     }, []);
 
     return {
@@ -53,7 +66,9 @@ export function useExternalFile() {
         openExternal,
         openExternalByPath,
         saveExternal,
+        activateExternal,
+        deactivateExternal,
         closeExternal,
-        isExternalMode: externalFile !== null,
+        isExternalMode: isExternalActive,
     };
 }

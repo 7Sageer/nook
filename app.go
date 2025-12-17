@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/markdown"
@@ -50,6 +51,10 @@ type App struct {
 	searchService   *search.Service
 	settingsService *settings.Service
 	markdownService *markdown.Service
+
+	pendingExternalOpensMu sync.Mutex
+	pendingExternalOpens   []string
+	frontendReady          bool
 }
 
 // NewApp creates a new App application struct
@@ -76,9 +81,52 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
+	runtime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
+		a.pendingExternalOpensMu.Lock()
+		a.frontendReady = true
+		a.pendingExternalOpensMu.Unlock()
+		a.flushPendingExternalFileOpens()
+	})
 }
 
 // ========== 文档列表管理 ==========
+
+func (a *App) handleExternalFileOpen(filePath string) {
+	if filePath == "" {
+		return
+	}
+
+	a.pendingExternalOpensMu.Lock()
+	isReady := a.frontendReady && a.ctx != nil
+	if !isReady {
+		a.pendingExternalOpens = append(a.pendingExternalOpens, filePath)
+		a.pendingExternalOpensMu.Unlock()
+		return
+	}
+	ctx := a.ctx
+	a.pendingExternalOpensMu.Unlock()
+
+	runtime.EventsEmit(ctx, "file:open-external", filePath)
+}
+
+func (a *App) flushPendingExternalFileOpens() {
+	a.pendingExternalOpensMu.Lock()
+	if !a.frontendReady || a.ctx == nil || len(a.pendingExternalOpens) == 0 {
+		a.pendingExternalOpensMu.Unlock()
+		return
+	}
+	paths := append([]string(nil), a.pendingExternalOpens...)
+	a.pendingExternalOpens = nil
+	ctx := a.ctx
+	a.pendingExternalOpensMu.Unlock()
+
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+		runtime.EventsEmit(ctx, "file:open-external", path)
+	}
+}
 
 // GetDocumentList 获取文档列表
 func (a *App) GetDocumentList() (DocumentIndex, error) {

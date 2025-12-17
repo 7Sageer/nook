@@ -82,7 +82,7 @@ func main() {
 			Appearance: mac.DefaultAppearance, // 跟随系统主题
 			OnFileOpen: func(filePath string) {
 				// 当用户通过 Finder 双击文件打开应用时触发
-				runtime.EventsEmit(app.ctx, "file:open-external", filePath)
+				app.handleExternalFileOpen(filePath)
 			},
 		},
 	})

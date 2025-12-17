@@ -10,6 +10,7 @@ interface SidebarProps {
   documents: DocumentMeta[];
   activeId: string | null;
   onSelect: (id: string) => void;
+  onSelectExternal?: () => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
   onRename: (id: string, title: string) => void;
@@ -26,6 +27,7 @@ export function Sidebar({
   documents,
   activeId,
   onSelect,
+  onSelectExternal,
   onCreate,
   onDelete,
   onRename,
@@ -113,6 +115,7 @@ export function Sidebar({
             <div className="section-label">外部文件</div>
             <div
               className={`external-file-item ${isExternalMode ? 'active' : ''}`}
+              onClick={onSelectExternal}
             >
               <FileText size={16} />
               <span className="external-file-name" title={externalFile.path}>
