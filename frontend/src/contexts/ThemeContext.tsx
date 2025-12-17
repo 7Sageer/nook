@@ -1,32 +1,73 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { GetSettings, SaveSettings } from '../../wailsjs/go/main/App';
 
-type Theme = 'light' | 'dark';
+type ThemeSetting = 'light' | 'dark' | 'system';
+type ResolvedTheme = 'light' | 'dark';
 
 interface ThemeContextType {
-  theme: Theme;
+  theme: ResolvedTheme;
+  themeSetting: ThemeSetting;
   toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+function getSystemTheme(): ResolvedTheme {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  return 'light';
+}
 
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [themeSetting, setThemeSetting] = useState<ThemeSetting>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light');
+
+  // Resolve theme based on setting and system preference
+  useEffect(() => {
+    if (themeSetting === 'system') {
+      setResolvedTheme(getSystemTheme());
+    } else {
+      setResolvedTheme(themeSetting);
+    }
+  }, [themeSetting]);
+
+  // Listen for system theme changes when in 'system' mode
+  useEffect(() => {
+    if (themeSetting !== 'system') return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setResolvedTheme(e.matches ? 'dark' : 'light');
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [themeSetting]);
+
+  // Load initial theme from settings
   useEffect(() => {
     GetSettings().then((settings) => {
-      setTheme((settings.theme as Theme) || 'light');
+      const savedTheme = settings.theme as ThemeSetting;
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+        setThemeSetting(savedTheme);
+      } else {
+        setThemeSetting('light');
+      }
     });
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    SaveSettings({ theme: newTheme });
+    // Cycle: light → dark → system → light
+    const nextTheme: ThemeSetting =
+      themeSetting === 'light' ? 'dark' :
+        themeSetting === 'dark' ? 'system' : 'light';
+    setThemeSetting(nextTheme);
+    SaveSettings({ theme: nextTheme });
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: resolvedTheme, themeSetting, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

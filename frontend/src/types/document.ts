@@ -17,5 +17,5 @@ export interface SearchResult {
 }
 
 export interface Settings {
-  theme: 'light' | 'dark';
+  theme: 'light' | 'dark' | 'system';
 }

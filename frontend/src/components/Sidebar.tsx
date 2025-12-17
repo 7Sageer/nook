@@ -4,7 +4,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
-import { Plus, Upload, Download, Moon, Sun, Search, PanelLeftClose, PanelLeft, FileText, X } from 'lucide-react';
+import { Plus, Upload, Download, Moon, Sun, Monitor, Search, PanelLeftClose, PanelLeft, FileText, X } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface SidebarProps {
@@ -40,7 +40,7 @@ export function Sidebar({
   onCloseExternal,
   isExternalMode = false,
 }: SidebarProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeSetting, toggleTheme } = useTheme();
   const { query, results, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
@@ -55,6 +55,29 @@ export function Sidebar({
   };
 
   const displayList = query ? results : documents;
+
+  // Get theme icon and tooltip based on current setting
+  const getThemeIcon = () => {
+    switch (themeSetting) {
+      case 'light':
+        return <Sun size={18} />;
+      case 'dark':
+        return <Moon size={18} />;
+      case 'system':
+        return <Monitor size={18} />;
+    }
+  };
+
+  const getThemeTooltip = () => {
+    switch (themeSetting) {
+      case 'light':
+        return STRINGS.TOOLTIPS.THEME_LIGHT;
+      case 'dark':
+        return STRINGS.TOOLTIPS.THEME_DARK;
+      case 'system':
+        return STRINGS.TOOLTIPS.THEME_SYSTEM;
+    }
+  };
 
   // 折叠状态：只显示一个展开按钮
   if (collapsed) {
@@ -89,8 +112,8 @@ export function Sidebar({
           <button className="icon-btn" onClick={onExport} title={STRINGS.TOOLTIPS.EXPORT}>
             <Download size={18} />
           </button>
-          <button className="icon-btn" onClick={toggleTheme} title={STRINGS.TOOLTIPS.THEME}>
-            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          <button className="icon-btn" onClick={toggleTheme} title={getThemeTooltip()}>
+            {getThemeIcon()}
           </button>
           {onToggleCollapse && (
             <button className="icon-btn collapse-btn" onClick={onToggleCollapse} title={STRINGS.TOOLTIPS.COLLAPSE}>
