@@ -1,0 +1,53 @@
+/* ========== Smooth Caret Styles ========== */
+
+/* CSS Variables for customization */
+:root {
+    --smooth-caret-color: #2563eb;
+    --smooth-caret-width: 2px;
+    --smooth-caret-blink-duration: 1s;
+}
+
+/* Dark mode caret color */
+.app-container.dark {
+    --smooth-caret-color: #60a5fa;
+}
+
+/* Hide native caret when smooth caret is enabled */
+.smooth-caret-enabled {
+    caret-color: transparent !important;
+}
+
+/* Smooth caret element */
+.smooth-caret {
+    position: absolute;
+    pointer-events: none;
+    z-index: 1000;
+    border-radius: 1px;
+    will-change: top, left, height;
+}
+
+/* Blink animation */
+@keyframes smoothCaretBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+.smooth-caret-blink {
+    animation: smoothCaretBlink var(--smooth-caret-blink-duration) ease-in-out infinite;
+}
+
+/* Ensure BlockNote wrapper has proper positioning */
+.bn-container {
+    position: relative;
+}
+
+.bn-editor {
+    position: relative;
+}
