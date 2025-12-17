@@ -41,15 +41,15 @@ export function createSmoothCaretPlugin(options?: {
         cursor.className = 'smooth-caret';
         cursor.setAttribute('data-smooth-caret', 'true');
 
-        // Base styles
+        // Base styles - refined for smooth animation
         Object.assign(cursor.style, {
             position: 'absolute',
             width: `${cursorWidth}px`,
             backgroundColor: cursorColor || 'var(--smooth-caret-color, #2563eb)',
             pointerEvents: 'none',
             zIndex: '1000',
-            borderRadius: '1px',
-            transition: `top ${transitionDuration}ms ease-out, left ${transitionDuration}ms ease-out, height ${transitionDuration}ms ease-out, opacity 150ms ease`,
+            borderRadius: '2px',
+            transition: `top ${transitionDuration}ms cubic-bezier(0.4, 0, 0.2, 1), left ${transitionDuration}ms cubic-bezier(0.4, 0, 0.2, 1), height ${transitionDuration}ms ease-out, opacity 150ms ease`,
             opacity: '0',
         });
 
