@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import { FileText, Pencil, Trash2, FileSearch } from 'lucide-react';
+import { STRINGS } from '../constants/strings';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -44,7 +45,7 @@ export function DocumentList({
         return (
             <li className="empty-hint">
                 <FileSearch size={32} strokeWidth={1.5} />
-                <span>{isSearchMode ? '没有找到匹配的文档' : '暂无文档，点击 + 创建'}</span>
+                <span>{isSearchMode ? STRINGS.LABELS.NO_MATCH : STRINGS.LABELS.EMPTY_LIST}</span>
             </li>
         );
     }
@@ -81,14 +82,14 @@ export function DocumentList({
                                 <button
                                     className="action-btn"
                                     onClick={(e) => startRename(e, item)}
-                                    title="重命名"
+                                    title={STRINGS.TOOLTIPS.RENAME}
                                 >
                                     <Pencil size={14} />
                                 </button>
                                 <button
                                     className="action-btn danger"
                                     onClick={(e) => handleDeleteClick(e, item.id)}
-                                    title="删除"
+                                    title={STRINGS.TOOLTIPS.DELETE}
                                 >
                                     <Trash2 size={14} />
                                 </button>

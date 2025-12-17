@@ -2,6 +2,7 @@ import React from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { AlertTriangle, X } from 'lucide-react';
 import './ConfirmModal.css';
+import { STRINGS } from '../constants/strings';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -35,10 +36,10 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <p className="modal-message">{message}</p>
         <div className="modal-actions">
           <button className="modal-btn cancel" onClick={onCancel}>
-            取消
+            {STRINGS.BUTTONS.CANCEL}
           </button>
           <button className="modal-btn confirm" onClick={onConfirm}>
-            确定
+            {STRINGS.BUTTONS.CONFIRM}
           </button>
         </div>
       </div>

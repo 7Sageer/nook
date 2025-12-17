@@ -1,5 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext';
 import { Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { STRINGS } from '../constants/strings';
 
 interface HeaderProps {
     title: string;
@@ -21,7 +22,7 @@ export function Header({ title, status }: HeaderProps) {
 
     return (
         <header className={`app-header ${theme}`}>
-            <h1>{title || 'Nostalgia'}</h1>
+            <h1>{title || STRINGS.APP_NAME}</h1>
             <span className="status">
                 {getStatusIcon()}
                 {status}

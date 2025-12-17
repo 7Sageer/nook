@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/constant"
 )
 
 // Result 搜索结果
@@ -43,7 +44,7 @@ func (s *Service) Search(query string) ([]Result, error) {
 			results = append(results, Result{
 				ID:      doc.ID,
 				Title:   doc.Title,
-				Snippet: "标题匹配",
+				Snippet: constant.SearchTitleMatch,
 			})
 			continue
 		}

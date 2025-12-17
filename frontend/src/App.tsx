@@ -9,6 +9,7 @@ import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
 import { Block, BlockNoteEditor } from "@blocknote/core";
+import { STRINGS } from "./constants/strings";
 import "./App.css";
 
 function AppContent() {
@@ -69,7 +70,7 @@ function AppContent() {
   }, []);
 
   const handleAbout = useCallback(() => {
-    alert("Nostalgia v1.0.0\n\n一个简洁优雅的本地笔记应用");
+    alert(STRINGS.ABOUT_INFO);
   }, []);
 
   const parseMarkdownToBlocks = useCallback((markdownText: string) => {
@@ -138,30 +139,42 @@ function AppContent() {
 
   // 加载当前文档内容（带动画）
   useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+
     // 如果是外部文件模式，跳过内部文档加载
-    if (isExternalMode) return;
+    if (isExternalMode) return cleanup;
 
     if (activeId) {
+      const currentId = activeId;
       // 如果已有编辑器，先触发淡出动画
-      if (editorKey && editorKey !== activeId) {
+      if (editorKey && editorKey !== currentId) {
         setEditorAnimating(true);
         // 等待淡出动画完成后再加载新内容
-        const timer = setTimeout(() => {
+        timer = setTimeout(() => {
+          if (cancelled) return;
           setContentLoading(true);
-          loadContent(activeId).then((data) => {
+          loadContent(currentId).then((data) => {
+            if (cancelled) return;
             setContent(data);
-            setEditorKey(activeId);
+            setEditorKey(currentId);
             setContentLoading(false);
             setEditorAnimating(false);
           });
         }, 150);
-        return () => clearTimeout(timer);
+        return cleanup;
       } else {
         // 首次加载，直接加载
         setContentLoading(true);
-        loadContent(activeId).then((data) => {
+        loadContent(currentId).then((data) => {
+          if (cancelled) return;
           setContent(data);
-          setEditorKey(activeId);
+          setEditorKey(currentId);
           setContentLoading(false);
         });
       }
@@ -169,6 +182,7 @@ function AppContent() {
       setContent(undefined);
       setEditorKey(null);
     }
+    return cleanup;
   }, [activeId, isExternalMode]);
 
   // 保存文档
@@ -178,14 +192,14 @@ function AppContent() {
       try {
         const markdown = await editorRef.current.blocksToMarkdownLossy();
         await saveExternal(markdown);
-        setStatus("已保存");
+        setStatus(STRINGS.STATUS.SAVED);
         setTimeout(() => setStatus(""), 1000);
       } catch (e) {
         console.error('保存外部文件失败:', e);
       }
     } else if (activeId) {
       saveContent(activeId, blocks).then(() => {
-        setStatus("已保存");
+        setStatus(STRINGS.STATUS.SAVED);
         setTimeout(() => setStatus(""), 1000);
       });
     }
@@ -221,7 +235,7 @@ function AppContent() {
 
   // 当前显示的标题
   const currentTitle = isExternalMode
-    ? externalFile?.name || "外部文件"
+    ? externalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
     : activeDoc?.title || "";
 
   return (
@@ -246,7 +260,7 @@ function AppContent() {
         <Header title={currentTitle} status={status} />
         <main className="editor-container">
           {isLoading || contentLoading ? (
-            <div className="loading">加载中...</div>
+            <div className="loading">{STRINGS.STATUS.LOADING}</div>
           ) : editorKey ? (
             <div className={editorAnimating ? "editor-fade-exit" : "editor-fade-enter"}>
               <Editor
@@ -258,8 +272,8 @@ function AppContent() {
             </div>
           ) : (
             <div className="empty-state">
-              <p>暂无文档</p>
-              <button onClick={handleCreateInternalDocument}>创建新文档</button>
+              <p>{STRINGS.LABELS.EMPTY_APP}</p>
+              <button onClick={() => createDoc()}>{STRINGS.BUTTONS.CREATE_DOC}</button>
             </div>
           )}
         </main>

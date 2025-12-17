@@ -10,6 +10,7 @@ import (
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
+	"notion-lite/internal/constant"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -249,12 +250,12 @@ type ExternalFile struct {
 // OpenExternalFile 打开外部文件对话框并读取内容
 func (a *App) OpenExternalFile() (ExternalFile, error) {
 	filePath, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "打开文件",
+		Title: constant.DialogTitleOpenFile,
 		Filters: []runtime.FileFilter{
-			{DisplayName: "Text Files (*.txt, *.md)", Pattern: "*.txt;*.md"},
-			{DisplayName: "Markdown Files (*.md)", Pattern: "*.md"},
-			{DisplayName: "Text Files (*.txt)", Pattern: "*.txt"},
-			{DisplayName: "All Files (*.*)", Pattern: "*.*"},
+			{DisplayName: constant.FilterTextAndMarkdown, Pattern: "*.txt;*.md"},
+			{DisplayName: constant.FilterMarkdown, Pattern: "*.md"},
+			{DisplayName: constant.FilterText, Pattern: "*.txt"},
+			{DisplayName: constant.FilterAll, Pattern: "*.*"},
 		},
 	})
 	if err != nil {

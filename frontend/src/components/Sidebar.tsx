@@ -5,6 +5,7 @@ import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { Plus, Upload, Download, Moon, Sun, Search, PanelLeftClose, PanelLeft, FileText, X } from 'lucide-react';
+import { STRINGS } from '../constants/strings';
 
 interface SidebarProps {
   documents: DocumentMeta[];
@@ -46,8 +47,8 @@ export function Sidebar({
   const handleDeleteClick = (id: string) => {
     openModal(
       {
-        title: '删除文档',
-        message: '确定要删除这个文档吗？此操作无法撤销。',
+        title: STRINGS.MODALS.DELETE_TITLE,
+        message: STRINGS.MODALS.DELETE_MESSAGE,
       },
       () => onDelete(id)
     );
@@ -64,7 +65,7 @@ export function Sidebar({
             <button
               className="icon-btn"
               onClick={onToggleCollapse}
-              title="展开侧边栏"
+              title={STRINGS.TOOLTIPS.EXPAND}
             >
               <PanelLeft size={18} />
             </button>
@@ -79,20 +80,20 @@ export function Sidebar({
     <>
       <aside className={`sidebar ${theme}`}>
         <div className="sidebar-header">
-          <button className="icon-btn primary" onClick={onCreate} title="新建文档">
+          <button className="icon-btn primary" onClick={onCreate} title={STRINGS.TOOLTIPS.NEW_DOC}>
             <Plus size={18} />
           </button>
-          <button className="icon-btn" onClick={onImport} title="导入 Markdown">
+          <button className="icon-btn" onClick={onImport} title={STRINGS.TOOLTIPS.IMPORT}>
             <Upload size={18} />
           </button>
-          <button className="icon-btn" onClick={onExport} title="导出 Markdown">
+          <button className="icon-btn" onClick={onExport} title={STRINGS.TOOLTIPS.EXPORT}>
             <Download size={18} />
           </button>
-          <button className="icon-btn" onClick={toggleTheme} title="切换主题">
+          <button className="icon-btn" onClick={toggleTheme} title={STRINGS.TOOLTIPS.THEME}>
             {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
           {onToggleCollapse && (
-            <button className="icon-btn collapse-btn" onClick={onToggleCollapse} title="折叠侧边栏">
+            <button className="icon-btn collapse-btn" onClick={onToggleCollapse} title={STRINGS.TOOLTIPS.COLLAPSE}>
               <PanelLeftClose size={18} />
             </button>
           )}
@@ -103,7 +104,7 @@ export function Sidebar({
           <input
             type="text"
             className="search-input"
-            placeholder="搜索文档..."
+            placeholder={STRINGS.LABELS.SEARCH_PLACEHOLDER}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -112,7 +113,7 @@ export function Sidebar({
         {/* 外部文件标签 */}
         {externalFile && (
           <div className="external-file-section">
-            <div className="section-label">外部文件</div>
+            <div className="section-label">{STRINGS.LABELS.EXTERNAL_FILE}</div>
             <div
               className={`external-file-item ${isExternalMode ? 'active' : ''}`}
               onClick={onSelectExternal}
@@ -128,7 +129,7 @@ export function Sidebar({
                     e.stopPropagation();
                     onCloseExternal();
                   }}
-                  title="关闭外部文件"
+                  title={STRINGS.TOOLTIPS.CLOSE_EXTERNAL}
                 >
                   <X size={14} />
                 </button>
@@ -139,7 +140,7 @@ export function Sidebar({
 
         {/* 文档列表 */}
         {documents.length > 0 && (
-          <div className="section-label">文档</div>
+          <div className="section-label">{STRINGS.LABELS.DOCUMENTS}</div>
         )}
         <ul className="document-list">
           <DocumentList

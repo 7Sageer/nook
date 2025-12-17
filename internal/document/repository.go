@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"notion-lite/internal/constant"
 )
 
 // Meta 文档元数据
@@ -54,7 +55,7 @@ func (r *Repository) GetAll() (Index, error) {
 // Create 创建新文档
 func (r *Repository) Create(title string) (Meta, error) {
 	if title == "" {
-		title = "无标题"
+		title = constant.DefaultNewDocTitle
 	}
 	now := time.Now().UnixMilli()
 	doc := Meta{
