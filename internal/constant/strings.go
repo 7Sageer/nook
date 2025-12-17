@@ -20,7 +20,7 @@ const (
 	SearchTitleMatch = "Title Match"
 
 	// App Info
-	AppTitle = "Nostalgia"
+	AppTitle = "Nook"
 
 	// Menu - File
 	MenuFile       = "File"
@@ -36,5 +36,5 @@ const (
 
 	// Menu - Help
 	MenuHelp      = "Help"
-	MenuHelpAbout = "About Nostalgia"
+	MenuHelpAbout = "About Nook"
 )

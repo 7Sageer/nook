@@ -61,7 +61,7 @@ type App struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	homeDir, _ := os.UserHomeDir()
-	dataPath := filepath.Join(homeDir, ".nostalgia")
+	dataPath := filepath.Join(homeDir, ".Nook")
 	os.MkdirAll(dataPath, 0755)
 	os.MkdirAll(filepath.Join(dataPath, "documents"), 0755)
 

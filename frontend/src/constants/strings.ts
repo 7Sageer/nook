@@ -1,6 +1,6 @@
 export const STRINGS = {
-    APP_NAME: "Nostalgia",
-    ABOUT_INFO: "Nostalgia v1.0.0\n\nA simple and elegant local note-taking application",
+    APP_NAME: "Nook",
+    ABOUT_INFO: "Nook v1.0.0\n\nA simple and elegant local note-taking application",
 
     STATUS: {
         LOADING: "Loading...",

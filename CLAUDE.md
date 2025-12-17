@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nostalgia is a local-first note-taking desktop application built with Wails (Go backend + React/TypeScript frontend). It uses BlockNote as the rich text editor and stores documents as JSON files locally.
+Nook is a local-first note-taking desktop application built with Wails (Go backend + React/TypeScript frontend). It uses BlockNote as the rich text editor and stores documents as JSON files locally.
 
 ## Development Commands
 
@@ -56,7 +56,7 @@ cd frontend && npm run build    # Build frontend
 
 ### Data Storage
 
-All data stored in `~/.nostalgia/`:
+All data stored in `~/.Nook/`:
 - `index.json` - Document metadata and active document ID
 - `documents/{uuid}.json` - Individual document content (BlockNote JSON format)
 - `settings.json` - User preferences

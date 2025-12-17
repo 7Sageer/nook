@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Nostalgia App Installer
+# Nook App Installer
 # This script installs the built app to /Applications
 
-APP_NAME="nostalgia.app"
+APP_NAME="Nook.app"
 BUILD_PATH="build/bin/$APP_NAME"
 INSTALL_PATH="/Applications/$APP_NAME"
 
-echo "🚀 Installing Nostalgia..."
+echo "🚀 Installing Nook..."
 
 # Check if the built app exists
 if [ ! -d "$BUILD_PATH" ]; then
@@ -27,7 +27,7 @@ echo "📋 Copying $APP_NAME to /Applications..."
 cp -r "$BUILD_PATH" "$INSTALL_PATH"
 
 if [ $? -eq 0 ]; then
-    echo "✅ Nostalgia has been successfully installed to /Applications!"
+    echo "✅ Nook has been successfully installed to /Applications!"
     echo "You can now launch it from Launchpad or Spotlight."
 else
     echo "❌ Installation failed. You may need to run with sudo:"

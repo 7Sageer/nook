@@ -213,11 +213,11 @@ body,
 
 .document-item:hover {
   background-color: #f3f4f6;
-  transform: translateX(4px);
+  transform: tranNookX(4px);
 }
 
 .document-item:active {
-  transform: translateX(4px) scale(0.98);
+  transform: tranNookX(4px) scale(0.98);
 }
 
 .sidebar.dark .document-item:hover {
@@ -226,7 +226,7 @@ body,
 
 .document-item.active {
   background-color: rgba(37, 99, 235, 0.1);
-  transform: translateX(4px);
+  transform: tranNookX(4px);
   box-shadow: inset 3px 0 0 0 var(--primary);
 }
 
@@ -477,11 +477,11 @@ body,
 .empty-state button:hover {
   background-color: var(--primary-hover);
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  transform: tranNookY(-1px);
 }
 
 .empty-state button:active {
-  transform: translateY(0);
+  transform: tranNookY(0);
 }
 
 /* ========== 加载状态 ========== */
@@ -607,24 +607,24 @@ body,
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: tranNookY(8px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: tranNookY(0);
   }
 }
 
 @keyframes fadeOut {
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: tranNookY(0);
   }
 
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: tranNookY(-8px);
   }
 }
 
@@ -640,12 +640,12 @@ body,
 @keyframes listItemAppear {
   from {
     opacity: 0;
-    transform: translateX(-8px);
+    transform: tranNookX(-8px);
   }
 
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: tranNookX(0);
   }
 }
 
