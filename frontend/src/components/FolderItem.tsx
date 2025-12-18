@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
-import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText } from 'lucide-react';
+import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface FolderItemProps {
@@ -15,6 +15,7 @@ interface FolderItemProps {
     onMoveDocument: (docId: string, folderId: string) => void;
     onReorderDocuments?: (ids: string[]) => void;
     onEditingChange?: (isEditing: boolean) => void;
+    onAddDocument?: () => void;
 }
 
 export function FolderItem({
@@ -29,6 +30,7 @@ export function FolderItem({
     onMoveDocument,
     onReorderDocuments,
     onEditingChange,
+    onAddDocument,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
@@ -166,6 +168,18 @@ export function FolderItem({
                 )}
                 <span className="folder-count">{documents.length}</span>
                 <div className="folder-actions">
+                    {onAddDocument && (
+                        <button
+                            className="action-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onAddDocument();
+                            }}
+                            title={STRINGS.TOOLTIPS.FOLDER_ADD_DOC}
+                        >
+                            <Plus size={14} />
+                        </button>
+                    )}
                     <button
                         className="action-btn"
                         onClick={(e) => {

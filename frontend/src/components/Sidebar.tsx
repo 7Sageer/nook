@@ -16,6 +16,7 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   onSelectExternal?: (path: string) => void;
   onCreate: () => void;
+  onCreateInFolder?: (folderId: string) => void;
   onCreateFolder: () => void;
   onDelete: (id: string) => void;
   onDeleteFolder: (id: string) => void;
@@ -37,6 +38,7 @@ export function Sidebar({
   onSelect,
   onSelectExternal,
   onCreate,
+  onCreateInFolder,
   onCreateFolder,
   onDelete,
   onDeleteFolder,
@@ -259,6 +261,7 @@ export function Sidebar({
                     onMoveDocument={onMoveToFolder}
                     onReorderDocuments={handleFolderDocReorder(folder.id)}
                     onEditingChange={(isEditing) => setEditingFolderId(isEditing ? folder.id : null)}
+                    onAddDocument={onCreateInFolder ? () => onCreateInFolder(folder.id) : undefined}
                   />
                 </div>
               ))}

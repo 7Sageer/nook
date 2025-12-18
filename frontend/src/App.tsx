@@ -106,6 +106,16 @@ function AppContent() {
     createDoc();
   }, [createDoc, deactivateExternal]);
 
+  // 在指定文件夹中创建文档
+  const handleCreateInFolder = useCallback(async (folderId: string) => {
+    deactivateExternal();
+    const doc = await createDoc();
+    if (doc && doc.id) {
+      await moveDocument(doc.id, folderId);
+      refreshDocuments();
+    }
+  }, [createDoc, deactivateExternal, moveDocument, refreshDocuments]);
+
   const handleNewDocument = useCallback(() => {
     handleCreateInternalDocument();
   }, [handleCreateInternalDocument]);
@@ -267,6 +277,7 @@ function AppContent() {
           onSelect={handleSwitchToInternal}
           onSelectExternal={handleSwitchToExternal}
           onCreate={handleCreateInternalDocument}
+          onCreateInFolder={handleCreateInFolder}
           onCreateFolder={() => createFolder()}
           onDelete={deleteDoc}
           onDeleteFolder={async (id) => {

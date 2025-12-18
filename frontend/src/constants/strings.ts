@@ -29,6 +29,7 @@ export const STRINGS = {
         DELETE: "Delete",
         FOLDER_RENAME: "Rename Folder",
         FOLDER_DELETE: "Delete Folder",
+        FOLDER_ADD_DOC: "Add Document to Folder",
     },
 
     LABELS: {
