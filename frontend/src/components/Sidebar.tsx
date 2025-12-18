@@ -1,57 +1,50 @@
-import { useMemo, useState, useRef } from 'react';
-import { DocumentMeta, Folder } from '../types/document';
+import { useMemo, useState, useRef, useCallback } from 'react';
 import { ExternalFileInfo } from '../hooks/useExternalFile';
 import { useTheme } from '../contexts/ThemeContext';
+import { useDocumentContext } from '../contexts/DocumentContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { FolderItem } from './FolderItem';
-import { Search, FileText, X, Plus, GripVertical } from 'lucide-react';
+import { Search, FileText, X, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface SidebarProps {
-  documents: DocumentMeta[];
-  folders: Folder[];
-  activeId: string | null;
-  onSelect: (id: string) => void;
-  onSelectExternal?: (path: string) => void;
-  onCreate: () => void;
-  onCreateInFolder?: (folderId: string) => void;
-  onCreateFolder: () => void;
-  onDelete: (id: string) => void;
-  onDeleteFolder: (id: string) => void;
-  onRenameFolder: (id: string, name: string) => void;
-  onToggleFolder: (id: string) => void;
-  onMoveToFolder: (docId: string, folderId: string) => void;
-  onReorderDocuments?: (ids: string[]) => void;
-  onReorderFolders?: (ids: string[]) => void;
+  // 外部文件相关（仍由 App.tsx 管理）
   externalFiles?: ExternalFileInfo[];
   activeExternalPath?: string | null;
+  onSelectExternal?: (path: string) => void;
   onCloseExternal?: (path: string) => void;
+  // UI 状态
   collapsed?: boolean;
+  // 切换到内部文档时的回调（用于退出外部文件模式）
+  onSelectInternal?: (id: string) => void;
 }
 
 export function Sidebar({
-  documents,
-  folders,
-  activeId,
-  onSelect,
-  onSelectExternal,
-  onCreate,
-  onCreateInFolder,
-  onCreateFolder,
-  onDelete,
-  onDeleteFolder,
-  onRenameFolder,
-  onToggleFolder,
-  onMoveToFolder,
-  onReorderDocuments,
-  onReorderFolders,
   externalFiles = [],
   activeExternalPath,
+  onSelectExternal,
   onCloseExternal,
   collapsed = false,
+  onSelectInternal,
 }: SidebarProps) {
+  // 从 Context 获取文档和文件夹状态
+  const {
+    documents,
+    activeId,
+    folders,
+    createDoc,
+    deleteDoc,
+    switchDoc,
+    reorderDocuments,
+    createFolder,
+    deleteFolder,
+    renameFolder,
+    toggleFolderCollapsed,
+    moveDocumentToFolder,
+    reorderFolders,
+  } = useDocumentContext();
   const { theme } = useTheme();
   const { query, results, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
@@ -60,13 +53,37 @@ export function Sidebar({
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const draggedFolderIdRef = useRef<string | null>(null);
 
+  // 选择文档时的处理
+  const handleSelect = useCallback((id: string) => {
+    if (onSelectInternal) {
+      onSelectInternal(id);
+    } else {
+      switchDoc(id);
+    }
+  }, [onSelectInternal, switchDoc]);
+
+  // 创建文档
+  const handleCreate = useCallback(() => {
+    createDoc();
+  }, [createDoc]);
+
+  // 在文件夹中创建文档
+  const handleCreateInFolder = useCallback(async (folderId: string) => {
+    await createDoc('无标题', folderId);
+  }, [createDoc]);
+
+  // 创建文件夹
+  const handleCreateFolder = useCallback(() => {
+    createFolder();
+  }, [createFolder]);
+
   const handleDeleteClick = (id: string) => {
     openModal(
       {
         title: STRINGS.MODALS.DELETE_TITLE,
         message: STRINGS.MODALS.DELETE_MESSAGE,
       },
-      () => onDelete(id)
+      () => deleteDoc(id)
     );
   };
 
@@ -76,7 +93,7 @@ export function Sidebar({
         title: STRINGS.MODALS.DELETE_FOLDER_TITLE,
         message: STRINGS.MODALS.DELETE_FOLDER_MESSAGE,
       },
-      () => onDeleteFolder(id)
+      () => deleteFolder(id)
     );
   };
 
@@ -118,7 +135,7 @@ export function Sidebar({
     const draggedFolderId = draggedFolderIdRef.current;
     draggedFolderIdRef.current = null;
 
-    if (!draggedFolderId || draggedFolderId === targetFolderId || !onReorderFolders) return;
+    if (!draggedFolderId || draggedFolderId === targetFolderId) return;
 
     const currentIds = sortedFolders.map(f => f.id);
     const draggedIndex = currentIds.indexOf(draggedFolderId);
@@ -130,7 +147,7 @@ export function Sidebar({
     newIds.splice(draggedIndex, 1);
     newIds.splice(targetIndex, 0, draggedFolderId);
 
-    onReorderFolders(newIds);
+    reorderFolders(newIds);
   };
 
   const handleFolderDragEnd = () => {
@@ -153,7 +170,7 @@ export function Sidebar({
     e.currentTarget.classList.remove('drag-over');
     const docId = e.dataTransfer.getData('text/plain');
     if (docId) {
-      onMoveToFolder(docId, '');
+      moveDocumentToFolder(docId, '');
     }
   };
 
@@ -161,7 +178,7 @@ export function Sidebar({
   const handleUncategorizedReorder = (ids: string[]) => {
     // 获取未分类文档的完整排序（保留文件夹内文档的顺序）
     const folderDocIds = documents.filter(d => d.folderId).map(d => d.id);
-    onReorderDocuments?.([...ids, ...folderDocIds]);
+    reorderDocuments([...ids, ...folderDocIds]);
   };
 
   // 处理文件夹内文档重排序
@@ -172,7 +189,7 @@ export function Sidebar({
       .filter(d => d.folderId && d.folderId !== folderId)
       .sort((a, b) => a.order - b.order)
       .map(d => d.id);
-    onReorderDocuments?.([...uncategorizedIds, ...ids, ...otherFolderDocs]);
+    reorderDocuments([...uncategorizedIds, ...ids, ...otherFolderDocs]);
   };
 
   return (
@@ -232,7 +249,7 @@ export function Sidebar({
                 <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
                 <button
                   className="section-add-btn"
-                  onClick={onCreateFolder}
+                  onClick={handleCreateFolder}
                   title={STRINGS.TOOLTIPS.NEW_FOLDER}
                 >
                   <Plus size={14} />
@@ -252,16 +269,16 @@ export function Sidebar({
                   <FolderItem
                     folder={folder}
                     documents={getDocumentsInFolder(folder.id)}
-                    activeDocId={activeId}
-                    onToggle={() => onToggleFolder(folder.id)}
-                    onRename={(name) => onRenameFolder(folder.id, name)}
+                    activeDocId={activeExternalPath ? null : activeId}
+                    onToggle={() => toggleFolderCollapsed(folder.id)}
+                    onRename={(name) => renameFolder(folder.id, name)}
                     onDelete={() => handleDeleteFolderClick(folder.id)}
-                    onSelectDocument={onSelect}
+                    onSelectDocument={handleSelect}
                     onDeleteDocument={handleDeleteClick}
-                    onMoveDocument={onMoveToFolder}
+                    onMoveDocument={moveDocumentToFolder}
                     onReorderDocuments={handleFolderDocReorder(folder.id)}
                     onEditingChange={(isEditing) => setEditingFolderId(isEditing ? folder.id : null)}
-                    onAddDocument={onCreateInFolder ? () => onCreateInFolder(folder.id) : undefined}
+                    onAddDocument={() => handleCreateInFolder(folder.id)}
                   />
                 </div>
               ))}
@@ -283,7 +300,7 @@ export function Sidebar({
                 {!query && (
                   <button
                     className="section-add-btn"
-                    onClick={onCreate}
+                    onClick={handleCreate}
                     title={STRINGS.TOOLTIPS.NEW_DOC}
                   >
                     <Plus size={14} />
@@ -293,9 +310,9 @@ export function Sidebar({
               <ul className="document-list">
                 <DocumentList
                   items={displayList}
-                  activeId={activeId}
+                  activeId={activeExternalPath ? null : activeId}
                   isSearchMode={!!query}
-                  onSelect={onSelect}
+                  onSelect={handleSelect}
                   onDelete={handleDeleteClick}
                   draggable={!query}
                   onReorder={handleUncategorizedReorder}

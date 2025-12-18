@@ -4,43 +4,35 @@ import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { WindowToolbar } from "./components/WindowToolbar";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
-import { useDocuments } from "./hooks/useDocuments";
-import { useFolders } from "./hooks/useFolders";
+import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImportExport } from "./hooks/useImportExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
 import { useH1Visibility } from "./hooks/useH1Visibility";
-import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
+import { useAppEvents } from "./hooks/useAppEvents";
 import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
 import "./App.css";
 
 function AppContent() {
   const { theme, themeSetting, toggleTheme } = useTheme();
+
+  // 从 Context 获取文档和文件夹状态
   const {
     documents,
     activeId,
     isLoading,
+    folders,
     createDoc,
     deleteDoc,
     renameDoc,
     switchDoc,
     loadContent,
     saveContent,
-    refresh: refreshDocuments,
-  } = useDocuments();
-
-  const {
-    folders,
     createFolder,
-    deleteFolder,
-    renameFolder,
-    toggleCollapsed,
-    moveDocument,
-    reorderFolders,
-  } = useFolders();
+  } = useDocumentContext();
 
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -100,25 +92,29 @@ function AppContent() {
     onContentChange: setContent,
   });
 
+  // 使用 useAppEvents 处理文件打开和保存事件
+  const { handleChange } = useAppEvents({
+    openExternalByPath,
+    saveExternal,
+    isExternalMode,
+    activeExternalFile,
+    editorRef,
+    parseMarkdownToBlocks,
+    setContent,
+    setContentLoading,
+    setEditorKey,
+    activeId,
+    saveContent,
+    syncTitleFromBlocks,
+    setStatus,
+    statusSavedText: STRINGS.STATUS.SAVED,
+  });
+
   // 菜单事件处理
   const handleCreateInternalDocument = useCallback(() => {
     deactivateExternal();
     createDoc();
   }, [createDoc, deactivateExternal]);
-
-  // 在指定文件夹中创建文档
-  const handleCreateInFolder = useCallback(async (folderId: string) => {
-    deactivateExternal();
-    const doc = await createDoc();
-    if (doc && doc.id) {
-      await moveDocument(doc.id, folderId);
-      refreshDocuments();
-    }
-  }, [createDoc, deactivateExternal, moveDocument, refreshDocuments]);
-
-  const handleNewDocument = useCallback(() => {
-    handleCreateInternalDocument();
-  }, [handleCreateInternalDocument]);
 
   const handleToggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
@@ -150,7 +146,7 @@ function AppContent() {
 
   // 监听菜单事件
   useMenuEvents({
-    onNewDocument: handleNewDocument,
+    onNewDocument: handleCreateInternalDocument,
     onNewFolder: createFolder,
     onImport: handleImport,
     onExport: handleExport,
@@ -159,58 +155,6 @@ function AppContent() {
     onAbout: handleAbout,
     onOpenExternal: handleOpenExternal,
   });
-
-  // 监听系统文件打开事件（macOS Finder 双击打开）
-  useEffect(() => {
-    const unsubscribe = EventsOn('file:open-external', async (filePath: string) => {
-      setContentLoading(true);
-      try {
-        // 通过后端读取文件内容
-        const { LoadExternalFile } = await import('../wailsjs/go/main/App');
-        const fileContent = await LoadExternalFile(filePath);
-
-        openExternalByPath(filePath, fileContent);
-
-        // 无论编辑器是否已初始化，都解析并展示
-        const blocks = await parseMarkdownToBlocks(fileContent);
-        setContent(blocks);
-        setEditorKey(`external-${filePath}`);
-      } catch (e) {
-        console.error('打开文件失败:', e);
-      } finally {
-        setContentLoading(false);
-      }
-    });
-
-    // 通知后端：前端已注册文件打开事件监听器，可安全 flush 启动时的待处理打开请求
-    EventsEmit('app:frontend-ready');
-
-    return () => unsubscribe();
-  }, [openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
-
-  // 保存文档
-  const handleChange = async (blocks: Block[]) => {
-    if (isExternalMode && activeExternalFile && editorRef.current) {
-      // 保存外部文件
-      try {
-        const markdown = await editorRef.current.blocksToMarkdownLossy();
-        await saveExternal(markdown);
-        setStatus(STRINGS.STATUS.SAVED);
-        setTimeout(() => setStatus(""), 1000);
-      } catch (e) {
-        console.error('保存外部文件失败:', e);
-      }
-    } else if (activeId) {
-      // 保存内容
-      saveContent(activeId, blocks).then(() => {
-        setStatus(STRINGS.STATUS.SAVED);
-        setTimeout(() => setStatus(""), 1000);
-      });
-
-      // 自动同步 H1 标题
-      syncTitleFromBlocks(blocks);
-    }
-  };
 
   // 切换回内部文档
   const handleSwitchToInternal = useCallback((id: string) => {
@@ -241,18 +185,6 @@ function AppContent() {
 
   const activeDoc = documents.find((d) => d.id === activeId);
 
-  // 处理文档排序
-  const handleReorderDocuments = useCallback(async (ids: string[]) => {
-    const { ReorderDocuments } = await import('../wailsjs/go/main/App');
-    await ReorderDocuments(ids);
-    refreshDocuments();
-  }, [refreshDocuments]);
-
-  // 处理文件夹排序
-  const handleReorderFolders = useCallback(async (ids: string[]) => {
-    await reorderFolders(ids);
-  }, [reorderFolders]);
-
   // 当前显示的标题
   const currentTitle = isExternalMode
     ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
@@ -271,31 +203,12 @@ function AppContent() {
       />
       <div className={`sidebar-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Sidebar
-          documents={documents}
-          folders={folders}
-          activeId={isExternalMode ? null : activeId}
-          onSelect={handleSwitchToInternal}
-          onSelectExternal={handleSwitchToExternal}
-          onCreate={handleCreateInternalDocument}
-          onCreateInFolder={handleCreateInFolder}
-          onCreateFolder={() => createFolder()}
-          onDelete={deleteDoc}
-          onDeleteFolder={async (id) => {
-            await deleteFolder(id);
-            refreshDocuments();
-          }}
-          onRenameFolder={renameFolder}
-          onToggleFolder={toggleCollapsed}
-          onMoveToFolder={async (docId, folderId) => {
-            await moveDocument(docId, folderId);
-            refreshDocuments();
-          }}
-          onReorderDocuments={handleReorderDocuments}
-          onReorderFolders={handleReorderFolders}
           externalFiles={externalFiles}
           activeExternalPath={activeExternalPath}
+          onSelectExternal={handleSwitchToExternal}
           onCloseExternal={closeExternal}
           collapsed={sidebarCollapsed}
+          onSelectInternal={handleSwitchToInternal}
         />
       </div>
       <div className="main-content">
@@ -331,7 +244,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <DocumentProvider>
+        <AppContent />
+      </DocumentProvider>
     </ThemeProvider>
   );
 }

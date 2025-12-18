@@ -26,21 +26,36 @@ export function useDocuments() {
     loadDocuments();
   }, [loadDocuments]);
 
-  const createDoc = async (title: string = '无标题') => {
+  // 增量更新：创建文档
+  const createDoc = useCallback(async (title: string = '无标题') => {
     const doc = await CreateDocument(title);
-    await loadDocuments();
+    setDocuments(prev => [doc, ...prev]);
+    setActiveId(doc.id);
     return doc;
-  };
+  }, []);
 
-  const deleteDoc = async (id: string) => {
+  // 增量更新：删除文档
+  const deleteDoc = useCallback(async (id: string) => {
     await DeleteDocument(id);
-    await loadDocuments();
-  };
+    setDocuments(prev => {
+      const remaining = prev.filter(d => d.id !== id);
+      // 如果删除的是当前活动文档，切换到第一个
+      if (activeId === id && remaining.length > 0) {
+        setActiveId(remaining[0].id);
+      } else if (remaining.length === 0) {
+        setActiveId(null);
+      }
+      return remaining;
+    });
+  }, [activeId]);
 
-  const renameDoc = async (id: string, newTitle: string) => {
+  // 增量更新：重命名文档
+  const renameDoc = useCallback(async (id: string, newTitle: string) => {
     await RenameDocument(id, newTitle);
-    await loadDocuments();
-  };
+    setDocuments(prev =>
+      prev.map(d => d.id === id ? { ...d, title: newTitle, updatedAt: Date.now() } : d)
+    );
+  }, []);
 
   const switchDoc = useCallback(async (id: string) => {
     await SetActiveDocument(id);

@@ -4,7 +4,7 @@ import { Block, BlockNoteEditor } from '@blocknote/core';
 interface UseEditorOptions {
     isExternalMode: boolean;
     activeId: string | null;
-    loadContent: (id: string) => Promise<Block[]>;
+    loadContent: (id: string) => Promise<Block[] | undefined>;
 }
 
 interface UseEditorReturn {
