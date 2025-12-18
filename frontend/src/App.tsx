@@ -11,6 +11,7 @@ import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
+import { useH1Visibility } from "./hooks/useH1Visibility";
 import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
 import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
@@ -81,6 +82,9 @@ function AppContent() {
     documents,
     renameDoc,
   });
+
+  // H1 可见性检测（用于智能显示顶栏标题）
+  const { isH1Visible } = useH1Visibility(editorKey);
 
   // 文档切换时重置标题同步状态
   useEffect(() => {
@@ -265,7 +269,6 @@ function AppContent() {
           onCreate={handleCreateInternalDocument}
           onCreateFolder={() => createFolder()}
           onDelete={deleteDoc}
-          onRename={renameDoc}
           onDeleteFolder={async (id) => {
             await deleteFolder(id);
             refreshDocuments();
@@ -288,6 +291,7 @@ function AppContent() {
         <Header
           title={currentTitle}
           status={status}
+          showTitle={!isH1Visible}
         />
         <main className="editor-container">
           {isLoading || contentLoading ? (

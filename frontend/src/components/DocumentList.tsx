@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
-import { FileText, Pencil, Trash2, FileSearch } from 'lucide-react';
+import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface DocumentListProps {
@@ -8,7 +8,6 @@ interface DocumentListProps {
     activeId: string | null;
     isSearchMode: boolean;
     onSelect: (id: string) => void;
-    onRename: (id: string, title: string) => void;
     onDelete: (id: string) => void;
     draggable?: boolean;
     onReorder?: (ids: string[]) => void;
@@ -19,13 +18,10 @@ export function DocumentList({
     activeId,
     isSearchMode,
     onSelect,
-    onRename,
     onDelete,
     draggable = false,
     onReorder,
 }: DocumentListProps) {
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editTitle, setEditTitle] = useState('');
     const [dragOverId, setDragOverId] = useState<string | null>(null);
     const draggedIdRef = useRef<string | null>(null);
 
@@ -37,19 +33,6 @@ export function DocumentList({
             return orderA - orderB;
         });
     }, [items, isSearchMode]);
-
-    const startRename = (e: React.MouseEvent, doc: DocumentMeta | SearchResult) => {
-        e.stopPropagation();
-        setEditingId(doc.id);
-        setEditTitle(doc.title);
-    };
-
-    const finishRename = () => {
-        if (editingId && editTitle.trim()) {
-            onRename(editingId, editTitle.trim());
-        }
-        setEditingId(null);
-    };
 
     const handleDeleteClick = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
@@ -117,54 +100,29 @@ export function DocumentList({
                     key={item.id}
                     className={`document-item ${item.id === activeId ? 'active' : ''} ${dragOverId === item.id ? 'drag-over-item' : ''}`}
                     onClick={() => onSelect(item.id)}
-                    draggable={draggable && editingId !== item.id}
+                    draggable={draggable}
                     onDragStart={draggable ? (e) => handleDragStart(e, item.id) : undefined}
                     onDragOver={draggable ? (e) => handleDragOver(e, item.id) : undefined}
                     onDragLeave={draggable ? handleDragLeave : undefined}
                     onDrop={draggable ? (e) => handleDrop(e, item.id) : undefined}
                     onDragEnd={draggable ? handleDragEnd : undefined}
                 >
-                    {editingId === item.id ? (
-                        <input
-                            type="text"
-                            className="rename-input"
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            onBlur={finishRename}
-                            onKeyDown={(e) => e.key === 'Enter' && finishRename()}
-                            autoFocus
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                    ) : (
-                        <>
-                            <FileText size={16} className="doc-icon" />
-                            <div className="doc-content">
-                                <span
-                                    className="doc-title"
-                                    onDoubleClick={(e) => startRename(e, item)}
-                                >{item.title}</span>
-                                {'snippet' in item && (
-                                    <span className="doc-snippet">{item.snippet}</span>
-                                )}
-                            </div>
-                            <div className="doc-actions">
-                                <button
-                                    className="action-btn"
-                                    onClick={(e) => startRename(e, item)}
-                                    title={STRINGS.TOOLTIPS.RENAME}
-                                >
-                                    <Pencil size={14} />
-                                </button>
-                                <button
-                                    className="action-btn danger"
-                                    onClick={(e) => handleDeleteClick(e, item.id)}
-                                    title={STRINGS.TOOLTIPS.DELETE}
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        </>
-                    )}
+                    <FileText size={16} className="doc-icon" />
+                    <div className="doc-content">
+                        <span className="doc-title">{item.title}</span>
+                        {'snippet' in item && (
+                            <span className="doc-snippet">{item.snippet}</span>
+                        )}
+                    </div>
+                    <div className="doc-actions">
+                        <button
+                            className="action-btn danger"
+                            onClick={(e) => handleDeleteClick(e, item.id)}
+                            title={STRINGS.TOOLTIPS.DELETE}
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                 </li>
             ))}
         </>

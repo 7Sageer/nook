@@ -11,10 +11,10 @@ interface FolderItemProps {
     onRename: (name: string) => void;
     onDelete: () => void;
     onSelectDocument: (id: string) => void;
-    onRenameDocument: (id: string, title: string) => void;
     onDeleteDocument: (id: string) => void;
     onMoveDocument: (docId: string, folderId: string) => void;
     onReorderDocuments?: (ids: string[]) => void;
+    onEditingChange?: (isEditing: boolean) => void;
 }
 
 export function FolderItem({
@@ -25,15 +25,13 @@ export function FolderItem({
     onRename,
     onDelete,
     onSelectDocument,
-    onRenameDocument,
     onDeleteDocument,
     onMoveDocument,
     onReorderDocuments,
+    onEditingChange,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
-    const [docEditingId, setDocEditingId] = useState<string | null>(null);
-    const [docEditTitle, setDocEditTitle] = useState('');
     const [dragOverId, setDragOverId] = useState<string | null>(null);
     const [headerDragOver, setHeaderDragOver] = useState(false);
     const draggedIdRef = useRef<string | null>(null);
@@ -47,19 +45,13 @@ export function FolderItem({
             onRename(editName.trim());
         }
         setIsEditing(false);
+        onEditingChange?.(false);
     };
 
-    const startDocRename = (e: React.MouseEvent, doc: DocumentMeta) => {
-        e.stopPropagation();
-        setDocEditingId(doc.id);
-        setDocEditTitle(doc.title);
-    };
-
-    const finishDocRename = () => {
-        if (docEditingId && docEditTitle.trim()) {
-            onRenameDocument(docEditingId, docEditTitle.trim());
-        }
-        setDocEditingId(null);
+    const startEditing = () => {
+        setEditName(folder.name);
+        setIsEditing(true);
+        onEditingChange?.(true);
     };
 
     // 文件夹头部拖拽处理（接收从其他地方拖来的文档）
@@ -160,14 +152,15 @@ export function FolderItem({
                         onKeyDown={(e) => e.key === 'Enter' && handleRenameSubmit()}
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDragStart={(e) => e.stopPropagation()}
                     />
                 ) : (
                     <span
                         className="folder-name"
                         onDoubleClick={(e) => {
                             e.stopPropagation();
-                            setEditName(folder.name);
-                            setIsEditing(true);
+                            startEditing();
                         }}
                     >{folder.name}</span>
                 )}
@@ -177,8 +170,7 @@ export function FolderItem({
                         className="action-btn"
                         onClick={(e) => {
                             e.stopPropagation();
-                            setEditName(folder.name);
-                            setIsEditing(true);
+                            startEditing();
                         }}
                         title={STRINGS.TOOLTIPS.FOLDER_RENAME}
                     >
@@ -203,52 +195,27 @@ export function FolderItem({
                             key={doc.id}
                             className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''} ${dragOverId === doc.id ? 'drag-over-item' : ''}`}
                             onClick={() => onSelectDocument(doc.id)}
-                            draggable={docEditingId !== doc.id}
+                            draggable
                             onDragStart={(e) => handleDocDragStart(e, doc.id)}
                             onDragOver={(e) => handleDocDragOver(e, doc.id)}
                             onDragLeave={handleDocDragLeave}
                             onDrop={(e) => handleDocDrop(e, doc.id)}
                             onDragEnd={handleDocDragEnd}
                         >
-                            {docEditingId === doc.id ? (
-                                <input
-                                    type="text"
-                                    className="rename-input"
-                                    value={docEditTitle}
-                                    onChange={(e) => setDocEditTitle(e.target.value)}
-                                    onBlur={finishDocRename}
-                                    onKeyDown={(e) => e.key === 'Enter' && finishDocRename()}
-                                    autoFocus
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            ) : (
-                                <>
-                                    <FileText size={16} className="doc-icon" />
-                                    <span
-                                        className="doc-title"
-                                        onDoubleClick={(e) => startDocRename(e, doc)}
-                                    >{doc.title}</span>
-                                    <div className="doc-actions">
-                                        <button
-                                            className="action-btn"
-                                            onClick={(e) => startDocRename(e, doc)}
-                                            title={STRINGS.TOOLTIPS.RENAME}
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            className="action-btn danger"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteDocument(doc.id);
-                                            }}
-                                            title={STRINGS.TOOLTIPS.DELETE}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </>
-                            )}
+                            <FileText size={16} className="doc-icon" />
+                            <span className="doc-title">{doc.title}</span>
+                            <div className="doc-actions">
+                                <button
+                                    className="action-btn danger"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDeleteDocument(doc.id);
+                                    }}
+                                    title={STRINGS.TOOLTIPS.DELETE}
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

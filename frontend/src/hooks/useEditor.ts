@@ -41,54 +41,50 @@ export function useEditor({
 
     // 加载当前文档内容（带动画）
     useEffect(() => {
-        // 如果是外部文件模式，跳过内部文档加载
-        if (isExternalMode) return;
+        // 如果是外部文件模式，跳过内部文档加载，并使任何在途的内部加载失效
+        if (isExternalMode) {
+            loadingIdRef.current += 1;
+            setEditorAnimating(false);
+            return;
+        }
 
-        if (activeId) {
-            const currentId = activeId;
-            const currentLoadingId = ++loadingIdRef.current;
-
-            // 如果已有编辑器，触发淡出动画并同时加载新内容
-            if (editorKey && editorKey !== currentId) {
-                setEditorAnimating(true);
-                setContentLoading(true);
-                // 并行：淡出动画和内容加载同时进行
-                loadContent(currentId)
-                    .then((data) => {
-                        if (currentLoadingId !== loadingIdRef.current) return;
-                        setContent(data);
-                        setEditorKey(currentId);
-                    })
-                    .catch((err) => {
-                        console.error('Failed to load content:', err);
-                    })
-                    .finally(() => {
-                        if (currentLoadingId !== loadingIdRef.current) return;
-                        setContentLoading(false);
-                        setEditorAnimating(false);
-                    });
-            } else if (!editorKey) {
-                // 首次加载，直接加载（仅当 editorKey 为 null 时）
-                setContentLoading(true);
-                loadContent(currentId)
-                    .then((data) => {
-                        if (currentLoadingId !== loadingIdRef.current) return;
-                        setContent(data);
-                        setEditorKey(currentId);
-                    })
-                    .catch((err) => {
-                        console.error('Failed to load content:', err);
-                    })
-                    .finally(() => {
-                        if (currentLoadingId !== loadingIdRef.current) return;
-                        setContentLoading(false);
-                    });
-            }
-            // 如果 editorKey === currentId，不做任何事（避免重复加载）
-        } else {
+        if (!activeId) {
+            loadingIdRef.current += 1;
             setContent(undefined);
             setEditorKey(null);
+            setContentLoading(false);
+            setEditorAnimating(false);
+            return;
         }
+
+        const currentId = activeId;
+        const needsLoad = !editorKey || editorKey !== currentId;
+        const shouldAnimate = Boolean(editorKey && editorKey !== currentId);
+
+        if (!needsLoad) {
+            setContentLoading(false);
+            setEditorAnimating(false);
+            return;
+        }
+
+        const currentLoadingId = ++loadingIdRef.current;
+        if (shouldAnimate) setEditorAnimating(true);
+        setContentLoading(true);
+
+        loadContent(currentId)
+            .then((data) => {
+                if (currentLoadingId !== loadingIdRef.current) return;
+                setContent(data);
+                setEditorKey(currentId);
+            })
+            .catch((err) => {
+                console.error('Failed to load content:', err);
+            })
+            .finally(() => {
+                if (currentLoadingId !== loadingIdRef.current) return;
+                setContentLoading(false);
+                if (shouldAnimate) setEditorAnimating(false);
+            });
     }, [activeId, editorKey, isExternalMode, loadContent]);
 
     return {

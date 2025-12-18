@@ -28,9 +28,19 @@
     transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
 
+.app-header.header-transparent {
+    background-color: transparent;
+    border-bottom-color: transparent;
+}
+
 .app-container.dark .app-header {
     background-color: #1a1a1a;
     border-bottom-color: #2a2a2a;
+}
+
+.app-container.dark .app-header.header-transparent {
+    background-color: transparent;
+    border-bottom-color: transparent;
 }
 
 /* Header 三栏布局 */
@@ -61,6 +71,15 @@
     color: #111827;
     text-align: center;
     margin: 0;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.header-title-hidden {
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
 }
 
 .app-container.dark .header-title {

@@ -39,3 +39,28 @@ export function extractFirstH1Title(blocks: Block[]): string | null {
 
     return null;
 }
+
+/**
+ * 从文档区块数组中提取标题
+ * 优先查找第一个 H1 标题，如果没有则使用第一个有文本内容的区块
+ */
+export function extractDocumentTitle(blocks: Block[]): string | null {
+    if (!blocks || blocks.length === 0) return null;
+
+    // 优先找第一个 H1
+    const firstH1 = blocks.find(
+        b => b.type === "heading" && (b.props as any)?.level === 1
+    );
+    if (firstH1) {
+        const text = extractTextFromBlock(firstH1);
+        if (text.trim()) return text.trim();
+    }
+
+    // Fallback: 第一个有文本内容的区块
+    for (const block of blocks) {
+        const text = extractTextFromBlock(block);
+        if (text.trim()) return text.trim();
+    }
+
+    return null;
+}

@@ -18,7 +18,6 @@ interface SidebarProps {
   onCreate: () => void;
   onCreateFolder: () => void;
   onDelete: (id: string) => void;
-  onRename: (id: string, title: string) => void;
   onDeleteFolder: (id: string) => void;
   onRenameFolder: (id: string, name: string) => void;
   onToggleFolder: (id: string) => void;
@@ -40,7 +39,6 @@ export function Sidebar({
   onCreate,
   onCreateFolder,
   onDelete,
-  onRename,
   onDeleteFolder,
   onRenameFolder,
   onToggleFolder,
@@ -57,6 +55,7 @@ export function Sidebar({
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const draggedFolderIdRef = useRef<string | null>(null);
 
   const handleDeleteClick = (id: string) => {
@@ -241,7 +240,7 @@ export function Sidebar({
                 <div
                   key={folder.id}
                   className={`folder-wrapper ${dragOverFolderId === folder.id ? 'drag-over-folder' : ''}`}
-                  draggable
+                  draggable={editingFolderId !== folder.id}
                   onDragStart={(e) => handleFolderDragStart(e, folder.id)}
                   onDragOver={(e) => handleFolderDragOver(e, folder.id)}
                   onDragLeave={handleFolderDragLeave}
@@ -256,10 +255,10 @@ export function Sidebar({
                     onRename={(name) => onRenameFolder(folder.id, name)}
                     onDelete={() => handleDeleteFolderClick(folder.id)}
                     onSelectDocument={onSelect}
-                    onRenameDocument={onRename}
                     onDeleteDocument={handleDeleteClick}
                     onMoveDocument={onMoveToFolder}
                     onReorderDocuments={handleFolderDocReorder(folder.id)}
+                    onEditingChange={(isEditing) => setEditingFolderId(isEditing ? folder.id : null)}
                   />
                 </div>
               ))}
@@ -294,7 +293,6 @@ export function Sidebar({
                   activeId={activeId}
                   isSearchMode={!!query}
                   onSelect={onSelect}
-                  onRename={onRename}
                   onDelete={handleDeleteClick}
                   draggable={!query}
                   onReorder={handleUncategorizedReorder}

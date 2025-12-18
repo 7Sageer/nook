@@ -26,7 +26,6 @@ export const STRINGS = {
         COLLAPSE: "Collapse Sidebar",
         EXPAND: "Expand Sidebar",
         CLOSE_EXTERNAL: "Close External File",
-        RENAME: "Rename",
         DELETE: "Delete",
         FOLDER_RENAME: "Rename Folder",
         FOLDER_DELETE: "Delete Folder",

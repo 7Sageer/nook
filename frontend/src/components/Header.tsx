@@ -3,14 +3,17 @@ import { CheckCircle } from 'lucide-react';
 interface HeaderProps {
     title: string;
     status?: string;
+    showTitle?: boolean;
 }
 
-export function Header({ title, status }: HeaderProps) {
+export function Header({ title, status, showTitle = true }: HeaderProps) {
     return (
-        <header className="app-header">
+        <header className={`app-header ${showTitle ? '' : 'header-transparent'}`}>
             <div className="header-left">
             </div>
-            <h1 className="header-title">{title}</h1>
+            <h1 className={`header-title ${showTitle ? '' : 'header-title-hidden'}`}>
+                {title}
+            </h1>
             <div className="header-right">
                 {status && (
                     <span className="status">

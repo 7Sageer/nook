@@ -97,6 +97,7 @@
     font-size: 14px;
     outline: none;
     background-color: #ffffff;
+    user-select: text;
 }
 
 .sidebar.dark .folder-rename-input {

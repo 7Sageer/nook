@@ -42,12 +42,12 @@ export function useDocuments() {
     await loadDocuments();
   };
 
-  const switchDoc = async (id: string) => {
+  const switchDoc = useCallback(async (id: string) => {
     await SetActiveDocument(id);
     setActiveId(id);
-  };
+  }, []);
 
-  const loadContent = async (id: string) => {
+  const loadContent = useCallback(async (id: string) => {
     const content = await LoadDocumentContent(id);
     if (content) {
       try {
@@ -57,11 +57,11 @@ export function useDocuments() {
       }
     }
     return undefined;
-  };
+  }, []);
 
-  const saveContent = async (id: string, content: any) => {
+  const saveContent = useCallback(async (id: string, content: any) => {
     await SaveDocumentContent(id, JSON.stringify(content));
-  };
+  }, []);
 
   return {
     documents,

@@ -1,6 +1,6 @@
 import { useRef, useCallback } from 'react';
 import { Block } from '@blocknote/core';
-import { extractFirstH1Title } from '../utils/blockUtils';
+import { extractDocumentTitle } from '../utils/blockUtils';
 import { DocumentMeta } from '../types/document';
 
 interface UseTitleSyncOptions {
@@ -28,8 +28,8 @@ export function useTitleSync({
     const syncTitleFromBlocks = useCallback((blocks: Block[]) => {
         if (!activeId) return;
 
-        const h1Title = extractFirstH1Title(blocks);
-        if (h1Title && h1Title !== lastSyncedTitleRef.current) {
+        const title = extractDocumentTitle(blocks);
+        if (title && title !== lastSyncedTitleRef.current) {
             // 清除之前的定时器
             if (titleSyncTimerRef.current) {
                 clearTimeout(titleSyncTimerRef.current);
@@ -37,9 +37,9 @@ export function useTitleSync({
             // 设置新的防抖定时器
             titleSyncTimerRef.current = setTimeout(() => {
                 const currentDoc = documents.find(d => d.id === activeId);
-                if (currentDoc && h1Title !== currentDoc.title) {
-                    renameDoc(activeId, h1Title);
-                    lastSyncedTitleRef.current = h1Title;
+                if (currentDoc && title !== currentDoc.title) {
+                    renameDoc(activeId, title);
+                    lastSyncedTitleRef.current = title;
                 }
             }, 500);
         }
