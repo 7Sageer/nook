@@ -16,12 +16,12 @@
     justify-content: flex-end;
     height: 100%;
     padding: 14px 8px 0 8px;
-    width: 280px;
+    width: var(--sidebar-width);
     --wails-draggable: drag;
     pointer-events: auto;
     transition:
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        transform var(--transition-sidebar);
 }
 
 .window-toolbar .toolbar-expanded.hidden {
@@ -45,7 +45,7 @@
     pointer-events: auto;
     transition:
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        transform var(--transition-sidebar);
 }
 
 .window-toolbar .toolbar-collapsed.hidden {
@@ -97,7 +97,7 @@
     cursor: pointer;
     background-color: transparent;
     color: #6b7280;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--transition-smooth);
 }
 
 /* 小按钮变体（与红黄绿对齐用） */
@@ -140,7 +140,7 @@
 }
 
 .create-menu-trigger .plus-icon {
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform var(--transition-smooth);
 }
 
 .create-menu-trigger.menu-open .plus-icon {
@@ -204,7 +204,7 @@
     background-color: #f3f4f6;
     border-radius: var(--radius-md);
     transition:
-        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform var(--transition-smooth),
         background-color var(--transition-fast);
 }
 

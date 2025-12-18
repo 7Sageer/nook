@@ -2,7 +2,7 @@
 .editor-container {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 80px;
+    padding: 32px var(--editor-padding-x);
 }
 
 /* ========== BlockNote 编辑器样式覆盖 ========== */
@@ -33,7 +33,7 @@
 /* 选区高亮平滑过渡 */
 .ProseMirror ::selection {
     background-color: rgba(37, 99, 235, 0.25);
-    transition: background-color 0.15s ease;
+    transition: background-color var(--transition-fast);
 }
 
 .app-container.dark .ProseMirror ::selection {
@@ -42,7 +42,7 @@
 
 /* 块级元素选中效果 */
 .ProseMirror .bn-block-content {
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 /* 输入时的平滑效果 */

@@ -93,8 +93,8 @@
     padding: 4px 10px;
     background-color: #f3f4f6;
     border-radius: 9999px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: statusFadeIn 0.2s ease-out;
+    transition: all var(--transition-smooth);
+    animation: statusFadeIn var(--transition-normal);
 }
 
 .app-container.dark .status {

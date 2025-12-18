@@ -26,3 +26,19 @@ body,
     background-color: #111111;
     color: #e5e7eb;
 }
+
+/* ========== 响应式断点 ========== */
+/* 窄窗口适配 (< 900px) */
+@media (max-width: 900px) {
+    :root {
+        --sidebar-width: var(--sidebar-width-narrow);
+        --editor-padding-x: var(--editor-padding-x-narrow);
+    }
+}
+
+/* 极窄窗口适配 (< 700px) - 自动折叠侧边栏提示 */
+@media (max-width: 700px) {
+    :root {
+        --editor-padding-x: 24px;
+    }
+}

@@ -33,11 +33,15 @@
     align-items: center;
     justify-content: center;
     color: #9ca3af;
-    transition: transform 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .folder-chevron.collapsed {
     transform: rotate(0deg);
+}
+
+.folder-chevron.expanded {
+    transform: rotate(90deg);
 }
 
 .folder-icon {
@@ -105,7 +109,7 @@
     padding-left: 16px;
     display: grid;
     grid-template-rows: 1fr;
-    transition: grid-template-rows 0.28s cubic-bezier(0.33, 1, 0.68, 1);
+    transition: grid-template-rows var(--transition-folder);
 }
 
 .folder-documents.collapsed {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
-import { ChevronRight, ChevronDown, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText } from 'lucide-react';
+import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface FolderItemProps {
@@ -85,8 +85,8 @@ export function FolderItem({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
-                <span className={`folder-chevron ${folder.collapsed ? 'collapsed' : ''}`}>
-                    {folder.collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                <span className={`folder-chevron ${folder.collapsed ? 'collapsed' : 'expanded'}`}>
+                    <ChevronRight size={16} />
                 </span>
                 {folder.collapsed ? (
                     <FolderIcon size={16} className="folder-icon" />
