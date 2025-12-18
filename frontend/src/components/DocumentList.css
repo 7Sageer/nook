@@ -1,0 +1,192 @@
+/* ========== 文档列表 ========== */
+.document-list {
+    flex: 1;
+    overflow-y: auto;
+    list-style: none;
+    padding: 8px;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    margin-bottom: 2px;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: left center;
+    animation: listItemAppear 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.document-item:hover {
+    background-color: #f3f4f6;
+    transform: translateX(4px);
+}
+
+.document-item:active {
+    transform: translateX(4px) scale(0.98);
+}
+
+.sidebar.dark .document-item:hover {
+    background-color: #252525;
+}
+
+.document-item.active {
+    background-color: rgba(37, 99, 235, 0.1);
+    transform: translateX(4px);
+    box-shadow: inset 3px 0 0 0 var(--primary);
+}
+
+.document-item.active .doc-icon {
+    color: var(--primary);
+}
+
+.sidebar.dark .document-item.active {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+.doc-icon {
+    flex-shrink: 0;
+    color: #9ca3af;
+    transition: color var(--transition-fast);
+}
+
+.sidebar.dark .doc-icon {
+    color: #6b7280;
+}
+
+.doc-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.doc-title {
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #374151;
+}
+
+.sidebar.dark .doc-title {
+    color: #e5e7eb;
+}
+
+.doc-snippet {
+    font-size: 12px;
+    color: #9ca3af;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.document-item:hover .doc-actions {
+    opacity: 1;
+}
+
+/* ========== Action Buttons ========== */
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    background-color: transparent;
+    color: #6b7280;
+    transition: all var(--transition-fast);
+}
+
+.action-btn:hover {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.action-btn.danger:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.sidebar.dark .action-btn {
+    color: #9ca3af;
+}
+
+.sidebar.dark .action-btn:hover {
+    background-color: #333;
+    color: #e5e7eb;
+}
+
+.sidebar.dark .action-btn.danger:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+/* ========== Rename Input ========== */
+.rename-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    outline: none;
+    background-color: #ffffff;
+}
+
+.sidebar.dark .rename-input {
+    background-color: #252525;
+    color: #e5e7eb;
+    border-color: var(--primary);
+}
+
+/* ========== List Item Animation Delays ========== */
+.document-item:nth-child(1) {
+    animation-delay: 0ms;
+}
+
+.document-item:nth-child(2) {
+    animation-delay: 30ms;
+}
+
+.document-item:nth-child(3) {
+    animation-delay: 60ms;
+}
+
+.document-item:nth-child(4) {
+    animation-delay: 90ms;
+}
+
+.document-item:nth-child(5) {
+    animation-delay: 120ms;
+}
+
+.document-item:nth-child(n+6) {
+    animation-delay: 150ms;
+}
+
+/* ========== Drag Styles ========== */
+.document-item[draggable="true"] {
+    cursor: grab;
+}
+
+.document-item[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+.document-item.dragging {
+    opacity: 0.5;
+}

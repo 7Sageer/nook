@@ -1,0 +1,28 @@
+/* ========== Base Styles ========== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    width: 100%;
+}
+
+/* ========== 主容器 ========== */
+.app-container {
+    display: flex;
+    height: 100vh;
+    background-color: #ffffff;
+    color: #374151;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
+    position: relative;
+}
+
+.app-container.dark {
+    background-color: #111111;
+    color: #e5e7eb;
+}

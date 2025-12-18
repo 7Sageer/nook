@@ -1,0 +1,31 @@
+/* ========== Scrollbar ========== */
+.document-list::-webkit-scrollbar,
+.editor-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.document-list::-webkit-scrollbar-track,
+.editor-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.document-list::-webkit-scrollbar-thumb,
+.editor-container::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 3px;
+}
+
+.document-list::-webkit-scrollbar-thumb:hover,
+.editor-container::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
+}
+
+.sidebar.dark .document-list::-webkit-scrollbar-thumb,
+.app-container.dark .editor-container::-webkit-scrollbar-thumb {
+    background-color: #374151;
+}
+
+.sidebar.dark .document-list::-webkit-scrollbar-thumb:hover,
+.app-container.dark .editor-container::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563;
+}

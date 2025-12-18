@@ -1,0 +1,221 @@
+/* ========== WindowToolbar ========== */
+.window-toolbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 38px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.window-toolbar .toolbar-drag-region {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    height: 100%;
+    padding: 13px 8px 0 8px;
+    width: 280px;
+    --wails-draggable: drag;
+    pointer-events: auto;
+}
+
+.window-toolbar .toolbar-buttons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    --wails-draggable: no-drag;
+}
+
+.window-toolbar .toolbar-buttons button,
+.window-toolbar .toolbar-buttons .icon-btn {
+    --wails-draggable: no-drag;
+}
+
+/* WindowToolbar 折叠状态 */
+.window-toolbar.window-toolbar-collapsed .toolbar-drag-region {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 78px;
+    /* 避开 macOS 红黄绿按钮 */
+}
+
+/* WindowToolbar 暗色模式 */
+.window-toolbar.dark .icon-btn {
+    color: #9ca3af;
+}
+
+.window-toolbar.dark .icon-btn:hover {
+    background-color: #2a2a2a;
+    color: #e5e7eb;
+}
+
+.window-toolbar.dark .icon-btn.primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.window-toolbar.dark .icon-btn.primary:hover {
+    background-color: var(--primary-hover);
+}
+
+/* ========== Icon Buttons ========== */
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background-color: transparent;
+    color: #6b7280;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 小按钮变体（与红黄绿对齐用） */
+.icon-btn.icon-btn-sm {
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+}
+
+.icon-btn:hover {
+    background-color: #e5e7eb;
+    color: #374151;
+    transform: scale(1.05);
+}
+
+.icon-btn:active {
+    transform: scale(0.92);
+}
+
+.icon-btn.primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.icon-btn.primary:hover {
+    background-color: var(--primary-hover);
+    color: white;
+}
+
+/* ========== Create Menu Dropdown ========== */
+.create-menu-wrapper {
+    position: relative;
+    -webkit-app-region: no-drag;
+}
+
+.create-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-menu-trigger .plus-icon {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-menu-trigger.menu-open .plus-icon {
+    transform: rotate(45deg);
+}
+
+.create-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 180px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 4px;
+    z-index: 100;
+    animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.create-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background-color: transparent;
+    color: #374151;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: left;
+}
+
+.create-menu-item:hover {
+    background-color: #f3f4f6;
+}
+
+.create-menu-item:active {
+    transform: scale(0.98);
+}
+
+.create-menu-item svg {
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.create-menu-item:hover svg {
+    color: var(--primary);
+}
+
+/* 折叠按钮 */
+.collapse-btn {
+    margin-left: auto;
+}
+
+/* 展开按钮动画 */
+.expand-sidebar-btn {
+    background-color: #f3f4f6;
+    border-radius: var(--radius-md);
+    margin-left: 70px;
+    /* 避开 macOS 红黄绿窗口控制按钮 */
+    transition:
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color var(--transition-fast);
+    animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.expand-sidebar-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.app-container.dark .expand-sidebar-btn {
+    background-color: #252525;
+}
+
+.app-container.dark .expand-sidebar-btn:hover {
+    background-color: #333;
+}
+
+/* Dark mode for create menu */
+.sidebar.dark .create-menu-dropdown {
+    background-color: #252525;
+    border-color: #333;
+}
+
+.sidebar.dark .create-menu-item {
+    color: #e5e7eb;
+}
+
+.sidebar.dark .create-menu-item:hover {
+    background-color: #333;
+}
+
+.sidebar.dark .create-menu-item svg {
+    color: #9ca3af;
+}
+
+.sidebar.dark .create-menu-item:hover svg {
+    color: var(--primary);
+}

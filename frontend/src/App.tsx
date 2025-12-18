@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Editor } from "./components/Editor";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
@@ -9,10 +9,11 @@ import { useFolders } from "./hooks/useFolders";
 import { useImportExport } from "./hooks/useImportExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
+import { useEditor } from "./hooks/useEditor";
+import { useTitleSync } from "./hooks/useTitleSync";
 import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
-import { Block, BlockNoteEditor } from "@blocknote/core";
+import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
-import { extractFirstH1Title } from "./utils/blockUtils";
 import "./App.css";
 
 function AppContent() {
@@ -39,17 +40,8 @@ function AppContent() {
     moveDocument,
   } = useFolders();
 
-  const [content, setContent] = useState<Block[] | undefined>(undefined);
   const [status, setStatus] = useState<string>("");
-  const [contentLoading, setContentLoading] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [editorAnimating, setEditorAnimating] = useState(false);
-  const [editorKey, setEditorKey] = useState<string | null>(null);
-  const editorRef = useRef<BlockNoteEditor | null>(null);
-
-  // H1 标题自动同步
-  const titleSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastSyncedTitleRef = useRef<string | null>(null);
 
   // 外部文件管理
   const {
@@ -64,6 +56,35 @@ function AppContent() {
     closeExternal,
     isExternalMode,
   } = useExternalFile();
+
+  // 编辑器状态管理
+  const {
+    content,
+    setContent,
+    contentLoading,
+    setContentLoading,
+    editorAnimating,
+    editorKey,
+    setEditorKey,
+    editorRef,
+    parseMarkdownToBlocks,
+  } = useEditor({
+    isExternalMode,
+    activeId,
+    loadContent,
+  });
+
+  // H1 标题自动同步
+  const { syncTitleFromBlocks, resetTitleSync } = useTitleSync({
+    activeId,
+    documents,
+    renameDoc,
+  });
+
+  // 文档切换时重置标题同步状态
+  useEffect(() => {
+    resetTitleSync();
+  }, [activeId, resetTitleSync]);
 
   const { handleImport, handleExport } = useImportExport({
     editorRef,
@@ -92,11 +113,6 @@ function AppContent() {
     alert(STRINGS.ABOUT_INFO);
   }, []);
 
-  const parseMarkdownToBlocks = useCallback((markdownText: string) => {
-    const editor = editorRef.current ?? BlockNoteEditor.create();
-    return editor.tryParseMarkdownToBlocks(markdownText);
-  }, []);
-
   // 打开外部文件
   const handleOpenExternal = useCallback(async () => {
     const file = await openExternal();
@@ -104,7 +120,7 @@ function AppContent() {
 
     setContentLoading(true);
     try {
-      const blocks = parseMarkdownToBlocks(file.content);
+      const blocks = await parseMarkdownToBlocks(file.content);
       setContent(blocks);
       setEditorKey(`external-${file.path}`);
       activateExternal();
@@ -115,7 +131,7 @@ function AppContent() {
     } finally {
       setContentLoading(false);
     }
-  }, [activateExternal, openExternal, parseMarkdownToBlocks]);
+  }, [activateExternal, openExternal, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
   // 监听菜单事件
   useMenuEvents({
@@ -136,12 +152,12 @@ function AppContent() {
       try {
         // 通过后端读取文件内容
         const { LoadExternalFile } = await import('../wailsjs/go/main/App');
-        const content = await LoadExternalFile(filePath);
+        const fileContent = await LoadExternalFile(filePath);
 
-        openExternalByPath(filePath, content);
+        openExternalByPath(filePath, fileContent);
 
         // 无论编辑器是否已初始化，都解析并展示
-        const blocks = parseMarkdownToBlocks(content);
+        const blocks = await parseMarkdownToBlocks(fileContent);
         setContent(blocks);
         setEditorKey(`external-${filePath}`);
       } catch (e) {
@@ -155,57 +171,7 @@ function AppContent() {
     EventsEmit('app:frontend-ready');
 
     return () => unsubscribe();
-  }, [openExternalByPath, parseMarkdownToBlocks]);
-
-  // 加载当前文档内容（带动画）
-  useEffect(() => {
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const cleanup = () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-
-    // 如果是外部文件模式，跳过内部文档加载
-    if (isExternalMode) return cleanup;
-
-    if (activeId) {
-      const currentId = activeId;
-      // 重置标题同步状态
-      lastSyncedTitleRef.current = null;
-      // 如果已有编辑器，先触发淡出动画
-      if (editorKey && editorKey !== currentId) {
-        setEditorAnimating(true);
-        // 等待淡出动画完成后再加载新内容
-        timer = setTimeout(() => {
-          if (cancelled) return;
-          setContentLoading(true);
-          loadContent(currentId).then((data) => {
-            if (cancelled) return;
-            setContent(data);
-            setEditorKey(currentId);
-            setContentLoading(false);
-            setEditorAnimating(false);
-          });
-        }, 150);
-        return cleanup;
-      } else {
-        // 首次加载，直接加载
-        setContentLoading(true);
-        loadContent(currentId).then((data) => {
-          if (cancelled) return;
-          setContent(data);
-          setEditorKey(currentId);
-          setContentLoading(false);
-        });
-      }
-    } else {
-      setContent(undefined);
-      setEditorKey(null);
-    }
-    return cleanup;
-  }, [activeId, isExternalMode]);
+  }, [openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
   // 保存文档
   const handleChange = async (blocks: Block[]) => {
@@ -226,22 +192,8 @@ function AppContent() {
         setTimeout(() => setStatus(""), 1000);
       });
 
-      // 自动同步 H1 标题（防抖 500ms）
-      const h1Title = extractFirstH1Title(blocks);
-      if (h1Title && h1Title !== lastSyncedTitleRef.current) {
-        // 清除之前的定时器
-        if (titleSyncTimerRef.current) {
-          clearTimeout(titleSyncTimerRef.current);
-        }
-        // 设置新的防抖定时器
-        titleSyncTimerRef.current = setTimeout(() => {
-          const currentDoc = documents.find(d => d.id === activeId);
-          if (currentDoc && h1Title !== currentDoc.title) {
-            renameDoc(activeId, h1Title);
-            lastSyncedTitleRef.current = h1Title;
-          }
-        }, 500);
-      }
+      // 自动同步 H1 标题
+      syncTitleFromBlocks(blocks);
     }
   };
 
@@ -258,10 +210,10 @@ function AppContent() {
     setContentLoading(true);
     try {
       const { LoadExternalFile } = await import('../wailsjs/go/main/App');
-      const content = await LoadExternalFile(file.path);
+      const fileContent = await LoadExternalFile(file.path);
 
-      openExternalByPath(file.path, content);
-      const blocks = parseMarkdownToBlocks(content);
+      openExternalByPath(file.path, fileContent);
+      const blocks = await parseMarkdownToBlocks(fileContent);
       setContent(blocks);
       setEditorKey(`external-${file.path}`);
       activateExternal(file.path);
@@ -270,7 +222,7 @@ function AppContent() {
     } finally {
       setContentLoading(false);
     }
-  }, [activateExternal, externalFiles, openExternalByPath, parseMarkdownToBlocks]);
+  }, [activateExternal, externalFiles, openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
   const activeDoc = documents.find((d) => d.id === activeId);
 
