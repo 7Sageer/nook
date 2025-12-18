@@ -7,6 +7,7 @@ import {
     RenameFolder,
     SetFolderCollapsed,
     MoveDocumentToFolder,
+    ReorderFolders,
 } from '../../wailsjs/go/main/App';
 
 export function useFolders() {
@@ -91,6 +92,24 @@ export function useFolders() {
         }
     }, []);
 
+    // 重新排序文件夹
+    const reorderFolders = useCallback(async (ids: string[]) => {
+        try {
+            await ReorderFolders(ids);
+            // 更新本地状态的顺序
+            setFolders((prev) => {
+                const orderMap = new Map(ids.map((id, index) => [id, index]));
+                return [...prev].sort((a, b) => {
+                    const orderA = orderMap.get(a.id) ?? 0;
+                    const orderB = orderMap.get(b.id) ?? 0;
+                    return orderA - orderB;
+                });
+            });
+        } catch (e) {
+            console.error('排序文件夹失败:', e);
+        }
+    }, []);
+
     return {
         folders,
         isLoading,
@@ -99,6 +118,7 @@ export function useFolders() {
         renameFolder,
         toggleCollapsed,
         moveDocument,
+        reorderFolders,
         refreshFolders: loadFolders,
     };
 }

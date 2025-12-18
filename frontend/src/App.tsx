@@ -38,6 +38,7 @@ function AppContent() {
     renameFolder,
     toggleCollapsed,
     moveDocument,
+    reorderFolders,
   } = useFolders();
 
   const [status, setStatus] = useState<string>("");
@@ -226,6 +227,18 @@ function AppContent() {
 
   const activeDoc = documents.find((d) => d.id === activeId);
 
+  // 处理文档排序
+  const handleReorderDocuments = useCallback(async (ids: string[]) => {
+    const { ReorderDocuments } = await import('../wailsjs/go/main/App');
+    await ReorderDocuments(ids);
+    refreshDocuments();
+  }, [refreshDocuments]);
+
+  // 处理文件夹排序
+  const handleReorderFolders = useCallback(async (ids: string[]) => {
+    await reorderFolders(ids);
+  }, [reorderFolders]);
+
   // 当前显示的标题
   const currentTitle = isExternalMode
     ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
@@ -263,6 +276,8 @@ function AppContent() {
             await moveDocument(docId, folderId);
             refreshDocuments();
           }}
+          onReorderDocuments={handleReorderDocuments}
+          onReorderFolders={handleReorderFolders}
           externalFiles={externalFiles}
           activeExternalPath={activeExternalPath}
           onCloseExternal={closeExternal}

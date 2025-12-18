@@ -2,6 +2,7 @@ export interface DocumentMeta {
   id: string;
   title: string;
   folderId?: string;
+  order: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -24,6 +25,7 @@ export interface Settings {
 export interface Folder {
   id: string;
   name: string;
+  order: number;
   createdAt: number;
   collapsed: boolean;
 }

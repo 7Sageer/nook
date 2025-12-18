@@ -62,6 +62,14 @@ export function RenameFolder(arg1, arg2) {
   return window['go']['main']['App']['RenameFolder'](arg1, arg2);
 }
 
+export function ReorderDocuments(arg1) {
+  return window['go']['main']['App']['ReorderDocuments'](arg1);
+}
+
+export function ReorderFolders(arg1) {
+  return window['go']['main']['App']['ReorderFolders'](arg1);
+}
+
 export function SaveDocumentContent(arg1, arg2) {
   return window['go']['main']['App']['SaveDocumentContent'](arg1, arg2);
 }

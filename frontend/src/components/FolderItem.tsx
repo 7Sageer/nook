@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
 import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
@@ -14,6 +14,7 @@ interface FolderItemProps {
     onRenameDocument: (id: string, title: string) => void;
     onDeleteDocument: (id: string) => void;
     onMoveDocument: (docId: string, folderId: string) => void;
+    onReorderDocuments?: (ids: string[]) => void;
 }
 
 export function FolderItem({
@@ -27,11 +28,19 @@ export function FolderItem({
     onRenameDocument,
     onDeleteDocument,
     onMoveDocument,
+    onReorderDocuments,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
     const [docEditingId, setDocEditingId] = useState<string | null>(null);
     const [docEditTitle, setDocEditTitle] = useState('');
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const [headerDragOver, setHeaderDragOver] = useState(false);
+    const draggedIdRef = useRef<string | null>(null);
+
+    const sortedDocs = useMemo(() => {
+        return [...documents].sort((a, b) => a.order - b.order);
+    }, [documents]);
 
     const handleRenameSubmit = () => {
         if (editName.trim() && editName !== folder.name) {
@@ -53,37 +62,85 @@ export function FolderItem({
         setDocEditingId(null);
     };
 
-    const handleDragOver = (e: React.DragEvent) => {
+    // 文件夹头部拖拽处理（接收从其他地方拖来的文档）
+    const handleHeaderDragOver = (e: React.DragEvent) => {
         e.preventDefault();
-        e.currentTarget.classList.add('drag-over');
+        setHeaderDragOver(true);
     };
 
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.currentTarget.classList.remove('drag-over');
+    const handleHeaderDragLeave = () => {
+        setHeaderDragOver(false);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleHeaderDrop = (e: React.DragEvent) => {
         e.preventDefault();
-        e.currentTarget.classList.remove('drag-over');
+        setHeaderDragOver(false);
         const docId = e.dataTransfer.getData('text/plain');
         if (docId) {
             onMoveDocument(docId, folder.id);
         }
     };
 
+    // 文档拖拽开始
     const handleDocDragStart = (e: React.DragEvent, docId: string) => {
+        draggedIdRef.current = docId;
         e.dataTransfer.setData('text/plain', docId);
         e.dataTransfer.effectAllowed = 'move';
+    };
+
+    // 文档拖拽悬停（用于排序）
+    const handleDocDragOver = (e: React.DragEvent, docId: string) => {
+        e.preventDefault();
+        if (draggedIdRef.current && draggedIdRef.current !== docId) {
+            setDragOverId(docId);
+        }
+    };
+
+    const handleDocDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    // 文档放置（用于排序）
+    const handleDocDrop = (e: React.DragEvent, targetId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverId(null);
+
+        const draggedId = draggedIdRef.current;
+        draggedIdRef.current = null;
+
+        if (!draggedId || !onReorderDocuments) return;
+
+        // 检查是否是文件夹内的文档排序
+        const currentIds = sortedDocs.map(d => d.id);
+        const draggedIndex = currentIds.indexOf(draggedId);
+        const targetIndex = currentIds.indexOf(targetId);
+
+        if (draggedIndex !== -1 && targetIndex !== -1 && draggedId !== targetId) {
+            // 文件夹内排序
+            const newIds = [...currentIds];
+            newIds.splice(draggedIndex, 1);
+            newIds.splice(targetIndex, 0, draggedId);
+            onReorderDocuments(newIds);
+        } else if (draggedIndex === -1) {
+            // 从外部拖入：移动到文件夹
+            onMoveDocument(draggedId, folder.id);
+        }
+    };
+
+    const handleDocDragEnd = () => {
+        draggedIdRef.current = null;
+        setDragOverId(null);
     };
 
     return (
         <div className="folder-item">
             <div
-                className="folder-header"
+                className={`folder-header ${headerDragOver ? 'drag-over' : ''}`}
                 onClick={onToggle}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+                onDragOver={handleHeaderDragOver}
+                onDragLeave={handleHeaderDragLeave}
+                onDrop={handleHeaderDrop}
             >
                 <span className={`folder-chevron ${folder.collapsed ? 'collapsed' : 'expanded'}`}>
                     <ChevronRight size={16} />
@@ -141,13 +198,17 @@ export function FolderItem({
             </div>
             <div className={`folder-documents ${folder.collapsed ? 'collapsed' : ''}`}>
                 <div className="folder-documents-inner">
-                    {documents.map((doc) => (
+                    {sortedDocs.map((doc) => (
                         <div
                             key={doc.id}
-                            className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''}`}
+                            className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''} ${dragOverId === doc.id ? 'drag-over-item' : ''}`}
                             onClick={() => onSelectDocument(doc.id)}
-                            draggable
+                            draggable={docEditingId !== doc.id}
                             onDragStart={(e) => handleDocDragStart(e, doc.id)}
+                            onDragOver={(e) => handleDocDragOver(e, doc.id)}
+                            onDragLeave={handleDocDragLeave}
+                            onDrop={(e) => handleDocDrop(e, doc.id)}
+                            onDragEnd={handleDocDragEnd}
                         >
                             {docEditingId === doc.id ? (
                                 <input

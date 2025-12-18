@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/google/uuid"
 	"notion-lite/internal/constant"
+
+	"github.com/google/uuid"
 )
 
 // Meta 文档元数据
@@ -15,6 +16,7 @@ type Meta struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
 	FolderId  string `json:"folderId,omitempty"`
+	Order     int    `json:"order"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
 }
@@ -159,3 +161,19 @@ func (r *Repository) saveIndex(index Index) error {
 	return os.WriteFile(indexPath, data, 0644)
 }
 
+// Reorder 重新排序文档
+func (r *Repository) Reorder(ids []string) error {
+	index, _ := r.GetAll()
+	// 创建 id -> order 映射
+	orderMap := make(map[string]int)
+	for i, id := range ids {
+		orderMap[id] = i
+	}
+	// 更新每个文档的 Order 字段
+	for i, d := range index.Documents {
+		if order, ok := orderMap[d.ID]; ok {
+			index.Documents[i].Order = order
+		}
+	}
+	return r.saveIndex(index)
+}

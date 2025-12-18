@@ -419,3 +419,49 @@
     font-size: 14px;
     text-align: center;
 }
+
+/* ========== Drag and Drop ========== */
+.is-dragging {
+    opacity: 0.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.folder-drag-handle {
+    cursor: grab;
+}
+
+.folder-drag-handle:active {
+    cursor: grabbing;
+}
+
+.document-item.is-dragging,
+.folder-item.is-dragging {
+    background-color: rgba(37, 99, 235, 0.1);
+    border-radius: var(--radius-md);
+}
+
+.sidebar.dark .document-item.is-dragging,
+.sidebar.dark .folder-item.is-dragging {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+/* 拖拽悬停指示器 - 文档 */
+.document-item.drag-over-item {
+    border-top: 2px solid var(--primary);
+    margin-top: -2px;
+}
+
+/* 拖拽悬停指示器 - 文件夹 */
+.folder-wrapper.drag-over-folder {
+    border-top: 2px solid var(--primary);
+    margin-top: -2px;
+}
+
+.folder-wrapper {
+    cursor: grab;
+}
+
+.folder-wrapper:active {
+    cursor: grabbing;
+}

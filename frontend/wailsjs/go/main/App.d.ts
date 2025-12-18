@@ -33,6 +33,10 @@ export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 
 export function RenameFolder(arg1:string,arg2:string):Promise<void>;
 
+export function ReorderDocuments(arg1:Array<string>):Promise<void>;
+
+export function ReorderFolders(arg1:Array<string>):Promise<void>;
+
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
 export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;

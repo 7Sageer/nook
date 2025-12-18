@@ -13,6 +13,7 @@ import (
 type Folder struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
+	Order     int    `json:"order"`
 	CreatedAt int64  `json:"createdAt"`
 	Collapsed bool   `json:"collapsed"`
 }
@@ -114,4 +115,21 @@ func (r *Repository) SetCollapsed(id string, collapsed bool) error {
 func (r *Repository) saveIndex(index Index) error {
 	data, _ := json.MarshalIndent(index, "", "  ")
 	return os.WriteFile(r.indexPath(), data, 0644)
+}
+
+// Reorder 重新排序文件夹
+func (r *Repository) Reorder(ids []string) error {
+	folders, _ := r.GetAll()
+	// 创建 id -> order 映射
+	orderMap := make(map[string]int)
+	for i, id := range ids {
+		orderMap[id] = i
+	}
+	// 更新每个文件夹的 Order 字段
+	for i, f := range folders {
+		if order, ok := orderMap[f.ID]; ok {
+			folders[i].Order = order
+		}
+	}
+	return r.saveIndex(Index{Folders: folders})
 }

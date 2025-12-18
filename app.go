@@ -23,6 +23,7 @@ type DocumentMeta struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
 	FolderId  string `json:"folderId,omitempty"`
+	Order     int    `json:"order"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
 }
@@ -49,6 +50,7 @@ type Settings struct {
 type Folder struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
+	Order     int    `json:"order"`
 	CreatedAt int64  `json:"createdAt"`
 	Collapsed bool   `json:"collapsed"`
 }
@@ -155,6 +157,7 @@ func (a *App) GetDocumentList() (DocumentIndex, error) {
 			ID:        d.ID,
 			Title:     d.Title,
 			FolderId:  d.FolderId,
+			Order:     d.Order,
 			CreatedAt: d.CreatedAt,
 			UpdatedAt: d.UpdatedAt,
 		}
@@ -265,6 +268,7 @@ func (a *App) GetFolders() ([]Folder, error) {
 		result[i] = Folder{
 			ID:        f.ID,
 			Name:      f.Name,
+			Order:     f.Order,
 			CreatedAt: f.CreatedAt,
 			Collapsed: f.Collapsed,
 		}
@@ -311,6 +315,16 @@ func (a *App) SetFolderCollapsed(id string, collapsed bool) error {
 // MoveDocumentToFolder 将文档移动到指定文件夹
 func (a *App) MoveDocumentToFolder(docId string, folderId string) error {
 	return a.docRepo.MoveToFolder(docId, folderId)
+}
+
+// ReorderDocuments 重新排序文档
+func (a *App) ReorderDocuments(ids []string) error {
+	return a.docRepo.Reorder(ids)
+}
+
+// ReorderFolders 重新排序文件夹
+func (a *App) ReorderFolders(ids []string) error {
+	return a.folderRepo.Reorder(ids)
 }
 
 // ========== 外部文件编辑 ==========

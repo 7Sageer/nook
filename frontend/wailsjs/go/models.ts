@@ -4,6 +4,7 @@ export namespace main {
 	    id: string;
 	    title: string;
 	    folderId?: string;
+	    order: number;
 	    createdAt: number;
 	    updatedAt: number;
 	
@@ -16,6 +17,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.title = source["title"];
 	        this.folderId = source["folderId"];
+	        this.order = source["order"];
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	    }
@@ -72,6 +74,7 @@ export namespace main {
 	export class Folder {
 	    id: string;
 	    name: string;
+	    order: number;
 	    createdAt: number;
 	    collapsed: boolean;
 	
@@ -83,6 +86,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.order = source["order"];
 	        this.createdAt = source["createdAt"];
 	        this.collapsed = source["collapsed"];
 	    }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import { FileText, Pencil, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
@@ -11,6 +11,7 @@ interface DocumentListProps {
     onRename: (id: string, title: string) => void;
     onDelete: (id: string) => void;
     draggable?: boolean;
+    onReorder?: (ids: string[]) => void;
 }
 
 export function DocumentList({
@@ -21,9 +22,21 @@ export function DocumentList({
     onRename,
     onDelete,
     draggable = false,
+    onReorder,
 }: DocumentListProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const draggedIdRef = useRef<string | null>(null);
+
+    const sortedItems = useMemo(() => {
+        if (isSearchMode) return items;
+        return [...items].sort((a, b) => {
+            const orderA = 'order' in a ? a.order : 0;
+            const orderB = 'order' in b ? b.order : 0;
+            return orderA - orderB;
+        });
+    }, [items, isSearchMode]);
 
     const startRename = (e: React.MouseEvent, doc: DocumentMeta | SearchResult) => {
         e.stopPropagation();
@@ -44,8 +57,48 @@ export function DocumentList({
     };
 
     const handleDragStart = (e: React.DragEvent, id: string) => {
+        draggedIdRef.current = id;
         e.dataTransfer.setData('text/plain', id);
         e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent, id: string) => {
+        e.preventDefault();
+        if (draggedIdRef.current && draggedIdRef.current !== id) {
+            setDragOverId(id);
+        }
+    };
+
+    const handleDragLeave = () => {
+        setDragOverId(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetId: string) => {
+        e.preventDefault();
+        setDragOverId(null);
+        const draggedId = draggedIdRef.current;
+        draggedIdRef.current = null;
+
+        if (!draggedId || draggedId === targetId || !onReorder) return;
+
+        // 计算新顺序
+        const currentIds = sortedItems.map(item => item.id);
+        const draggedIndex = currentIds.indexOf(draggedId);
+        const targetIndex = currentIds.indexOf(targetId);
+
+        if (draggedIndex === -1 || targetIndex === -1) return;
+
+        // 移动元素
+        const newIds = [...currentIds];
+        newIds.splice(draggedIndex, 1);
+        newIds.splice(targetIndex, 0, draggedId);
+
+        onReorder(newIds);
+    };
+
+    const handleDragEnd = () => {
+        draggedIdRef.current = null;
+        setDragOverId(null);
     };
 
     if (items.length === 0) {
@@ -59,13 +112,17 @@ export function DocumentList({
 
     return (
         <>
-            {items.map((item) => (
+            {sortedItems.map((item) => (
                 <li
                     key={item.id}
-                    className={`document-item ${item.id === activeId ? 'active' : ''}`}
+                    className={`document-item ${item.id === activeId ? 'active' : ''} ${dragOverId === item.id ? 'drag-over-item' : ''}`}
                     onClick={() => onSelect(item.id)}
                     draggable={draggable && editingId !== item.id}
                     onDragStart={draggable ? (e) => handleDragStart(e, item.id) : undefined}
+                    onDragOver={draggable ? (e) => handleDragOver(e, item.id) : undefined}
+                    onDragLeave={draggable ? handleDragLeave : undefined}
+                    onDrop={draggable ? (e) => handleDrop(e, item.id) : undefined}
+                    onDragEnd={draggable ? handleDragEnd : undefined}
                 >
                     {editingId === item.id ? (
                         <input
@@ -113,4 +170,3 @@ export function DocumentList({
         </>
     );
 }
-

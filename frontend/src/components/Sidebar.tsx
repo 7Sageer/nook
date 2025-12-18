@@ -1,3 +1,4 @@
+import { useMemo, useState, useRef } from 'react';
 import { DocumentMeta, Folder } from '../types/document';
 import { ExternalFileInfo } from '../hooks/useExternalFile';
 import { useTheme } from '../contexts/ThemeContext';
@@ -5,7 +6,7 @@ import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { FolderItem } from './FolderItem';
-import { Search, FileText, X, Plus } from 'lucide-react';
+import { Search, FileText, X, Plus, GripVertical } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface SidebarProps {
@@ -22,6 +23,8 @@ interface SidebarProps {
   onRenameFolder: (id: string, name: string) => void;
   onToggleFolder: (id: string) => void;
   onMoveToFolder: (docId: string, folderId: string) => void;
+  onReorderDocuments?: (ids: string[]) => void;
+  onReorderFolders?: (ids: string[]) => void;
   externalFiles?: ExternalFileInfo[];
   activeExternalPath?: string | null;
   onCloseExternal?: (path: string) => void;
@@ -42,6 +45,8 @@ export function Sidebar({
   onRenameFolder,
   onToggleFolder,
   onMoveToFolder,
+  onReorderDocuments,
+  onReorderFolders,
   externalFiles = [],
   activeExternalPath,
   onCloseExternal,
@@ -51,7 +56,8 @@ export function Sidebar({
   const { query, results, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
-
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  const draggedFolderIdRef = useRef<string | null>(null);
 
   const handleDeleteClick = (id: string) => {
     openModal(
@@ -78,10 +84,58 @@ export function Sidebar({
     documents.filter((d) => d.folderId === folderId);
 
   const uncategorizedDocs = documents.filter((d) => !d.folderId);
-
   const displayList = query ? results : uncategorizedDocs;
 
+  // 排序后的文件夹
+  const sortedFolders = useMemo(() => {
+    return [...folders].sort((a, b) => a.order - b.order);
+  }, [folders]);
 
+  // 文件夹拖拽排序
+  const handleFolderDragStart = (e: React.DragEvent, folderId: string) => {
+    draggedFolderIdRef.current = folderId;
+    e.dataTransfer.setData('folder-id', folderId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleFolderDragOver = (e: React.DragEvent, folderId: string) => {
+    e.preventDefault();
+    // 只有拖拽的是文件夹时才处理
+    if (draggedFolderIdRef.current && draggedFolderIdRef.current !== folderId) {
+      setDragOverFolderId(folderId);
+    }
+  };
+
+  const handleFolderDragLeave = () => {
+    setDragOverFolderId(null);
+  };
+
+  const handleFolderDrop = (e: React.DragEvent, targetFolderId: string) => {
+    e.preventDefault();
+    setDragOverFolderId(null);
+
+    const draggedFolderId = draggedFolderIdRef.current;
+    draggedFolderIdRef.current = null;
+
+    if (!draggedFolderId || draggedFolderId === targetFolderId || !onReorderFolders) return;
+
+    const currentIds = sortedFolders.map(f => f.id);
+    const draggedIndex = currentIds.indexOf(draggedFolderId);
+    const targetIndex = currentIds.indexOf(targetFolderId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const newIds = [...currentIds];
+    newIds.splice(draggedIndex, 1);
+    newIds.splice(targetIndex, 0, draggedFolderId);
+
+    onReorderFolders(newIds);
+  };
+
+  const handleFolderDragEnd = () => {
+    draggedFolderIdRef.current = null;
+    setDragOverFolderId(null);
+  };
 
   // 处理拖拽到未分类区域
   const handleUncategorizedDragOver = (e: React.DragEvent) => {
@@ -100,6 +154,24 @@ export function Sidebar({
     if (docId) {
       onMoveToFolder(docId, '');
     }
+  };
+
+  // 处理未分类文档重排序
+  const handleUncategorizedReorder = (ids: string[]) => {
+    // 获取未分类文档的完整排序（保留文件夹内文档的顺序）
+    const folderDocIds = documents.filter(d => d.folderId).map(d => d.id);
+    onReorderDocuments?.([...ids, ...folderDocIds]);
+  };
+
+  // 处理文件夹内文档重排序
+  const handleFolderDocReorder = (folderId: string) => (ids: string[]) => {
+    // 保留其他文档的顺序，只更新该文件夹内的文档
+    const uncategorizedIds = uncategorizedDocs.sort((a, b) => a.order - b.order).map(d => d.id);
+    const otherFolderDocs = documents
+      .filter(d => d.folderId && d.folderId !== folderId)
+      .sort((a, b) => a.order - b.order)
+      .map(d => d.id);
+    onReorderDocuments?.([...uncategorizedIds, ...ids, ...otherFolderDocs]);
   };
 
   return (
@@ -165,20 +237,31 @@ export function Sidebar({
                   <Plus size={14} />
                 </button>
               </div>
-              {folders.map((folder) => (
-                <FolderItem
+              {sortedFolders.map((folder) => (
+                <div
                   key={folder.id}
-                  folder={folder}
-                  documents={getDocumentsInFolder(folder.id)}
-                  activeDocId={activeId}
-                  onToggle={() => onToggleFolder(folder.id)}
-                  onRename={(name) => onRenameFolder(folder.id, name)}
-                  onDelete={() => handleDeleteFolderClick(folder.id)}
-                  onSelectDocument={onSelect}
-                  onRenameDocument={onRename}
-                  onDeleteDocument={handleDeleteClick}
-                  onMoveDocument={onMoveToFolder}
-                />
+                  className={`folder-wrapper ${dragOverFolderId === folder.id ? 'drag-over-folder' : ''}`}
+                  draggable
+                  onDragStart={(e) => handleFolderDragStart(e, folder.id)}
+                  onDragOver={(e) => handleFolderDragOver(e, folder.id)}
+                  onDragLeave={handleFolderDragLeave}
+                  onDrop={(e) => handleFolderDrop(e, folder.id)}
+                  onDragEnd={handleFolderDragEnd}
+                >
+                  <FolderItem
+                    folder={folder}
+                    documents={getDocumentsInFolder(folder.id)}
+                    activeDocId={activeId}
+                    onToggle={() => onToggleFolder(folder.id)}
+                    onRename={(name) => onRenameFolder(folder.id, name)}
+                    onDelete={() => handleDeleteFolderClick(folder.id)}
+                    onSelectDocument={onSelect}
+                    onRenameDocument={onRename}
+                    onDeleteDocument={handleDeleteClick}
+                    onMoveDocument={onMoveToFolder}
+                    onReorderDocuments={handleFolderDocReorder(folder.id)}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -214,6 +297,7 @@ export function Sidebar({
                   onRename={onRename}
                   onDelete={handleDeleteClick}
                   draggable={!query}
+                  onReorder={handleUncategorizedReorder}
                 />
               </ul>
             </div>
