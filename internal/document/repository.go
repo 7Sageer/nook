@@ -14,6 +14,7 @@ import (
 type Meta struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
+	FolderId  string `json:"folderId,omitempty"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
 }
@@ -139,8 +140,22 @@ func (r *Repository) UpdateTimestamp(id string) error {
 	return r.saveIndex(index)
 }
 
+// MoveToFolder 将文档移动到指定文件夹
+func (r *Repository) MoveToFolder(docId string, folderId string) error {
+	index, _ := r.GetAll()
+	for i, d := range index.Documents {
+		if d.ID == docId {
+			index.Documents[i].FolderId = folderId
+			index.Documents[i].UpdatedAt = time.Now().UnixMilli()
+			break
+		}
+	}
+	return r.saveIndex(index)
+}
+
 func (r *Repository) saveIndex(index Index) error {
 	indexPath := filepath.Join(r.dataPath, "index.json")
 	data, _ := json.MarshalIndent(index, "", "  ")
 	return os.WriteFile(indexPath, data, 0644)
 }
+

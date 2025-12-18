@@ -10,6 +10,7 @@ interface DocumentListProps {
     onSelect: (id: string) => void;
     onRename: (id: string, title: string) => void;
     onDelete: (id: string) => void;
+    draggable?: boolean;
 }
 
 export function DocumentList({
@@ -19,6 +20,7 @@ export function DocumentList({
     onSelect,
     onRename,
     onDelete,
+    draggable = false,
 }: DocumentListProps) {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState('');
@@ -41,6 +43,11 @@ export function DocumentList({
         onDelete(id);
     };
 
+    const handleDragStart = (e: React.DragEvent, id: string) => {
+        e.dataTransfer.setData('text/plain', id);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
     if (items.length === 0) {
         return (
             <li className="empty-hint">
@@ -57,6 +64,8 @@ export function DocumentList({
                     key={item.id}
                     className={`document-item ${item.id === activeId ? 'active' : ''}`}
                     onClick={() => onSelect(item.id)}
+                    draggable={draggable && editingId !== item.id}
+                    onDragStart={draggable ? (e) => handleDragStart(e, item.id) : undefined}
                 >
                     {editingId === item.id ? (
                         <input
@@ -73,7 +82,10 @@ export function DocumentList({
                         <>
                             <FileText size={16} className="doc-icon" />
                             <div className="doc-content">
-                                <span className="doc-title">{item.title}</span>
+                                <span
+                                    className="doc-title"
+                                    onDoubleClick={(e) => startRename(e, item)}
+                                >{item.title}</span>
                                 {'snippet' in item && (
                                     <span className="doc-snippet">{item.snippet}</span>
                                 )}
@@ -101,3 +113,4 @@ export function DocumentList({
         </>
     );
 }
+

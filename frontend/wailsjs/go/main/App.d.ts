@@ -4,11 +4,17 @@ import {main} from '../models';
 
 export function CreateDocument(arg1:string):Promise<main.DocumentMeta>;
 
+export function CreateFolder(arg1:string):Promise<main.Folder>;
+
 export function DeleteDocument(arg1:string):Promise<void>;
+
+export function DeleteFolder(arg1:string):Promise<void>;
 
 export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function GetDocumentList():Promise<main.DocumentIndex>;
+
+export function GetFolders():Promise<Array<main.Folder>>;
 
 export function GetSettings():Promise<main.Settings>;
 
@@ -18,9 +24,13 @@ export function LoadDocumentContent(arg1:string):Promise<string>;
 
 export function LoadExternalFile(arg1:string):Promise<string>;
 
+export function MoveDocumentToFolder(arg1:string,arg2:string):Promise<void>;
+
 export function OpenExternalFile():Promise<main.ExternalFile>;
 
 export function RenameDocument(arg1:string,arg2:string):Promise<void>;
+
+export function RenameFolder(arg1:string,arg2:string):Promise<void>;
 
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
@@ -31,3 +41,5 @@ export function SaveSettings(arg1:main.Settings):Promise<void>;
 export function SearchDocuments(arg1:string):Promise<Array<main.SearchResult>>;
 
 export function SetActiveDocument(arg1:string):Promise<void>;
+
+export function SetFolderCollapsed(arg1:string,arg2:boolean):Promise<void>;

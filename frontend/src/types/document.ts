@@ -1,6 +1,7 @@
 export interface DocumentMeta {
   id: string;
   title: string;
+  folderId?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -19,3 +20,11 @@ export interface SearchResult {
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
 }
+
+export interface Folder {
+  id: string;
+  name: string;
+  createdAt: number;
+  collapsed: boolean;
+}
+

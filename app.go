@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 	"sync"
 
+	"notion-lite/internal/constant"
 	"notion-lite/internal/document"
+	"notion-lite/internal/folder"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
-	"notion-lite/internal/constant"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -21,6 +22,7 @@ import (
 type DocumentMeta struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
+	FolderId  string `json:"folderId,omitempty"`
 	CreatedAt int64  `json:"createdAt"`
 	UpdatedAt int64  `json:"updatedAt"`
 }
@@ -43,12 +45,21 @@ type Settings struct {
 	Theme string `json:"theme"`
 }
 
+// Folder 文件夹（前端兼容）
+type Folder struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	CreatedAt int64  `json:"createdAt"`
+	Collapsed bool   `json:"collapsed"`
+}
+
 // App struct
 type App struct {
 	ctx             context.Context
 	dataPath        string
 	docRepo         *document.Repository
 	docStorage      *document.Storage
+	folderRepo      *folder.Repository
 	searchService   *search.Service
 	settingsService *settings.Service
 	markdownService *markdown.Service
@@ -67,11 +78,13 @@ func NewApp() *App {
 
 	docRepo := document.NewRepository(dataPath)
 	docStorage := document.NewStorage(dataPath)
+	folderRepo := folder.NewRepository(dataPath)
 
 	return &App{
 		dataPath:        dataPath,
 		docRepo:         docRepo,
 		docStorage:      docStorage,
+		folderRepo:      folderRepo,
 		searchService:   search.NewService(docRepo, docStorage),
 		settingsService: settings.NewService(dataPath),
 		markdownService: markdown.NewService(),
@@ -141,6 +154,7 @@ func (a *App) GetDocumentList() (DocumentIndex, error) {
 		docs[i] = DocumentMeta{
 			ID:        d.ID,
 			Title:     d.Title,
+			FolderId:  d.FolderId,
 			CreatedAt: d.CreatedAt,
 			UpdatedAt: d.UpdatedAt,
 		}
@@ -236,6 +250,67 @@ func (a *App) GetSettings() (Settings, error) {
 // SaveSettings 保存用户设置
 func (a *App) SaveSettings(s Settings) error {
 	return a.settingsService.Save(settings.Settings{Theme: s.Theme})
+}
+
+// ========== 文件夹管理 ==========
+
+// GetFolders 获取所有文件夹
+func (a *App) GetFolders() ([]Folder, error) {
+	folders, err := a.folderRepo.GetAll()
+	if err != nil {
+		return []Folder{}, err
+	}
+	result := make([]Folder, len(folders))
+	for i, f := range folders {
+		result[i] = Folder{
+			ID:        f.ID,
+			Name:      f.Name,
+			CreatedAt: f.CreatedAt,
+			Collapsed: f.Collapsed,
+		}
+	}
+	return result, nil
+}
+
+// CreateFolder 创建新文件夹
+func (a *App) CreateFolder(name string) (Folder, error) {
+	f, err := a.folderRepo.Create(name)
+	if err != nil {
+		return Folder{}, err
+	}
+	return Folder{
+		ID:        f.ID,
+		Name:      f.Name,
+		CreatedAt: f.CreatedAt,
+		Collapsed: f.Collapsed,
+	}, nil
+}
+
+// DeleteFolder 删除文件夹
+func (a *App) DeleteFolder(id string) error {
+	// 将该文件夹下的文档移到未分类
+	index, _ := a.docRepo.GetAll()
+	for _, doc := range index.Documents {
+		if doc.FolderId == id {
+			a.docRepo.MoveToFolder(doc.ID, "")
+		}
+	}
+	return a.folderRepo.Delete(id)
+}
+
+// RenameFolder 重命名文件夹
+func (a *App) RenameFolder(id string, newName string) error {
+	return a.folderRepo.Rename(id, newName)
+}
+
+// SetFolderCollapsed 设置文件夹折叠状态
+func (a *App) SetFolderCollapsed(id string, collapsed bool) error {
+	return a.folderRepo.SetCollapsed(id, collapsed)
+}
+
+// MoveDocumentToFolder 将文档移动到指定文件夹
+func (a *App) MoveDocumentToFolder(docId string, folderId string) error {
+	return a.docRepo.MoveToFolder(docId, folderId)
 }
 
 // ========== 外部文件编辑 ==========

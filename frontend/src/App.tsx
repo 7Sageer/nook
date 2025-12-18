@@ -4,12 +4,14 @@ import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { useDocuments } from "./hooks/useDocuments";
+import { useFolders } from "./hooks/useFolders";
 import { useImportExport } from "./hooks/useImportExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { EventsEmit, EventsOn } from "../wailsjs/runtime/runtime";
 import { Block, BlockNoteEditor } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
+import { extractFirstH1Title } from "./utils/blockUtils";
 import "./App.css";
 
 function AppContent() {
@@ -24,7 +26,17 @@ function AppContent() {
     switchDoc,
     loadContent,
     saveContent,
+    refresh: refreshDocuments,
   } = useDocuments();
+
+  const {
+    folders,
+    createFolder,
+    deleteFolder,
+    renameFolder,
+    toggleCollapsed,
+    moveDocument,
+  } = useFolders();
 
   const [content, setContent] = useState<Block[] | undefined>(undefined);
   const [status, setStatus] = useState<string>("");
@@ -33,6 +45,10 @@ function AppContent() {
   const [editorAnimating, setEditorAnimating] = useState(false);
   const [editorKey, setEditorKey] = useState<string | null>(null);
   const editorRef = useRef<BlockNoteEditor | null>(null);
+
+  // H1 标题自动同步
+  const titleSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedTitleRef = useRef<string | null>(null);
 
   // 外部文件管理
   const {
@@ -152,6 +168,8 @@ function AppContent() {
 
     if (activeId) {
       const currentId = activeId;
+      // 重置标题同步状态
+      lastSyncedTitleRef.current = null;
       // 如果已有编辑器，先触发淡出动画
       if (editorKey && editorKey !== currentId) {
         setEditorAnimating(true);
@@ -198,10 +216,28 @@ function AppContent() {
         console.error('保存外部文件失败:', e);
       }
     } else if (activeId) {
+      // 保存内容
       saveContent(activeId, blocks).then(() => {
         setStatus(STRINGS.STATUS.SAVED);
         setTimeout(() => setStatus(""), 1000);
       });
+
+      // 自动同步 H1 标题（防抖 500ms）
+      const h1Title = extractFirstH1Title(blocks);
+      if (h1Title && h1Title !== lastSyncedTitleRef.current) {
+        // 清除之前的定时器
+        if (titleSyncTimerRef.current) {
+          clearTimeout(titleSyncTimerRef.current);
+        }
+        // 设置新的防抖定时器
+        titleSyncTimerRef.current = setTimeout(() => {
+          const currentDoc = documents.find(d => d.id === activeId);
+          if (currentDoc && h1Title !== currentDoc.title) {
+            renameDoc(activeId, h1Title);
+            lastSyncedTitleRef.current = h1Title;
+          }
+        }, 500);
+      }
     }
   };
 
@@ -242,12 +278,24 @@ function AppContent() {
     <div className={`app-container ${theme}`}>
       <Sidebar
         documents={documents}
+        folders={folders}
         activeId={isExternalMode ? null : activeId}
         onSelect={handleSwitchToInternal}
         onSelectExternal={handleSwitchToExternal}
         onCreate={handleCreateInternalDocument}
+        onCreateFolder={() => createFolder()}
         onDelete={deleteDoc}
         onRename={renameDoc}
+        onDeleteFolder={async (id) => {
+          await deleteFolder(id);
+          refreshDocuments();
+        }}
+        onRenameFolder={renameFolder}
+        onToggleFolder={toggleCollapsed}
+        onMoveToFolder={async (docId, folderId) => {
+          await moveDocument(docId, folderId);
+          refreshDocuments();
+        }}
         onImport={handleImport}
         onExport={handleExport}
         collapsed={sidebarCollapsed}

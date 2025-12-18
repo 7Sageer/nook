@@ -6,8 +6,16 @@ export function CreateDocument(arg1) {
   return window['go']['main']['App']['CreateDocument'](arg1);
 }
 
+export function CreateFolder(arg1) {
+  return window['go']['main']['App']['CreateFolder'](arg1);
+}
+
 export function DeleteDocument(arg1) {
   return window['go']['main']['App']['DeleteDocument'](arg1);
+}
+
+export function DeleteFolder(arg1) {
+  return window['go']['main']['App']['DeleteFolder'](arg1);
 }
 
 export function ExportMarkdownFile(arg1, arg2) {
@@ -16,6 +24,10 @@ export function ExportMarkdownFile(arg1, arg2) {
 
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
+}
+
+export function GetFolders() {
+  return window['go']['main']['App']['GetFolders']();
 }
 
 export function GetSettings() {
@@ -34,12 +46,20 @@ export function LoadExternalFile(arg1) {
   return window['go']['main']['App']['LoadExternalFile'](arg1);
 }
 
+export function MoveDocumentToFolder(arg1, arg2) {
+  return window['go']['main']['App']['MoveDocumentToFolder'](arg1, arg2);
+}
+
 export function OpenExternalFile() {
   return window['go']['main']['App']['OpenExternalFile']();
 }
 
 export function RenameDocument(arg1, arg2) {
   return window['go']['main']['App']['RenameDocument'](arg1, arg2);
+}
+
+export function RenameFolder(arg1, arg2) {
+  return window['go']['main']['App']['RenameFolder'](arg1, arg2);
 }
 
 export function SaveDocumentContent(arg1, arg2) {
@@ -60,4 +80,8 @@ export function SearchDocuments(arg1) {
 
 export function SetActiveDocument(arg1) {
   return window['go']['main']['App']['SetActiveDocument'](arg1);
+}
+
+export function SetFolderCollapsed(arg1, arg2) {
+  return window['go']['main']['App']['SetFolderCollapsed'](arg1, arg2);
 }

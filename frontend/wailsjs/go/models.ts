@@ -3,6 +3,7 @@ export namespace main {
 	export class DocumentMeta {
 	    id: string;
 	    title: string;
+	    folderId?: string;
 	    createdAt: number;
 	    updatedAt: number;
 	
@@ -14,6 +15,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.title = source["title"];
+	        this.folderId = source["folderId"];
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
 	    }
@@ -65,6 +67,24 @@ export namespace main {
 	        this.path = source["path"];
 	        this.name = source["name"];
 	        this.content = source["content"];
+	    }
+	}
+	export class Folder {
+	    id: string;
+	    name: string;
+	    createdAt: number;
+	    collapsed: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Folder(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.createdAt = source["createdAt"];
+	        this.collapsed = source["collapsed"];
 	    }
 	}
 	export class SearchResult {

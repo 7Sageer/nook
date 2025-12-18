@@ -794,3 +794,189 @@ body,
 .sidebar.dark .close-external-btn:hover {
   background-color: rgba(239, 68, 68, 0.2);
 }
+
+/* ========== 文件夹样式 ========== */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.folders-section {
+  margin-bottom: 8px;
+}
+
+.uncategorized-section {
+  flex: 1;
+  min-height: 100px;
+  transition: background-color var(--transition-fast);
+  border-radius: var(--radius-md);
+  margin: 0 8px;
+}
+
+.uncategorized-section.drag-over {
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+.sidebar.dark .uncategorized-section.drag-over {
+  background-color: rgba(37, 99, 235, 0.15);
+}
+
+.folder-item {
+  margin: 0 8px 2px;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.folder-header:hover {
+  background-color: #f3f4f6;
+}
+
+.sidebar.dark .folder-header:hover {
+  background-color: #252525;
+}
+
+.folder-header.drag-over {
+  background-color: rgba(37, 99, 235, 0.15);
+  outline: 2px dashed var(--primary);
+  outline-offset: -2px;
+}
+
+.folder-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  transition: transform 0.2s ease;
+}
+
+.folder-chevron.collapsed {
+  transform: rotate(0deg);
+}
+
+.folder-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.folder-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar.dark .folder-name {
+  color: #e5e7eb;
+}
+
+.folder-count {
+  font-size: 12px;
+  color: #9ca3af;
+  padding: 2px 6px;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.sidebar.dark .folder-count {
+  background-color: #333;
+  color: #9ca3af;
+}
+
+.folder-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.folder-header:hover .folder-actions {
+  opacity: 1;
+}
+
+.folder-rename-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.sidebar.dark .folder-rename-input {
+  background-color: #252525;
+  color: #e5e7eb;
+}
+
+.folder-documents {
+  padding-left: 16px;
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease-out;
+}
+
+.folder-documents.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.folder-documents-inner,
+.folder-documents>* {
+  overflow: hidden;
+}
+
+.folder-documents .document-item {
+  padding-left: 24px;
+}
+
+.folder-documents .document-item.folder-doc {
+  margin-bottom: 1px;
+  animation: folderDocAppear 0.15s ease-out forwards;
+}
+
+@keyframes folderDocAppear {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.folder-documents.collapsed .document-item.folder-doc {
+  animation: none;
+}
+
+/* 拖拽样式 */
+.document-item[draggable="true"] {
+  cursor: grab;
+}
+
+.document-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.document-item.dragging {
+  opacity: 0.5;
+}
