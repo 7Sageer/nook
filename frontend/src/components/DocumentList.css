@@ -15,9 +15,8 @@
     border-radius: var(--radius-md);
     margin-bottom: 2px;
     position: relative;
-    transition: all var(--transition-smooth);
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
     transform-origin: left center;
-    animation: listItemAppear var(--transition-smooth) forwards;
 }
 
 .document-item:hover {
@@ -155,30 +154,6 @@
     border-color: var(--primary);
 }
 
-/* ========== List Item Animation Delays ========== */
-.document-item:nth-child(1) {
-    animation-delay: 0ms;
-}
-
-.document-item:nth-child(2) {
-    animation-delay: 30ms;
-}
-
-.document-item:nth-child(3) {
-    animation-delay: 60ms;
-}
-
-.document-item:nth-child(4) {
-    animation-delay: 90ms;
-}
-
-.document-item:nth-child(5) {
-    animation-delay: 120ms;
-}
-
-.document-item:nth-child(n+6) {
-    animation-delay: 150ms;
-}
 
 /* ========== Drag Styles ========== */
 .document-item[draggable="true"] {

@@ -76,7 +76,7 @@ function AppContent() {
   });
 
   // H1 可见性检测（用于智能显示顶栏标题）
-  const { isH1Visible } = useH1Visibility(editorKey);
+  const { isH1Visible } = useH1Visibility(editorKey, activeId);
 
   // 文档切换时重置标题同步状态
   useEffect(() => {
@@ -215,7 +215,7 @@ function AppContent() {
         <Header
           title={currentTitle}
           status={status}
-          showTitle={!isH1Visible}
+          showTitle={!isH1Visible && !editorAnimating && !contentLoading}
         />
         <main className="editor-container">
           {isLoading || contentLoading ? (

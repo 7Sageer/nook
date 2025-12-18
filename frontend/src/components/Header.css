@@ -46,8 +46,8 @@
 /* Header 三栏布局 */
 .header-left,
 .header-right {
-    flex: 0 0 auto;
-    min-width: 80px;
+    flex: 0 0 100px;
+    width: 100px;
     display: flex;
     align-items: center;
     -webkit-app-region: no-drag;

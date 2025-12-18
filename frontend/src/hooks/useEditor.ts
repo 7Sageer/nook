@@ -68,23 +68,36 @@ export function useEditor({
         }
 
         const currentLoadingId = ++loadingIdRef.current;
-        if (shouldAnimate) setEditorAnimating(true);
-        setContentLoading(true);
 
-        loadContent(currentId)
-            .then((data) => {
-                if (currentLoadingId !== loadingIdRef.current) return;
-                setContent(data);
-                setEditorKey(currentId);
-            })
-            .catch((err) => {
-                console.error('Failed to load content:', err);
-            })
-            .finally(() => {
-                if (currentLoadingId !== loadingIdRef.current) return;
-                setContentLoading(false);
-                if (shouldAnimate) setEditorAnimating(false);
-            });
+        // 退出动画时长（与 CSS 中的 editor-fade-exit 动画时长匹配）
+        const EXIT_ANIMATION_DURATION = 80;
+
+        const doLoad = () => {
+            loadContent(currentId)
+                .then((data) => {
+                    if (currentLoadingId !== loadingIdRef.current) return;
+                    setContent(data);
+                    setEditorKey(currentId);
+                })
+                .catch((err) => {
+                    console.error('Failed to load content:', err);
+                })
+                .finally(() => {
+                    if (currentLoadingId !== loadingIdRef.current) return;
+                    setContentLoading(false);
+                    setEditorAnimating(false);
+                });
+        };
+
+        if (shouldAnimate) {
+            // 有动画时：先播放退出动画，保持旧编辑器显示
+            setEditorAnimating(true);
+            setTimeout(doLoad, EXIT_ANIMATION_DURATION);
+        } else {
+            // 无动画时（首次加载）：显示 loading 状态
+            setContentLoading(true);
+            doLoad();
+        }
     }, [activeId, editorKey, isExternalMode, loadContent]);
 
     return {

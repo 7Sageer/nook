@@ -12,6 +12,7 @@
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     user-select: none;
+    position: relative;
 }
 
 .folder-header:hover {
@@ -83,6 +84,10 @@
     gap: 4px;
     opacity: 0;
     transition: opacity var(--transition-fast);
+    position: absolute;
+    right: 8px;
+    background: inherit;
+    padding-left: 8px;
 }
 
 .folder-header:hover .folder-actions {
@@ -132,9 +137,4 @@
 
 .folder-documents .document-item.folder-doc {
     margin-bottom: 1px;
-    animation: folderDocAppear 0.15s ease-out forwards;
-}
-
-.folder-documents.collapsed .document-item.folder-doc {
-    animation: none;
 }

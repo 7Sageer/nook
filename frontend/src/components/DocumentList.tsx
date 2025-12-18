@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -94,17 +95,22 @@ export function DocumentList({
     }
 
     return (
-        <>
+        <AnimatePresence mode="popLayout">
             {sortedItems.map((item) => (
-                <li
+                <motion.li
                     key={item.id}
+                    layout
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
                     className={`document-item ${item.id === activeId ? 'active' : ''} ${dragOverId === item.id ? 'drag-over-item' : ''}`}
                     onClick={() => onSelect(item.id)}
                     draggable={draggable}
-                    onDragStart={draggable ? (e) => handleDragStart(e, item.id) : undefined}
-                    onDragOver={draggable ? (e) => handleDragOver(e, item.id) : undefined}
+                    onDragStart={draggable ? (e) => handleDragStart(e as unknown as React.DragEvent, item.id) : undefined}
+                    onDragOver={draggable ? (e) => handleDragOver(e as unknown as React.DragEvent, item.id) : undefined}
                     onDragLeave={draggable ? handleDragLeave : undefined}
-                    onDrop={draggable ? (e) => handleDrop(e, item.id) : undefined}
+                    onDrop={draggable ? (e) => handleDrop(e as unknown as React.DragEvent, item.id) : undefined}
                     onDragEnd={draggable ? handleDragEnd : undefined}
                 >
                     <FileText size={16} className="doc-icon" />
@@ -123,8 +129,8 @@ export function DocumentList({
                             <Trash2 size={14} />
                         </button>
                     </div>
-                </li>
+                </motion.li>
             ))}
-        </>
+        </AnimatePresence>
     );
 }

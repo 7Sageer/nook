@@ -8,6 +8,7 @@ import { DocumentList } from './DocumentList';
 import { FolderItem } from './FolderItem';
 import { Search, FileText, X, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
   // 外部文件相关（仍由 App.tsx 管理）
@@ -211,33 +212,40 @@ export function Sidebar({
         {externalFiles.length > 0 && (
           <div className="external-file-section">
             <div className="section-label">{STRINGS.LABELS.EXTERNAL_FILE}</div>
-            {externalFiles.map((file) => {
-              const isActive = activeExternalPath === file.path;
-              return (
-                <div
-                  key={file.path}
-                  className={`external-file-item ${isActive ? 'active' : ''}`}
-                  onClick={() => onSelectExternal?.(file.path)}
-                >
-                  <FileText size={16} />
-                  <span className="external-file-name" title={file.path}>
-                    {file.name}
-                  </span>
-                  {isActive && onCloseExternal && (
-                    <button
-                      className="close-external-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCloseExternal(file.path);
-                      }}
-                      title={STRINGS.TOOLTIPS.CLOSE_EXTERNAL}
-                    >
-                      <X size={14} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            <AnimatePresence mode="popLayout">
+              {externalFiles.map((file) => {
+                const isActive = activeExternalPath === file.path;
+                return (
+                  <motion.div
+                    key={file.path}
+                    layout
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+                    className={`external-file-item ${isActive ? 'active' : ''}`}
+                    onClick={() => onSelectExternal?.(file.path)}
+                  >
+                    <FileText size={16} />
+                    <span className="external-file-name" title={file.path}>
+                      {file.name}
+                    </span>
+                    {isActive && onCloseExternal && (
+                      <button
+                        className="close-external-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onCloseExternal(file.path);
+                        }}
+                        title={STRINGS.TOOLTIPS.CLOSE_EXTERNAL}
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
 
@@ -255,33 +263,40 @@ export function Sidebar({
                   <Plus size={14} />
                 </button>
               </div>
-              {sortedFolders.map((folder) => (
-                <div
-                  key={folder.id}
-                  className={`folder-wrapper ${dragOverFolderId === folder.id ? 'drag-over-folder' : ''}`}
-                  draggable={editingFolderId !== folder.id}
-                  onDragStart={(e) => handleFolderDragStart(e, folder.id)}
-                  onDragOver={(e) => handleFolderDragOver(e, folder.id)}
-                  onDragLeave={handleFolderDragLeave}
-                  onDrop={(e) => handleFolderDrop(e, folder.id)}
-                  onDragEnd={handleFolderDragEnd}
-                >
-                  <FolderItem
-                    folder={folder}
-                    documents={getDocumentsInFolder(folder.id)}
-                    activeDocId={activeExternalPath ? null : activeId}
-                    onToggle={() => toggleFolderCollapsed(folder.id)}
-                    onRename={(name) => renameFolder(folder.id, name)}
-                    onDelete={() => handleDeleteFolderClick(folder.id)}
-                    onSelectDocument={handleSelect}
-                    onDeleteDocument={handleDeleteClick}
-                    onMoveDocument={moveDocumentToFolder}
-                    onReorderDocuments={handleFolderDocReorder(folder.id)}
-                    onEditingChange={(isEditing) => setEditingFolderId(isEditing ? folder.id : null)}
-                    onAddDocument={() => handleCreateInFolder(folder.id)}
-                  />
-                </div>
-              ))}
+              <AnimatePresence mode="popLayout">
+                {sortedFolders.map((folder) => (
+                  <motion.div
+                    key={folder.id}
+                    layout
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -12, scale: 0.95 }}
+                    transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+                    className={`folder-wrapper ${dragOverFolderId === folder.id ? 'drag-over-folder' : ''}`}
+                    draggable={editingFolderId !== folder.id}
+                    onDragStart={(e) => handleFolderDragStart(e as unknown as React.DragEvent, folder.id)}
+                    onDragOver={(e) => handleFolderDragOver(e as unknown as React.DragEvent, folder.id)}
+                    onDragLeave={handleFolderDragLeave}
+                    onDrop={(e) => handleFolderDrop(e as unknown as React.DragEvent, folder.id)}
+                    onDragEnd={handleFolderDragEnd}
+                  >
+                    <FolderItem
+                      folder={folder}
+                      documents={getDocumentsInFolder(folder.id)}
+                      activeDocId={activeExternalPath ? null : activeId}
+                      onToggle={() => toggleFolderCollapsed(folder.id)}
+                      onRename={(name) => renameFolder(folder.id, name)}
+                      onDelete={() => handleDeleteFolderClick(folder.id)}
+                      onSelectDocument={handleSelect}
+                      onDeleteDocument={handleDeleteClick}
+                      onMoveDocument={moveDocumentToFolder}
+                      onReorderDocuments={handleFolderDocReorder(folder.id)}
+                      onEditingChange={(isEditing) => setEditingFolderId(isEditing ? folder.id : null)}
+                      onAddDocument={() => handleCreateInFolder(folder.id)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           )}
 

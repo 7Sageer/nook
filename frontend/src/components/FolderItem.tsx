@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
 import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface FolderItemProps {
     folder: Folder;
@@ -204,34 +205,41 @@ export function FolderItem({
             </div>
             <div className={`folder-documents ${folder.collapsed ? 'collapsed' : ''}`}>
                 <div className="folder-documents-inner">
-                    {sortedDocs.map((doc) => (
-                        <div
-                            key={doc.id}
-                            className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''} ${dragOverId === doc.id ? 'drag-over-item' : ''}`}
-                            onClick={() => onSelectDocument(doc.id)}
-                            draggable
-                            onDragStart={(e) => handleDocDragStart(e, doc.id)}
-                            onDragOver={(e) => handleDocDragOver(e, doc.id)}
-                            onDragLeave={handleDocDragLeave}
-                            onDrop={(e) => handleDocDrop(e, doc.id)}
-                            onDragEnd={handleDocDragEnd}
-                        >
-                            <FileText size={16} className="doc-icon" />
-                            <span className="doc-title">{doc.title}</span>
-                            <div className="doc-actions">
-                                <button
-                                    className="action-btn danger"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteDocument(doc.id);
-                                    }}
-                                    title={STRINGS.TOOLTIPS.DELETE}
-                                >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                    <AnimatePresence mode="popLayout">
+                        {sortedDocs.map((doc) => (
+                            <motion.div
+                                key={doc.id}
+                                layout
+                                initial={{ opacity: 0, x: -12 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -12, scale: 0.95 }}
+                                transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+                                className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''} ${dragOverId === doc.id ? 'drag-over-item' : ''}`}
+                                onClick={() => onSelectDocument(doc.id)}
+                                draggable
+                                onDragStart={(e) => handleDocDragStart(e as unknown as React.DragEvent, doc.id)}
+                                onDragOver={(e) => handleDocDragOver(e as unknown as React.DragEvent, doc.id)}
+                                onDragLeave={handleDocDragLeave}
+                                onDrop={(e) => handleDocDrop(e as unknown as React.DragEvent, doc.id)}
+                                onDragEnd={handleDocDragEnd}
+                            >
+                                <FileText size={16} className="doc-icon" />
+                                <span className="doc-title">{doc.title}</span>
+                                <div className="doc-actions">
+                                    <button
+                                        className="action-btn danger"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDeleteDocument(doc.id);
+                                        }}
+                                        title={STRINGS.TOOLTIPS.DELETE}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>
