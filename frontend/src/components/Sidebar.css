@@ -29,7 +29,7 @@
     background-color: transparent;
     transition:
         transform var(--transition-sidebar),
-        opacity var(--transition-folder),
+        opacity var(--transition-sidebar),
         background-color var(--transition-normal),
         border-color var(--transition-normal);
     position: relative;
@@ -142,7 +142,7 @@
 .sidebar-content,
 .external-file-section {
     transition:
-        opacity var(--transition-smooth),
+        opacity var(--transition-sidebar),
         transform var(--transition-sidebar);
     transform: translateX(0);
 }
