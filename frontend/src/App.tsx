@@ -52,7 +52,9 @@ function AppContent() {
 
   // 外部文件管理
   const {
-    externalFile,
+    externalFiles,
+    activeExternalFile,
+    activeExternalPath,
     openExternal,
     openExternalByPath,
     saveExternal,
@@ -205,7 +207,7 @@ function AppContent() {
 
   // 保存文档
   const handleChange = async (blocks: Block[]) => {
-    if (isExternalMode && externalFile && editorRef.current) {
+    if (isExternalMode && activeExternalFile && editorRef.current) {
       // 保存外部文件
       try {
         const markdown = await editorRef.current.blocksToMarkdownLossy();
@@ -248,30 +250,31 @@ function AppContent() {
   }, [deactivateExternal, switchDoc]);
 
   // 重新激活外部文件
-  const handleSwitchToExternal = useCallback(async () => {
-    if (!externalFile) return;
+  const handleSwitchToExternal = useCallback(async (path: string) => {
+    const file = externalFiles.find(f => f.path === path);
+    if (!file) return;
     setContentLoading(true);
     try {
       const { LoadExternalFile } = await import('../wailsjs/go/main/App');
-      const content = await LoadExternalFile(externalFile.path);
+      const content = await LoadExternalFile(file.path);
 
-      openExternalByPath(externalFile.path, content);
+      openExternalByPath(file.path, content);
       const blocks = parseMarkdownToBlocks(content);
       setContent(blocks);
-      setEditorKey(`external-${externalFile.path}`);
-      activateExternal();
+      setEditorKey(`external-${file.path}`);
+      activateExternal(file.path);
     } catch (e) {
       console.error('打开外部文件失败:', e);
     } finally {
       setContentLoading(false);
     }
-  }, [activateExternal, externalFile, openExternalByPath, parseMarkdownToBlocks]);
+  }, [activateExternal, externalFiles, openExternalByPath, parseMarkdownToBlocks]);
 
   const activeDoc = documents.find((d) => d.id === activeId);
 
   // 当前显示的标题
   const currentTitle = isExternalMode
-    ? externalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
+    ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
     : activeDoc?.title || "";
 
   return (
@@ -300,9 +303,9 @@ function AppContent() {
         onExport={handleExport}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
-        externalFile={externalFile}
+        externalFiles={externalFiles}
+        activeExternalPath={activeExternalPath}
         onCloseExternal={closeExternal}
-        isExternalMode={isExternalMode}
       />
       <div className="main-content">
         <Header title={currentTitle} status={status} />

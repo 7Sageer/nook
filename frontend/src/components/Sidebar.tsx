@@ -13,7 +13,7 @@ interface SidebarProps {
   folders: Folder[];
   activeId: string | null;
   onSelect: (id: string) => void;
-  onSelectExternal?: () => void;
+  onSelectExternal?: (path: string) => void;
   onCreate: () => void;
   onCreateFolder: () => void;
   onDelete: (id: string) => void;
@@ -26,9 +26,9 @@ interface SidebarProps {
   onExport: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
-  externalFile?: ExternalFileInfo | null;
-  onCloseExternal?: () => void;
-  isExternalMode?: boolean;
+  externalFiles?: ExternalFileInfo[];
+  activeExternalPath?: string | null;
+  onCloseExternal?: (path: string) => void;
 }
 
 export function Sidebar({
@@ -49,9 +49,9 @@ export function Sidebar({
   onExport,
   collapsed = false,
   onToggleCollapse,
-  externalFile,
+  externalFiles = [],
+  activeExternalPath,
   onCloseExternal,
-  isExternalMode = false,
 }: SidebarProps) {
   const { theme, themeSetting, toggleTheme } = useTheme();
   const { query, results, setQuery } = useSearch();
@@ -185,30 +185,36 @@ export function Sidebar({
         </div>
 
         {/* 外部文件标签 */}
-        {externalFile && (
+        {externalFiles.length > 0 && (
           <div className="external-file-section">
             <div className="section-label">{STRINGS.LABELS.EXTERNAL_FILE}</div>
-            <div
-              className={`external-file-item ${isExternalMode ? 'active' : ''}`}
-              onClick={onSelectExternal}
-            >
-              <FileText size={16} />
-              <span className="external-file-name" title={externalFile.path}>
-                {externalFile.name}
-              </span>
-              {onCloseExternal && (
-                <button
-                  className="close-external-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCloseExternal();
-                  }}
-                  title={STRINGS.TOOLTIPS.CLOSE_EXTERNAL}
+            {externalFiles.map((file) => {
+              const isActive = activeExternalPath === file.path;
+              return (
+                <div
+                  key={file.path}
+                  className={`external-file-item ${isActive ? 'active' : ''}`}
+                  onClick={() => onSelectExternal?.(file.path)}
                 >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+                  <FileText size={16} />
+                  <span className="external-file-name" title={file.path}>
+                    {file.name}
+                  </span>
+                  {isActive && onCloseExternal && (
+                    <button
+                      className="close-external-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCloseExternal(file.path);
+                      }}
+                      title={STRINGS.TOOLTIPS.CLOSE_EXTERNAL}
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

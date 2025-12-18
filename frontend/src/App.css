@@ -734,28 +734,34 @@ body,
   padding: 10px 12px;
   margin: 0 8px;
   border-radius: var(--radius-md);
-  cursor: default;
-  background-color: rgba(37, 99, 235, 0.08);
-  border: 1px solid rgba(37, 99, 235, 0.2);
+  cursor: pointer;
+  background-color: transparent;
+  border: 1px solid transparent;
   color: #374151;
   transition: all var(--transition-fast);
 }
 
+.external-file-item:hover {
+  background-color: #f3f4f6;
+}
+
 .external-file-item.active {
-  background-color: rgba(37, 99, 235, 0.15);
-  border-color: var(--primary);
+  background-color: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.3);
   box-shadow: inset 3px 0 0 0 var(--primary);
 }
 
 .sidebar.dark .external-file-item {
-  background-color: rgba(37, 99, 235, 0.1);
-  border-color: rgba(37, 99, 235, 0.3);
   color: #e5e7eb;
 }
 
+.sidebar.dark .external-file-item:hover {
+  background-color: #252525;
+}
+
 .sidebar.dark .external-file-item.active {
-  background-color: rgba(37, 99, 235, 0.2);
-  border-color: var(--primary);
+  background-color: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.4);
 }
 
 .external-file-item svg:first-child {
