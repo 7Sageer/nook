@@ -35,7 +35,10 @@ func (s *Service) Search(query string) ([]Result, error) {
 	}
 
 	query = strings.ToLower(query)
-	index, _ := s.repo.GetAll()
+	index, err := s.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
 	results := []Result{}
 
 	for _, doc := range index.Documents {
@@ -49,8 +52,11 @@ func (s *Service) Search(query string) ([]Result, error) {
 			continue
 		}
 
-		// 搜索内容
-		content, _ := s.storage.Load(doc.ID)
+		// 搜索内容 - 忽略单个文档加载错误，继续搜索其他文档
+		content, err := s.storage.Load(doc.ID)
+		if err != nil {
+			continue
+		}
 		if strings.Contains(strings.ToLower(content), query) {
 			snippet := extractSnippet(content, query)
 			results = append(results, Result{

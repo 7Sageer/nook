@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Nostalgia is a local-first note-taking desktop application built with Wails (Go backend + React/TypeScript frontend). It uses BlockNote as the rich text editor and stores documents as JSON files locally.
+Nook is a local-first note-taking desktop application built with Wails (Go backend + React/TypeScript frontend). It uses BlockNote as the rich text editor and stores documents as JSON files locally. Documents can be organized into folders with drag-and-drop reordering.
 
 ## Development Commands
 
@@ -26,8 +26,10 @@ cd frontend && npm run build    # Build frontend
 
 - `main.go` - Application entry point, Wails configuration, native menu setup, macOS file association handling
 - `app.go` - Main App struct exposing methods to frontend via Wails bindings:
-  - Document CRUD: `GetDocumentList`, `CreateDocument`, `DeleteDocument`, `RenameDocument`
+  - Document CRUD: `GetDocumentList`, `CreateDocument`, `DeleteDocument`, `RenameDocument`, `SetActiveDocument`
   - Content: `LoadDocumentContent`, `SaveDocumentContent`
+  - Folders: `GetFolders`, `CreateFolder`, `DeleteFolder`, `RenameFolder`, `SetFolderCollapsed`, `MoveDocumentToFolder`
+  - Reordering: `ReorderDocuments`, `ReorderFolders`
   - External files: `OpenExternalFile`, `SaveExternalFile`, `LoadExternalFile`
   - Markdown: `ImportMarkdownFile`, `ExportMarkdownFile`
   - Search: `SearchDocuments`
@@ -35,6 +37,7 @@ cd frontend && npm run build    # Build frontend
 
 - `internal/` packages:
   - `document/` - Repository (metadata/index) and Storage (content) for documents
+  - `folder/` - Folder repository for organizing documents
   - `search/` - Full-text search across documents
   - `settings/` - User preferences persistence
   - `markdown/` - Import/export markdown files via native dialogs
@@ -43,21 +46,28 @@ cd frontend && npm run build    # Build frontend
 ### Frontend (React/TypeScript)
 
 - `App.tsx` - Main component orchestrating editor, sidebar, and state
-- `components/` - UI components (Editor, Sidebar, Header, DocumentList, ConfirmModal)
+- `components/` - UI components (Editor, Sidebar, Header, DocumentList, FolderItem, ConfirmModal, WindowToolbar)
+- `contexts/`
+  - `DocumentContext.tsx` - Centralized state management for documents and folders (CRUD, reordering, content loading/saving)
+  - `ThemeContext.tsx` - Light/dark theme management
 - `hooks/` - Custom hooks:
   - `useDocuments` - Document list state and CRUD operations
+  - `useFolders` - Folder management (create, delete, rename, collapse, reorder)
   - `useExternalFile` - External file editing mode
   - `useImportExport` - Markdown import/export
   - `useMenuEvents` - Native menu event listeners
   - `useSearch` - Document search
-- `contexts/ThemeContext.tsx` - Light/dark theme management
+  - `useEditor` - BlockNote editor instance management
+  - `useTitleSync` - Sync document title with first H1 block
+  - `useH1Visibility` - Track H1 visibility for header title display
 - `constants/strings.ts` - All UI strings centralized
 - `types/document.ts` - TypeScript interfaces matching Go structs
 
 ### Data Storage
 
-All data stored in `~/.nostalgia/`:
-- `index.json` - Document metadata and active document ID
+All data stored in `~/.Nook/`:
+- `index.json` - Document metadata, folder assignments, and active document ID
+- `folders.json` - Folder metadata (id, name, order, collapsed state)
 - `documents/{uuid}.json` - Individual document content (BlockNote JSON format)
 - `settings.json` - User preferences
 
@@ -69,7 +79,9 @@ All data stored in `~/.nostalgia/`:
 
 ## Key Patterns
 
-- Strings are externalized: Go strings in `internal/constant/strings.go`, frontend strings in `frontend/src/constants/strings.ts`
-- Document content is BlockNote JSON blocks, converted to/from Markdown for import/export
-- External file mode allows editing .md/.txt files outside the app's document store
-- macOS file associations configured in `wails.json` for .md and .txt files
+- **Centralized state**: Use `DocumentContext` for all document/folder operations; components consume via `useDocumentContext()`
+- **Strings externalized**: Go strings in `internal/constant/strings.go`, frontend strings in `frontend/src/constants/strings.ts`
+- **Document content**: BlockNote JSON blocks, converted to/from Markdown for import/export
+- **External file mode**: Allows editing .md/.txt files outside the app's document store
+- **Drag-and-drop**: Documents and folders support reordering via drag-and-drop
+- **macOS file associations**: Configured in `wails.json` for .md and .txt files

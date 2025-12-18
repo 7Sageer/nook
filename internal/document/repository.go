@@ -75,7 +75,10 @@ func (r *Repository) Create(title string) (Meta, error) {
 	}
 
 	// 更新索引
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return Meta{}, err
+	}
 	index.Documents = append([]Meta{doc}, index.Documents...)
 	index.ActiveID = doc.ID
 	if err := r.saveIndex(index); err != nil {
@@ -89,10 +92,15 @@ func (r *Repository) Create(title string) (Meta, error) {
 func (r *Repository) Delete(id string) error {
 	// 删除文档文件
 	docPath := filepath.Join(r.dataPath, "documents", id+".json")
-	os.Remove(docPath)
+	if err := os.Remove(docPath); err != nil && !os.IsNotExist(err) {
+		return err
+	}
 
 	// 更新索引
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	newDocs := []Meta{}
 	for _, d := range index.Documents {
 		if d.ID != id {
@@ -112,7 +120,10 @@ func (r *Repository) Delete(id string) error {
 
 // Rename 重命名文档
 func (r *Repository) Rename(id string, newTitle string) error {
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	for i, d := range index.Documents {
 		if d.ID == id {
 			index.Documents[i].Title = newTitle
@@ -125,14 +136,20 @@ func (r *Repository) Rename(id string, newTitle string) error {
 
 // SetActive 设置当前活动文档
 func (r *Repository) SetActive(id string) error {
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	index.ActiveID = id
 	return r.saveIndex(index)
 }
 
 // UpdateTimestamp 更新文档时间戳
 func (r *Repository) UpdateTimestamp(id string) error {
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	for i, d := range index.Documents {
 		if d.ID == id {
 			index.Documents[i].UpdatedAt = time.Now().UnixMilli()
@@ -144,7 +161,10 @@ func (r *Repository) UpdateTimestamp(id string) error {
 
 // MoveToFolder 将文档移动到指定文件夹
 func (r *Repository) MoveToFolder(docId string, folderId string) error {
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	for i, d := range index.Documents {
 		if d.ID == docId {
 			index.Documents[i].FolderId = folderId
@@ -157,13 +177,19 @@ func (r *Repository) MoveToFolder(docId string, folderId string) error {
 
 func (r *Repository) saveIndex(index Index) error {
 	indexPath := filepath.Join(r.dataPath, "index.json")
-	data, _ := json.MarshalIndent(index, "", "  ")
+	data, err := json.MarshalIndent(index, "", "  ")
+	if err != nil {
+		return err
+	}
 	return os.WriteFile(indexPath, data, 0644)
 }
 
 // Reorder 重新排序文档
 func (r *Repository) Reorder(ids []string) error {
-	index, _ := r.GetAll()
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
 	// 创建 id -> order 映射
 	orderMap := make(map[string]int)
 	for i, id := range ids {
