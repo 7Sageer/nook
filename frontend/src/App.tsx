@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Editor } from "./components/Editor";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
+import { WindowToolbar } from "./components/WindowToolbar";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { useDocuments } from "./hooks/useDocuments";
 import { useFolders } from "./hooks/useFolders";
@@ -15,7 +16,7 @@ import { extractFirstH1Title } from "./utils/blockUtils";
 import "./App.css";
 
 function AppContent() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeSetting, toggleTheme } = useTheme();
   const {
     documents,
     activeId,
@@ -280,34 +281,46 @@ function AppContent() {
 
   return (
     <div className={`app-container ${theme}`}>
-      <Sidebar
-        documents={documents}
-        folders={folders}
-        activeId={isExternalMode ? null : activeId}
-        onSelect={handleSwitchToInternal}
-        onSelectExternal={handleSwitchToExternal}
-        onCreate={handleCreateInternalDocument}
+      <WindowToolbar
+        sidebarCollapsed={sidebarCollapsed}
+        onToggleSidebar={handleToggleSidebar}
+        onCreateDocument={handleCreateInternalDocument}
         onCreateFolder={() => createFolder()}
-        onDelete={deleteDoc}
-        onRename={renameDoc}
-        onDeleteFolder={async (id) => {
-          await deleteFolder(id);
-          refreshDocuments();
-        }}
-        onRenameFolder={renameFolder}
-        onToggleFolder={toggleCollapsed}
-        onMoveToFolder={async (docId, folderId) => {
-          await moveDocument(docId, folderId);
-          refreshDocuments();
-        }}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={handleToggleSidebar}
-        externalFiles={externalFiles}
-        activeExternalPath={activeExternalPath}
-        onCloseExternal={closeExternal}
+        themeSetting={themeSetting}
+        onToggleTheme={toggleTheme}
+        theme={theme}
       />
+      <div className={`sidebar-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <Sidebar
+          documents={documents}
+          folders={folders}
+          activeId={isExternalMode ? null : activeId}
+          onSelect={handleSwitchToInternal}
+          onSelectExternal={handleSwitchToExternal}
+          onCreate={handleCreateInternalDocument}
+          onCreateFolder={() => createFolder()}
+          onDelete={deleteDoc}
+          onRename={renameDoc}
+          onDeleteFolder={async (id) => {
+            await deleteFolder(id);
+            refreshDocuments();
+          }}
+          onRenameFolder={renameFolder}
+          onToggleFolder={toggleCollapsed}
+          onMoveToFolder={async (docId, folderId) => {
+            await moveDocument(docId, folderId);
+            refreshDocuments();
+          }}
+          externalFiles={externalFiles}
+          activeExternalPath={activeExternalPath}
+          onCloseExternal={closeExternal}
+        />
+      </div>
       <div className="main-content">
-        <Header title={currentTitle} status={status} />
+        <Header
+          title={currentTitle}
+          status={status}
+        />
         <main className="editor-container">
           {isLoading || contentLoading ? (
             <div className="loading">{STRINGS.STATUS.LOADING}</div>

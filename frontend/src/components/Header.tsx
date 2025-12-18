@@ -8,13 +8,17 @@ interface HeaderProps {
 export function Header({ title, status }: HeaderProps) {
     return (
         <header className="app-header">
-            <h1>{title}</h1>
-            {status && (
-                <span className="status">
-                    <CheckCircle size={12} className="status-icon" />
-                    {status}
-                </span>
-            )}
+            <div className="header-left">
+            </div>
+            <h1 className="header-title">{title}</h1>
+            <div className="header-right">
+                {status && (
+                    <span className="status">
+                        <CheckCircle size={12} className="status-icon" />
+                        {status}
+                    </span>
+                )}
+            </div>
         </header>
     );
 }

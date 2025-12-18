@@ -39,11 +39,94 @@ body,
   background-color: #ffffff;
   color: #374151;
   transition: background-color var(--transition-normal), color var(--transition-normal);
+  position: relative;
 }
 
 .app-container.dark {
   background-color: #111111;
   color: #e5e7eb;
+}
+
+/* ========== WindowToolbar ========== */
+.window-toolbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.window-toolbar .toolbar-drag-region {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  height: 100%;
+  padding: 13px 8px 0 8px;
+  width: 280px;
+  --wails-draggable: drag;
+  pointer-events: auto;
+}
+
+.window-toolbar .toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  --wails-draggable: no-drag;
+}
+
+.window-toolbar .toolbar-buttons button,
+.window-toolbar .toolbar-buttons .icon-btn {
+  --wails-draggable: no-drag;
+}
+
+/* WindowToolbar 折叠状态 */
+.window-toolbar.window-toolbar-collapsed .toolbar-drag-region {
+  width: 100%;
+  justify-content: flex-start;
+  padding-left: 78px;
+  /* 避开 macOS 红黄绿按钮 */
+}
+
+/* WindowToolbar 暗色模式 */
+.window-toolbar.dark .icon-btn {
+  color: #9ca3af;
+}
+
+.window-toolbar.dark .icon-btn:hover {
+  background-color: #2a2a2a;
+  color: #e5e7eb;
+}
+
+.window-toolbar.dark .icon-btn.primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.window-toolbar.dark .icon-btn.primary:hover {
+  background-color: var(--primary-hover);
+}
+
+/* ========== Sidebar Wrapper ========== */
+.sidebar-wrapper {
+  display: flex;
+  flex-direction: column;
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-wrapper.sidebar-collapsed {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-100%);
+  margin-left: -8px;
 }
 
 /* ========== 侧边栏 ========== */
@@ -52,28 +135,60 @@ body,
   min-width: 280px;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb;
+  background-color: transparent;
   transition: background-color var(--transition-normal);
   position: relative;
+  padding: 8px;
+  padding-right: 0;
+  padding-top: 46px;
+  /* 为 WindowToolbar 留出空间 */
 }
 
 .sidebar::after {
   content: '';
   position: absolute;
-  top: 0;
+  top: 8px;
   right: 0;
   width: 1px;
-  height: 100%;
+  height: calc(100% - 16px);
   background-color: #e5e7eb;
   pointer-events: none;
 }
 
 .sidebar.dark {
-  background-color: #1a1a1a;
+  background-color: transparent;
 }
 
 .sidebar.dark::after {
   background-color: #333;
+}
+
+/* 侧边栏内容容器（浮动岛屿效果） */
+.sidebar-header,
+.search-wrapper,
+.sidebar-content {
+  background-color: #f9fafb;
+  margin-right: 8px;
+}
+
+.sidebar.dark .sidebar-header,
+.sidebar.dark .search-wrapper,
+.sidebar.dark .sidebar-content {
+  background-color: #1a1a1a;
+}
+
+.sidebar-header {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: visible;
+}
+
+.search-wrapper {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.sidebar-content {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  margin-bottom: 8px;
 }
 
 .sidebar-header {
@@ -82,18 +197,22 @@ body,
   box-sizing: border-box;
 }
 
-/* 窗口拖拽区域（红黄绿按钮所在行） */
+/* 窗口拖拽区域 + 工具按钮（与红黄绿同行） */
 .sidebar-drag-region {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   height: 38px;
+  padding: 0 8px;
   --wails-draggable: drag;
 }
 
-/* 工具按钮行 */
+/* 工具按钮组 */
 .sidebar-toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 4px;
+  --wails-draggable: no-drag;
 }
 
 .sidebar-toolbar button,
@@ -114,6 +233,13 @@ body,
   background-color: transparent;
   color: #6b7280;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 小按钮变体（与红黄绿对齐用） */
+.icon-btn.icon-btn-sm {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
 }
 
 .icon-btn:hover {
@@ -398,7 +524,62 @@ body,
   border-bottom-color: #2a2a2a;
 }
 
-.app-header h1 {
+/* Header 三栏布局 */
+.header-left,
+.header-right {
+  flex: 0 0 auto;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  -webkit-app-region: no-drag;
+}
+
+.header-left {
+  justify-content: flex-start;
+}
+
+.header-right {
+  justify-content: flex-end;
+}
+
+.header-title {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #111827;
+  text-align: center;
+  margin: 0;
+}
+
+.app-container.dark .header-title {
+  color: #f3f4f6;
+}
+
+/* 展开侧边栏按钮 */
+.expand-sidebar-btn {
+  background-color: #f3f4f6;
+  border-radius: var(--radius-md);
+  margin-left: 70px;
+  /* 避开 macOS 红黄绿窗口控制按钮 */
+}
+
+.expand-sidebar-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.app-container.dark .expand-sidebar-btn {
+  background-color: #252525;
+}
+
+.app-container.dark .expand-sidebar-btn:hover {
+  background-color: #333;
+}
+
+/* 兼容旧的 h1 样式（向后兼容） */
+.app-header h1:not(.header-title) {
   font-size: 18px;
   font-weight: 600;
   white-space: nowrap;
@@ -407,7 +588,7 @@ body,
   color: #111827;
 }
 
-.app-container.dark .app-header h1 {
+.app-container.dark .app-header h1:not(.header-title) {
   color: #f3f4f6;
 }
 
@@ -692,33 +873,102 @@ body,
   flex-shrink: 0;
 }
 
-/* ========== 侧边栏折叠 ========== */
+/* ========== 侧边栏折叠动画 ========== */
 .sidebar {
-  transition: width var(--transition-normal), min-width var(--transition-normal),
-    background-color var(--transition-normal), border-color var(--transition-normal);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color var(--transition-normal),
+    border-color var(--transition-normal);
+  overflow: hidden;
+}
+
+/* 侧边栏内容过渡 - 折叠时快速渐隐 */
+.sidebar-header,
+.search-wrapper,
+.sidebar-content,
+.external-file-section {
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 侧边栏隐藏状态 - 向左滑出 */
+.sidebar.sidebar-hidden {
+  transform: translateX(-100%);
+  opacity: 0;
+  width: 0;
+  min-width: 0;
+  margin-left: -8px;
+  /* 补偿 padding */
+  pointer-events: none;
+}
+
+/* 隐藏时内容立即渐隐 */
+.sidebar.sidebar-hidden .sidebar-header,
+.sidebar.sidebar-hidden .search-wrapper,
+.sidebar.sidebar-hidden .sidebar-content,
+.sidebar.sidebar-hidden .external-file-section {
+  opacity: 0;
+}
+
+/* 隐藏时移除分隔线 */
+.sidebar.sidebar-hidden::after {
+  opacity: 0;
 }
 
 .collapse-btn {
   margin-left: auto;
 }
 
+/* 展开按钮动画 */
+.expand-sidebar-btn {
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color var(--transition-fast);
+  animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 旧的折叠样式（保留向后兼容）*/
 .sidebar-collapsed {
   width: 56px;
   min-width: 56px;
+  padding: 8px;
+  padding-right: 0;
 }
 
 .sidebar-collapsed-content {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 8px 0;
-  padding-top: 46px;
-  /* 为红黄绿窗口按钮预留空间 */
+  justify-content: center;
+  height: 38px;
+  background-color: #f9fafb;
+  border-radius: var(--radius-lg);
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.sidebar.dark .sidebar-collapsed-content {
+  background-color: #1a1a1a;
 }
 
 .sidebar-collapsed .icon-btn {
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
 }
 
 /* ========== 外部文件标签 ========== */
@@ -996,14 +1246,15 @@ body,
   padding-left: 16px;
   display: grid;
   grid-template-rows: 1fr;
-  opacity: 1;
-  transition: grid-template-rows 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.2s ease-out;
+  transition: grid-template-rows 0.28s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .folder-documents.collapsed {
   grid-template-rows: 0fr;
-  opacity: 0;
+}
+
+.folder-documents-inner {
+  min-height: 0;
 }
 
 .folder-documents-inner,
