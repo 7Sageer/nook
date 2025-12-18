@@ -78,17 +78,27 @@ body,
 
 .sidebar-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  min-height: 69px;
+  flex-direction: column;
   box-sizing: border-box;
-  -webkit-app-region: drag;
 }
 
-.sidebar-header button,
-.sidebar-header .icon-btn {
-  -webkit-app-region: no-drag;
+/* 窗口拖拽区域（红黄绿按钮所在行） */
+.sidebar-drag-region {
+  height: 38px;
+  --wails-draggable: drag;
+}
+
+/* 工具按钮行 */
+.sidebar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+}
+
+.sidebar-toolbar button,
+.sidebar-toolbar .icon-btn {
+  --wails-draggable: no-drag;
 }
 
 /* ========== Icon Buttons ========== */
@@ -373,11 +383,12 @@ body,
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
+  padding: 12px 32px;
+  padding-top: 16px;
+  /* 为拖拽预留一点空间，但不需要与侧边栏对齐 */
   border-bottom: 1px solid #e5e7eb;
   background-color: #ffffff;
-  -webkit-app-region: drag;
-  min-height: 69px;
+  --wails-draggable: drag;
   box-sizing: border-box;
   transition: background-color var(--transition-normal), border-color var(--transition-normal);
 }
@@ -700,7 +711,9 @@ body,
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 0;
+  padding: 8px 0;
+  padding-top: 46px;
+  /* 为红黄绿窗口按钮预留空间 */
 }
 
 .sidebar-collapsed .icon-btn {
@@ -709,18 +722,67 @@ body,
 }
 
 /* ========== 外部文件标签 ========== */
+.section-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px 4px;
+  margin-top: 4px;
+}
+
 .section-label {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #9ca3af;
+}
+
+/* When section-label is used standalone (not in row) */
+.section-label:not(.section-label-row .section-label) {
   padding: 8px 16px 4px;
   margin-top: 4px;
 }
 
+.section-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.section-label-row:hover .section-add-btn {
+  opacity: 1;
+}
+
+.section-add-btn:hover {
+  background-color: #e5e7eb;
+  color: var(--primary);
+}
+
+.section-add-btn:active {
+  transform: scale(0.9);
+}
+
 .sidebar.dark .section-label {
   color: #6b7280;
+}
+
+.sidebar.dark .section-add-btn {
+  color: #6b7280;
+}
+
+.sidebar.dark .section-add-btn:hover {
+  background-color: #333;
+  color: var(--primary);
 }
 
 .external-file-section {
@@ -985,4 +1047,105 @@ body,
 
 .document-item.dragging {
   opacity: 0.5;
+}
+
+/* ========== Create Menu Dropdown ========== */
+.create-menu-wrapper {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.create-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-menu-trigger .plus-icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-menu-trigger.menu-open .plus-icon {
+  transform: rotate(45deg);
+}
+
+.create-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 180px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  z-index: 100;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.create-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.create-menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.create-menu-item:active {
+  transform: scale(0.98);
+}
+
+.create-menu-item svg {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.create-menu-item:hover svg {
+  color: var(--primary);
+}
+
+/* Dark mode */
+.sidebar.dark .create-menu-dropdown {
+  background-color: #252525;
+  border-color: #333;
+}
+
+.sidebar.dark .create-menu-item {
+  color: #e5e7eb;
+}
+
+.sidebar.dark .create-menu-item:hover {
+  background-color: #333;
+}
+
+.sidebar.dark .create-menu-item svg {
+  color: #9ca3af;
+}
+
+.sidebar.dark .create-menu-item:hover svg {
+  color: var(--primary);
 }

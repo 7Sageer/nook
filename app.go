@@ -207,7 +207,7 @@ func (a *App) SaveDocumentContent(id string, content string) error {
 // ========== Markdown 导入/导出 ==========
 
 // ImportMarkdownFile 导入 Markdown 文件
-func (a *App) ImportMarkdownFile() (string, error) {
+func (a *App) ImportMarkdownFile() (*markdown.ImportResult, error) {
 	return a.markdownService.Import()
 }
 

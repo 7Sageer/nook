@@ -119,6 +119,7 @@ function AppContent() {
   // 监听菜单事件
   useMenuEvents({
     onNewDocument: handleNewDocument,
+    onNewFolder: createFolder,
     onImport: handleImport,
     onExport: handleExport,
     onToggleSidebar: handleToggleSidebar,
@@ -299,8 +300,6 @@ function AppContent() {
           await moveDocument(docId, folderId);
           refreshDocuments();
         }}
-        onImport={handleImport}
-        onExport={handleExport}
         collapsed={sidebarCollapsed}
         onToggleCollapse={handleToggleSidebar}
         externalFiles={externalFiles}

@@ -35,6 +35,9 @@ func main() {
 	FileMenu.AddText(constant.MenuFileNewDoc, keys.CmdOrCtrl("n"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:new-document")
 	})
+	FileMenu.AddText(constant.MenuFileNewFolder, keys.Combo("n", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:new-folder")
+	})
 	FileMenu.AddText(constant.MenuFileOpen, keys.Combo("o", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:open-external")
 	})
@@ -81,6 +84,7 @@ func main() {
 			app,
 		},
 		Mac: &mac.Options{
+			TitleBar:   mac.TitleBarHiddenInset(),
 			Appearance: mac.DefaultAppearance, // 跟随系统主题
 			OnFileOpen: func(filePath string) {
 				// 当用户通过 Finder 双击文件打开应用时触发

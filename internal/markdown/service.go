@@ -3,11 +3,19 @@ package markdown
 import (
 	"context"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"notion-lite/internal/constant"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+// ImportResult 导入结果
+type ImportResult struct {
+	Content  string `json:"content"`
+	FileName string `json:"fileName"`
+}
 
 // Service Markdown 导入导出服务
 type Service struct {
@@ -25,7 +33,7 @@ func (s *Service) SetContext(ctx context.Context) {
 }
 
 // Import 导入 Markdown 文件
-func (s *Service) Import() (string, error) {
+func (s *Service) Import() (*ImportResult, error) {
 	filePath, err := runtime.OpenFileDialog(s.ctx, runtime.OpenDialogOptions{
 		Title: constant.DialogTitleImport,
 		Filters: []runtime.FileFilter{
@@ -33,17 +41,24 @@ func (s *Service) Import() (string, error) {
 		},
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if filePath == "" {
-		return "", nil
+		return nil, nil
 	}
 
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(data), nil
+
+	fileName := filepath.Base(filePath)
+	fileName = strings.TrimSuffix(fileName, filepath.Ext(fileName))
+
+	return &ImportResult{
+		Content:  string(data),
+		FileName: fileName,
+	}, nil
 }
 
 // Export 导出为 Markdown 文件

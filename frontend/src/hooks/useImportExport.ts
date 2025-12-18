@@ -26,11 +26,11 @@ export function useImportExport({
     onContentChange,
 }: UseImportExportProps): UseImportExportReturn {
     const handleImport = useCallback(async () => {
-        const markdown = await ImportMarkdownFile();
-        if (markdown && editorRef.current) {
+        const result = await ImportMarkdownFile();
+        if (result && result.content && editorRef.current) {
             try {
-                const blocks = await editorRef.current.tryParseMarkdownToBlocks(markdown);
-                const doc = await createDoc('导入的文档');
+                const blocks = await editorRef.current.tryParseMarkdownToBlocks(result.content);
+                const doc = await createDoc(result.fileName);
                 await saveContent(doc.id, blocks);
                 onContentChange?.(blocks);
             } catch (e) {

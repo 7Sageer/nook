@@ -118,3 +118,22 @@ export namespace main {
 
 }
 
+export namespace markdown {
+	
+	export class ImportResult {
+	    content: string;
+	    fileName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.content = source["content"];
+	        this.fileName = source["fileName"];
+	    }
+	}
+
+}
+

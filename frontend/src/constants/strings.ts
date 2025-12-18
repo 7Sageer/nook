@@ -17,6 +17,7 @@ export const STRINGS = {
     TOOLTIPS: {
         NEW_DOC: "New Document",
         NEW_FOLDER: "New Folder",
+        OPEN_FILE: "Open File",
         IMPORT: "Import Markdown",
         EXPORT: "Export Markdown",
         THEME_LIGHT: "Light Mode (click to switch)",
@@ -48,6 +49,11 @@ export const STRINGS = {
         DELETE_MESSAGE: "Are you sure you want to delete this document? This action cannot be undone.",
         DELETE_FOLDER_TITLE: "Delete Folder",
         DELETE_FOLDER_MESSAGE: "Are you sure you want to delete this folder? Documents inside will be moved to uncategorized.",
+    },
+
+    MENU: {
+        NEW_DOC: "New Document",
+        NEW_FOLDER: "New Folder",
     }
 };
 

@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { DocumentMeta, Folder } from '../types/document';
 import { ExternalFileInfo } from '../hooks/useExternalFile';
 import { useTheme } from '../contexts/ThemeContext';
@@ -5,7 +6,7 @@ import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { FolderItem } from './FolderItem';
-import { Plus, Upload, Download, Moon, Sun, Monitor, Search, PanelLeftClose, PanelLeft, FileText, X, FolderPlus } from 'lucide-react';
+import { Plus, Moon, Sun, Monitor, Search, PanelLeftClose, PanelLeft, FileText, X, FolderPlus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
 interface SidebarProps {
@@ -22,8 +23,6 @@ interface SidebarProps {
   onRenameFolder: (id: string, name: string) => void;
   onToggleFolder: (id: string) => void;
   onMoveToFolder: (docId: string, folderId: string) => void;
-  onImport: () => void;
-  onExport: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   externalFiles?: ExternalFileInfo[];
@@ -45,8 +44,6 @@ export function Sidebar({
   onRenameFolder,
   onToggleFolder,
   onMoveToFolder,
-  onImport,
-  onExport,
   collapsed = false,
   onToggleCollapse,
   externalFiles = [],
@@ -56,6 +53,37 @@ export function Sidebar({
   const { theme, themeSetting, toggleTheme } = useTheme();
   const { query, results, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
+
+  // 下拉菜单状态
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
+    };
+
+    if (isCreateMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCreateMenuOpen]);
+
+  const handleCreateDocument = () => {
+    onCreate();
+    setIsCreateMenuOpen(false);
+  };
+
+  const handleCreateFolder = () => {
+    onCreateFolder();
+    setIsCreateMenuOpen(false);
+  };
 
   const handleDeleteClick = (id: string) => {
     openModal(
@@ -151,26 +179,41 @@ export function Sidebar({
     <>
       <aside className={`sidebar ${theme}`}>
         <div className="sidebar-header">
-          <button className="icon-btn primary" onClick={onCreate} title={STRINGS.TOOLTIPS.NEW_DOC}>
-            <Plus size={18} />
-          </button>
-          <button className="icon-btn" onClick={onCreateFolder} title={STRINGS.TOOLTIPS.NEW_FOLDER}>
-            <FolderPlus size={18} />
-          </button>
-          <button className="icon-btn" onClick={onImport} title={STRINGS.TOOLTIPS.IMPORT}>
-            <Upload size={18} />
-          </button>
-          <button className="icon-btn" onClick={onExport} title={STRINGS.TOOLTIPS.EXPORT}>
-            <Download size={18} />
-          </button>
-          <button className="icon-btn" onClick={toggleTheme} title={getThemeTooltip()}>
-            {getThemeIcon()}
-          </button>
-          {onToggleCollapse && (
-            <button className="icon-btn collapse-btn" onClick={onToggleCollapse} title={STRINGS.TOOLTIPS.COLLAPSE}>
-              <PanelLeftClose size={18} />
+          {/* 拖拽区域（红黄绿按钮所在行） */}
+          <div className="sidebar-drag-region" />
+
+          {/* 工具按钮行 */}
+          <div className="sidebar-toolbar">
+            <div className="create-menu-wrapper" ref={createMenuRef}>
+              <button
+                className={`icon-btn primary create-menu-trigger ${isCreateMenuOpen ? 'menu-open' : ''}`}
+                onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
+                title={STRINGS.TOOLTIPS.NEW_DOC}
+              >
+                <Plus size={18} className="plus-icon" />
+              </button>
+              {isCreateMenuOpen && (
+                <div className="create-menu-dropdown">
+                  <button className="create-menu-item" onClick={handleCreateDocument}>
+                    <FileText size={16} />
+                    <span>{STRINGS.MENU.NEW_DOC}</span>
+                  </button>
+                  <button className="create-menu-item" onClick={handleCreateFolder}>
+                    <FolderPlus size={16} />
+                    <span>{STRINGS.MENU.NEW_FOLDER}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+            <button className="icon-btn" onClick={toggleTheme} title={getThemeTooltip()}>
+              {getThemeIcon()}
             </button>
-          )}
+            {onToggleCollapse && (
+              <button className="icon-btn collapse-btn" onClick={onToggleCollapse} title={STRINGS.TOOLTIPS.COLLAPSE}>
+                <PanelLeftClose size={18} />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="search-wrapper">
@@ -222,7 +265,16 @@ export function Sidebar({
           {/* 文件夹列表 */}
           {!query && folders.length > 0 && (
             <div className="folders-section">
-              <div className="section-label">{STRINGS.LABELS.FOLDERS}</div>
+              <div className="section-label-row">
+                <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
+                <button
+                  className="section-add-btn"
+                  onClick={onCreateFolder}
+                  title={STRINGS.TOOLTIPS.NEW_FOLDER}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
               {folders.map((folder) => (
                 <FolderItem
                   key={folder.id}
@@ -249,8 +301,19 @@ export function Sidebar({
               onDragLeave={!query ? handleUncategorizedDragLeave : undefined}
               onDrop={!query ? handleUncategorizedDrop : undefined}
             >
-              <div className="section-label">
-                {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
+              <div className="section-label-row">
+                <span className="section-label">
+                  {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
+                </span>
+                {!query && (
+                  <button
+                    className="section-add-btn"
+                    onClick={onCreate}
+                    title={STRINGS.TOOLTIPS.NEW_DOC}
+                  >
+                    <Plus size={14} />
+                  </button>
+                )}
               </div>
               <ul className="document-list">
                 <DocumentList

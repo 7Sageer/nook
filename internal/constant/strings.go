@@ -2,9 +2,9 @@ package constant
 
 const (
 	// Dialog Titles
-	DialogTitleOpenFile   = "Open File"
-	DialogTitleImport     = "Import Markdown File"
-	DialogTitleExport     = "Export as Markdown"
+	DialogTitleOpenFile = "Open File"
+	DialogTitleImport   = "Import Markdown File"
+	DialogTitleExport   = "Export as Markdown"
 
 	// File Filters
 	FilterTextAndMarkdown = "Text Files (*.txt, *.md)"
@@ -23,11 +23,12 @@ const (
 	AppTitle = "Nook"
 
 	// Menu - File
-	MenuFile       = "File"
-	MenuFileNewDoc = "New Document"
-	MenuFileOpen   = "Open File"
-	MenuFileImport = "Import Markdown"
-	MenuFileExport = "Export Markdown"
+	MenuFile          = "File"
+	MenuFileNewDoc    = "New Document"
+	MenuFileNewFolder = "New Folder"
+	MenuFileOpen      = "Open File"
+	MenuFileImport    = "Import Markdown"
+	MenuFileExport    = "Export Markdown"
 
 	// Menu - View
 	MenuView              = "View"

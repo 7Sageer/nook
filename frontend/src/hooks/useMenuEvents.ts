@@ -3,6 +3,7 @@ import { EventsOn } from '../../wailsjs/runtime/runtime';
 
 interface MenuEventsOptions {
     onNewDocument: () => void;
+    onNewFolder?: () => void;
     onImport: () => void;
     onExport: () => void;
     onToggleSidebar: () => void;
@@ -13,6 +14,7 @@ interface MenuEventsOptions {
 
 export function useMenuEvents({
     onNewDocument,
+    onNewFolder,
     onImport,
     onExport,
     onToggleSidebar,
@@ -30,6 +32,10 @@ export function useMenuEvents({
             EventsOn('menu:about', onAbout),
         ];
 
+        if (onNewFolder) {
+            unsubscribers.push(EventsOn('menu:new-folder', onNewFolder));
+        }
+
         if (onOpenExternal) {
             unsubscribers.push(EventsOn('menu:open-external', onOpenExternal));
         }
@@ -37,5 +43,5 @@ export function useMenuEvents({
         return () => {
             unsubscribers.forEach((unsubscribe) => unsubscribe());
         };
-    }, [onNewDocument, onImport, onExport, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
+    }, [onNewDocument, onNewFolder, onImport, onExport, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
 }
