@@ -69,8 +69,8 @@ export function useEditor({
                     });
                 }, 150);
                 return cleanup;
-            } else {
-                // 首次加载，直接加载
+            } else if (!editorKey) {
+                // 首次加载，直接加载（仅当 editorKey 为 null 时）
                 setContentLoading(true);
                 loadContent(currentId).then((data) => {
                     if (cancelled) return;
@@ -79,12 +79,13 @@ export function useEditor({
                     setContentLoading(false);
                 });
             }
+            // 如果 editorKey === currentId，不做任何事（避免重复加载）
         } else {
             setContent(undefined);
             setEditorKey(null);
         }
         return cleanup;
-    }, [activeId, isExternalMode, editorKey, loadContent]);
+    }, [activeId, isExternalMode, loadContent]);
 
     return {
         content,

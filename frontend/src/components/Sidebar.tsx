@@ -25,6 +25,7 @@ interface SidebarProps {
   externalFiles?: ExternalFileInfo[];
   activeExternalPath?: string | null;
   onCloseExternal?: (path: string) => void;
+  collapsed?: boolean;
 }
 
 export function Sidebar({
@@ -44,6 +45,7 @@ export function Sidebar({
   externalFiles = [],
   activeExternalPath,
   onCloseExternal,
+  collapsed = false,
 }: SidebarProps) {
   const { theme } = useTheme();
   const { query, results, setQuery } = useSearch();
@@ -102,7 +104,7 @@ export function Sidebar({
 
   return (
     <>
-      <aside className={`sidebar ${theme}`}>
+      <aside className={`sidebar ${theme} ${collapsed ? 'sidebar-hidden' : ''}`}>
 
         <div className="search-wrapper">
           <Search size={16} className="search-icon" />

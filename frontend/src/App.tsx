@@ -266,6 +266,7 @@ function AppContent() {
           externalFiles={externalFiles}
           activeExternalPath={activeExternalPath}
           onCloseExternal={closeExternal}
+          collapsed={sidebarCollapsed}
         />
       </div>
       <div className="main-content">

@@ -98,6 +98,24 @@
     }
 }
 
+/* 展开按钮弹性滑入动画 */
+@keyframes expandBtnSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-16px) scale(0.9);
+    }
+
+    60% {
+        opacity: 1;
+        transform: translateX(4px) scale(1.02);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
 /* ========== 文件夹文档动画 ========== */
 @keyframes folderDocAppear {
     from {

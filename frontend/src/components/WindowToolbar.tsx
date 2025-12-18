@@ -75,27 +75,11 @@ export function WindowToolbar({
         }
     };
 
-    // 折叠状态下显示在主内容区的展开按钮
-    if (sidebarCollapsed) {
-        return (
-            <div className={`window-toolbar window-toolbar-collapsed ${theme}`}>
-                <div className="toolbar-drag-region">
-                    <button
-                        className="icon-btn icon-btn-sm expand-sidebar-btn"
-                        onClick={onToggleSidebar}
-                        title={STRINGS.TOOLTIPS.EXPAND}
-                    >
-                        <PanelLeft size={14} />
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    // 展开状态下显示在侧边栏顶部的工具栏
+    // 同时渲染两种状态，用 CSS 控制过渡动画
     return (
-        <div className={`window-toolbar ${theme}`}>
-            <div className="toolbar-drag-region">
+        <div className={`window-toolbar ${theme} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
+            {/* 展开状态：侧边栏顶部的工具栏 */}
+            <div className={`toolbar-drag-region toolbar-expanded ${sidebarCollapsed ? 'hidden' : ''}`}>
                 <div className="toolbar-buttons">
                     <div className="create-menu-wrapper" ref={createMenuRef}>
                         <button
@@ -125,6 +109,17 @@ export function WindowToolbar({
                         <PanelLeftClose size={14} />
                     </button>
                 </div>
+            </div>
+
+            {/* 折叠状态：展开按钮 */}
+            <div className={`toolbar-drag-region toolbar-collapsed ${sidebarCollapsed ? '' : 'hidden'}`}>
+                <button
+                    className="icon-btn icon-btn-sm expand-sidebar-btn"
+                    onClick={onToggleSidebar}
+                    title={STRINGS.TOOLTIPS.EXPAND}
+                >
+                    <PanelLeft size={14} />
+                </button>
             </div>
         </div>
     );

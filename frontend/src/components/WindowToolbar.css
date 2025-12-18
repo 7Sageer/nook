@@ -9,15 +9,49 @@
     pointer-events: none;
 }
 
-.window-toolbar .toolbar-drag-region {
+/* 展开状态的工具栏区域 */
+.window-toolbar .toolbar-expanded {
     display: flex;
     align-items: flex-start;
     justify-content: flex-end;
     height: 100%;
-    padding: 13px 8px 0 8px;
+    padding: 14px 8px 0 8px;
     width: 280px;
     --wails-draggable: drag;
     pointer-events: auto;
+    transition:
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.window-toolbar .toolbar-expanded.hidden {
+    opacity: 0;
+    transform: translateX(-12px);
+    pointer-events: none;
+}
+
+/* 折叠状态的展开按钮区域 */
+.window-toolbar .toolbar-collapsed {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    height: 100%;
+    padding: 14px 8px 0 100px;
+    /* 100px = 红黄绿按钮宽度(~68px) + 适当间距(32px) */
+    --wails-draggable: drag;
+    pointer-events: auto;
+    transition:
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.window-toolbar .toolbar-collapsed.hidden {
+    opacity: 0;
+    transform: translateX(-12px);
+    pointer-events: none;
 }
 
 .window-toolbar .toolbar-buttons {
@@ -30,14 +64,6 @@
 .window-toolbar .toolbar-buttons button,
 .window-toolbar .toolbar-buttons .icon-btn {
     --wails-draggable: no-drag;
-}
-
-/* WindowToolbar 折叠状态 */
-.window-toolbar.window-toolbar-collapsed .toolbar-drag-region {
-    width: 100%;
-    justify-content: flex-start;
-    padding-left: 78px;
-    /* 避开 macOS 红黄绿按钮 */
 }
 
 /* WindowToolbar 暗色模式 */
@@ -173,17 +199,13 @@
     margin-left: auto;
 }
 
-/* 展开按钮动画 */
+/* 展开按钮样式 */
 .expand-sidebar-btn {
     background-color: #f3f4f6;
     border-radius: var(--radius-md);
-    margin-left: 70px;
-    /* 避开 macOS 红黄绿窗口控制按钮 */
     transition:
         transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-        opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
         background-color var(--transition-fast);
-    animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .expand-sidebar-btn:hover {
