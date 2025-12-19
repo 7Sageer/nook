@@ -141,3 +141,76 @@
         opacity: 0;
     }
 }
+
+/* ========== 拖拽相关动画 ========== */
+
+/* Drop indicator 淡入动画 */
+@keyframes dropIndicatorFadeIn {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+/* Drop indicator 脉冲动画 */
+@keyframes dropIndicatorPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scaleX(0.98);
+    }
+}
+
+/* 拖拽预览出现动画 */
+@keyframes dragOverlayAppear {
+    0% {
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    100% {
+        transform: scale(1.02) rotate(1deg);
+        box-shadow:
+            0 12px 28px rgba(0, 0, 0, 0.2),
+            0 6px 12px rgba(0, 0, 0, 0.12);
+    }
+}
+
+/* 放下落地动画 */
+@keyframes dropSettle {
+    0% {
+        transform: scale(1.02) translateY(-2px);
+    }
+    50% {
+        transform: scale(0.98) translateY(1px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* 容器拖拽悬停脉冲效果 */
+@keyframes containerPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+}
+
+/* 图标弹跳动画 */
+@keyframes iconBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.25);
+    }
+}

@@ -6,28 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { docDndId } from '../utils/dnd';
-
-const listItemVariants = {
-    initial: { opacity: 0, x: -12 },
-    animate: (i: number) => ({
-        opacity: 1,
-        x: 0,
-        transition: {
-            delay: i * 0.03,
-            duration: 0.2,
-            ease: [0.4, 0, 0.2, 1] as const,
-        },
-    }),
-    exit: {
-        opacity: 0,
-        x: -20,
-        scale: 0.95,
-        transition: {
-            duration: 0.15,
-            ease: [0.4, 0, 1, 1] as const,
-        },
-    },
-};
+import { listItemVariants } from '../utils/animations';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -185,7 +164,8 @@ function SortableDocumentRow({
         <motion.li
             ref={setNodeRef}
             style={style}
-            layout
+            // 拖拽时禁用 layout 动画，避免与 dnd-kit transform 冲突
+            layout={!isDragging}
             variants={listItemVariants}
             initial="initial"
             animate="animate"

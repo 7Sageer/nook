@@ -216,31 +216,8 @@
     background: linear-gradient(90deg, var(--primary), var(--primary-hover));
     border-radius: 2px;
     pointer-events: none;
-    /* 淡入动画 */
+    /* 动画定义在 styles/animations.css */
     animation: dropIndicatorFadeIn 0.15s ease-out forwards, dropIndicatorPulse 1s ease-in-out 0.15s infinite;
-}
-
-/* Drop indicator 淡入动画 */
-@keyframes dropIndicatorFadeIn {
-    0% {
-        opacity: 0;
-        transform: scaleX(0.3);
-    }
-    100% {
-        opacity: 1;
-        transform: scaleX(1);
-    }
-}
-
-@keyframes dropIndicatorPulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scaleX(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: scaleX(0.98);
-    }
 }
 
 .document-item.drop-before::before {
@@ -266,17 +243,7 @@
     animation: dropSettle 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-@keyframes dropSettle {
-    0% {
-        transform: scale(1.02) translateY(-2px);
-    }
-    50% {
-        transform: scale(0.98) translateY(1px);
-    }
-    100% {
-        transform: scale(1) translateY(0);
-    }
-}
+/* dropSettle 动画定义在 styles/animations.css */
 
 /* ========== Drag Overlay ========== */
 .document-item.drag-overlay {
@@ -292,18 +259,7 @@
     animation: dragOverlayAppear 0.15s ease-out forwards;
 }
 
-@keyframes dragOverlayAppear {
-    0% {
-        transform: scale(1) rotate(0deg);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    100% {
-        transform: scale(1.02) rotate(1deg);
-        box-shadow:
-            0 12px 28px rgba(0, 0, 0, 0.2),
-            0 6px 12px rgba(0, 0, 0, 0.12);
-    }
-}
+/* dragOverlayAppear 动画定义在 styles/animations.css */
 
 .sidebar.dark .document-item.drag-overlay {
     background-color: #2a2a2a;

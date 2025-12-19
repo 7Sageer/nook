@@ -43,31 +43,8 @@
     border-radius: 2px;
     bottom: 0;
     pointer-events: none;
-    /* 淡入动画 */
+    /* 动画定义在 styles/animations.css */
     animation: dropIndicatorFadeIn 0.15s ease-out forwards, dropIndicatorPulse 1s ease-in-out 0.15s infinite;
-}
-
-/* Drop indicator 淡入动画 */
-@keyframes dropIndicatorFadeIn {
-    0% {
-        opacity: 0;
-        transform: scaleX(0.3);
-    }
-    100% {
-        opacity: 1;
-        transform: scaleX(1);
-    }
-}
-
-@keyframes dropIndicatorPulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scaleX(1);
-    }
-    50% {
-        opacity: 0.7;
-        transform: scaleX(0.98);
-    }
 }
 
 .folder-chevron {
@@ -92,21 +69,9 @@
     transition: transform var(--transition-fast);
 }
 
-/* Folder icon bounce on click */
+/* Folder icon bounce on click - 动画定义在 styles/animations.css */
 .folder-header:active .folder-icon {
     animation: iconBounce 0.3s ease;
-}
-
-@keyframes iconBounce {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.25);
-    }
 }
 
 .folder-name {
