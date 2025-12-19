@@ -21,6 +21,7 @@ interface FolderItemProps {
     folderDragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
     containerDropIndicator?: { containerId: string } | null;
+    justDroppedId?: string | null;
 }
 
 export const FolderItem = memo(function FolderItem({
@@ -37,6 +38,7 @@ export const FolderItem = memo(function FolderItem({
     folderDragHandleProps,
     dropIndicator,
     containerDropIndicator,
+    justDroppedId,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
@@ -159,6 +161,7 @@ export const FolderItem = memo(function FolderItem({
                                 containerId={folder.id}
                                 activeDocId={activeDocId}
                                 dropIndicator={dropIndicator}
+                                justDroppedId={justDroppedId}
                                 onSelectDocument={onSelectDocument}
                                 onDeleteDocument={onDeleteDocument}
                             />
@@ -175,6 +178,7 @@ function SortableFolderDocRow({
     containerId,
     activeDocId,
     dropIndicator,
+    justDroppedId,
     onSelectDocument,
     onDeleteDocument,
 }: {
@@ -182,6 +186,7 @@ function SortableFolderDocRow({
     containerId: string;
     activeDocId: string | null;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    justDroppedId?: string | null;
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
 }) {
@@ -209,11 +214,13 @@ function SortableFolderDocRow({
                 : 'drop-after'
             : '';
 
+    const isJustDropped = justDroppedId === doc.id;
+
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className={`document-item folder-doc sortable ${doc.id === activeDocId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass}`}
+            className={`document-item folder-doc sortable ${doc.id === activeDocId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
             onClick={() => onSelectDocument(doc.id)}
             {...attributes}
             {...listeners}

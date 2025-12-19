@@ -15,6 +15,7 @@ interface DocumentListProps {
     sortable?: boolean;
     containerId?: string;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    justDroppedId?: string | null;
 }
 
 export function DocumentList({
@@ -26,6 +27,7 @@ export function DocumentList({
     sortable = false,
     containerId,
     dropIndicator,
+    justDroppedId,
 }: DocumentListProps) {
     const sortedItems = useMemo(() => {
         if (isSearchMode) return items;
@@ -64,6 +66,7 @@ export function DocumentList({
                         activeId={activeId}
                         containerId={containerId}
                         dropIndicator={dropIndicator}
+                        justDroppedId={justDroppedId}
                         onSelect={onSelect}
                         onDelete={handleDeleteClick}
                     />
@@ -106,6 +109,7 @@ function SortableDocumentRow({
     activeId,
     containerId,
     dropIndicator,
+    justDroppedId,
     onSelect,
     onDelete,
 }: {
@@ -113,6 +117,7 @@ function SortableDocumentRow({
     activeId: string | null;
     containerId: string;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    justDroppedId?: string | null;
     onSelect: (id: string) => void;
     onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
@@ -140,11 +145,13 @@ function SortableDocumentRow({
                 : 'drop-after'
             : '';
 
+    const isJustDropped = justDroppedId === item.id;
+
     return (
         <li
             ref={setNodeRef}
             style={style}
-            className={`document-item sortable ${item.id === activeId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass}`}
+            className={`document-item sortable ${item.id === activeId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
             onClick={() => onSelect(item.id)}
             {...attributes}
             {...listeners}

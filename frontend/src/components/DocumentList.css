@@ -181,18 +181,31 @@
     cursor: grab;
     user-select: none;
     touch-action: none;
-    /* 禁用 transform 的 transition，避免拖拽时抖动 */
-    transition-property: background-color, box-shadow;
+    /* 平滑过渡用于让位动画 */
+    transition:
+        background-color var(--transition-fast),
+        box-shadow var(--transition-fast),
+        transform 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .document-item.sortable:active {
     cursor: grabbing;
 }
 
+/* 拖拽中的元素 - 占位符状态（实际预览由 DragOverlay 显示） */
 .document-item.is-dragging {
-    opacity: 0.5;
+    opacity: 0.4;
+    background-color: rgba(37, 99, 235, 0.08);
+    border: 1px dashed rgba(37, 99, 235, 0.3);
+    border-radius: var(--radius-md);
 }
 
+.sidebar.dark .document-item.is-dragging {
+    background-color: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.4);
+}
+
+/* Drop indicator 动画 */
 .document-item.drop-before::before,
 .document-item.drop-after::before {
     content: '';
@@ -200,20 +213,101 @@
     left: 12px;
     right: 12px;
     height: 2px;
-    background-color: var(--primary);
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
     border-radius: 2px;
     pointer-events: none;
+    /* 淡入动画 */
+    animation: dropIndicatorFadeIn 0.15s ease-out forwards, dropIndicatorPulse 1s ease-in-out 0.15s infinite;
+}
+
+/* Drop indicator 淡入动画 */
+@keyframes dropIndicatorFadeIn {
+    0% {
+        opacity: 0;
+        transform: scaleX(0.3);
+    }
+    100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+@keyframes dropIndicatorPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scaleX(0.98);
+    }
 }
 
 .document-item.drop-before::before {
-    top: 0;
+    top: -1px;
 }
 
 .document-item.drop-after::before {
-    bottom: 0;
+    bottom: -1px;
 }
 
 .document-item.folder-doc.drop-before::before,
 .document-item.folder-doc.drop-after::before {
     left: 24px;
+}
+
+/* 拖拽时隐藏操作按钮 */
+.document-item.is-dragging .doc-actions {
+    opacity: 0 !important;
+}
+
+/* 放下落地动画 */
+.document-item.just-dropped {
+    animation: dropSettle 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes dropSettle {
+    0% {
+        transform: scale(1.02) translateY(-2px);
+    }
+    50% {
+        transform: scale(0.98) translateY(1px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ========== Drag Overlay ========== */
+.document-item.drag-overlay {
+    background-color: #ffffff;
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 0, 0, 0.12);
+    transform: scale(1.02) rotate(1deg);
+    opacity: 0.95;
+    cursor: grabbing;
+    animation: dragOverlayAppear 0.15s ease-out forwards;
+}
+
+@keyframes dragOverlayAppear {
+    0% {
+        transform: scale(1) rotate(0deg);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    100% {
+        transform: scale(1.02) rotate(1deg);
+        box-shadow:
+            0 12px 28px rgba(0, 0, 0, 0.2),
+            0 6px 12px rgba(0, 0, 0, 0.12);
+    }
+}
+
+.sidebar.dark .document-item.drag-overlay {
+    background-color: #2a2a2a;
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.5),
+        0 6px 12px rgba(0, 0, 0, 0.4);
 }

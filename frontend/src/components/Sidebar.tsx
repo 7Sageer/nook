@@ -7,12 +7,13 @@ import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { FolderItem } from './FolderItem';
-import { Search, FileText, X, Plus } from 'lucide-react';
+import { Search, FileText, X, Plus, ChevronRight, FolderOpen } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   closestCenter,
   DndContext,
+  DragOverlay,
   type CollisionDetection,
   type DragEndEvent,
   type DragMoveEvent,
@@ -85,6 +86,11 @@ export function Sidebar({
   } | null>(null);
   const [containerDropIndicator, setContainerDropIndicator] = useState<{
     containerId: string;
+  } | null>(null);
+  const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
+  const [activeDragItem, setActiveDragItem] = useState<{
+    type: 'document' | 'folder';
+    id: string;
   } | null>(null);
 
   // 选择文档时的处理
@@ -224,9 +230,22 @@ export function Sidebar({
   }, []);
 
   const handleDragStart = useCallback(
-    (_event: DragStartEvent) => {
+    (event: DragStartEvent) => {
       setDocDropIndicator(null);
       setContainerDropIndicator(null);
+
+      const activeId = String(event.active.id);
+      if (isDocDndId(activeId)) {
+        const docId = parseDocId(activeId);
+        if (docId) {
+          setActiveDragItem({ type: 'document', id: docId });
+        }
+      } else if (isFolderDndId(activeId)) {
+        const folderId = parseFolderId(activeId);
+        if (folderId) {
+          setActiveDragItem({ type: 'folder', id: folderId });
+        }
+      }
     },
     []
   );
@@ -291,10 +310,21 @@ export function Sidebar({
     async ({ active, over }: DragEndEvent) => {
       setDocDropIndicator(null);
       setContainerDropIndicator(null);
+      setActiveDragItem(null);
       if (!over) return;
 
       const activeId = String(active.id);
       const overId = String(over.id);
+
+      // 设置刚放下的文档 ID，触发落地动画
+      if (isDocDndId(activeId)) {
+        const droppedDocId = parseDocId(activeId);
+        if (droppedDocId) {
+          setJustDroppedId(droppedDocId);
+          // 动画结束后清除状态
+          setTimeout(() => setJustDroppedId(null), 300);
+        }
+      }
 
       if (isFolderDndId(activeId) && isFolderDndId(overId)) {
         const activeFolderId = parseFolderId(activeId);
@@ -492,6 +522,7 @@ export function Sidebar({
           onDragCancel={() => {
             setDocDropIndicator(null);
             setContainerDropIndicator(null);
+            setActiveDragItem(null);
           }}
         >
           <div className="sidebar-content">
@@ -528,6 +559,7 @@ export function Sidebar({
                       onAddDocumentInFolder={handleCreateInFolder}
                       dropIndicator={docDropIndicator}
                       containerDropIndicator={containerDropIndicator}
+                      justDroppedId={justDroppedId}
                     />
                   ))}
                 </SortableContext>
@@ -568,11 +600,45 @@ export function Sidebar({
                     sortable={!query}
                     containerId={UNCATEGORIZED_CONTAINER_ID}
                     dropIndicator={docDropIndicator}
+                    justDroppedId={justDroppedId}
                   />
                 </ul>
               </div>
             )}
           </div>
+
+          {/* 拖拽预览层 */}
+          <DragOverlay dropAnimation={null}>
+            {activeDragItem?.type === 'document' && (() => {
+              const doc = documents.find(d => d.id === activeDragItem.id);
+              if (!doc) return null;
+              return (
+                <div className="document-item drag-overlay">
+                  <FileText size={16} className="doc-icon" />
+                  <div className="doc-content">
+                    <span className="doc-title">{doc.title}</span>
+                  </div>
+                </div>
+              );
+            })()}
+            {activeDragItem?.type === 'folder' && (() => {
+              const folder = folders.find(f => f.id === activeDragItem.id);
+              if (!folder) return null;
+              const folderDocs = docsByContainer.get(folder.id) || [];
+              return (
+                <div className="folder-item drag-overlay">
+                  <div className="folder-header">
+                    <span className="folder-chevron expanded">
+                      <ChevronRight size={16} />
+                    </span>
+                    <FolderOpen size={16} className="folder-icon" />
+                    <span className="folder-name">{folder.name}</span>
+                    <span className="folder-count">{folderDocs.length}</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </DragOverlay>
         </DndContext>
       </aside>
 
@@ -595,6 +661,7 @@ function SortableFolderWrapper({
   onAddDocumentInFolder,
   dropIndicator,
   containerDropIndicator,
+  justDroppedId,
 }: {
   folder: Folder;
   documents: DocumentMeta[];
@@ -609,6 +676,7 @@ function SortableFolderWrapper({
   onAddDocumentInFolder: (folderId: string) => Promise<void> | void;
   dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
   containerDropIndicator?: { containerId: string } | null;
+  justDroppedId?: string | null;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: folderDndId(folder.id),
@@ -672,6 +740,7 @@ function SortableFolderWrapper({
         folderDragHandleProps={folderDragHandleProps}
         dropIndicator={dropIndicator}
         containerDropIndicator={containerDropIndicator}
+        justDroppedId={justDroppedId}
       />
     </div>
   );
