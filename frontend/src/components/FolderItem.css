@@ -48,6 +48,24 @@
 .folder-icon {
     color: #f59e0b;
     flex-shrink: 0;
+    transition: transform var(--transition-fast);
+}
+
+/* Folder icon bounce on click */
+.folder-header:active .folder-icon {
+    animation: iconBounce 0.3s ease;
+}
+
+@keyframes iconBounce {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.25);
+    }
 }
 
 .folder-name {

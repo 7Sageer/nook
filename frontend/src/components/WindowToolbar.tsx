@@ -102,7 +102,7 @@ export function WindowToolbar({
                             </div>
                         )}
                     </div>
-                    <button className="icon-btn icon-btn-sm" onClick={onToggleTheme} title={getThemeTooltip()}>
+                    <button className="icon-btn icon-btn-sm theme-btn" onClick={onToggleTheme} title={getThemeTooltip()}>
                         {getThemeIcon()}
                     </button>
                     <button className="icon-btn icon-btn-sm collapse-btn" onClick={onToggleSidebar} title={STRINGS.TOOLTIPS.COLLAPSE}>

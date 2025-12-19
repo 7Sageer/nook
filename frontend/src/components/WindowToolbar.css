@@ -85,6 +85,21 @@
     background-color: var(--primary-hover);
 }
 
+/* Theme toggle button animation */
+.theme-btn svg {
+    transition: transform var(--transition-fast);
+}
+
+.theme-btn:hover svg {
+    animation: wiggle 0.4s ease;
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+}
+
 /* ========== Icon Buttons ========== */
 .icon-btn {
     display: flex;
@@ -143,6 +158,11 @@
     transition: transform var(--transition-smooth);
 }
 
+/* Plus icon hover rotation (pre-warm before menu open) */
+.create-menu-trigger:hover .plus-icon {
+    transform: rotate(90deg);
+}
+
 .create-menu-trigger.menu-open .plus-icon {
     transform: rotate(45deg);
 }
@@ -199,6 +219,14 @@
     margin-left: auto;
 }
 
+.collapse-btn svg {
+    transition: transform var(--transition-fast);
+}
+
+.collapse-btn:hover svg {
+    transform: translateX(-2px);
+}
+
 /* 展开按钮样式 */
 .expand-sidebar-btn {
     background-color: #f3f4f6;
@@ -208,8 +236,16 @@
         background-color var(--transition-fast);
 }
 
+.expand-sidebar-btn svg {
+    transition: transform var(--transition-fast);
+}
+
 .expand-sidebar-btn:hover {
     background-color: #e5e7eb;
+}
+
+.expand-sidebar-btn:hover svg {
+    transform: translateX(2px);
 }
 
 .app-container.dark .expand-sidebar-btn {

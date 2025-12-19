@@ -15,7 +15,7 @@
     border-radius: var(--radius-md);
     margin-bottom: 2px;
     position: relative;
-    transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     transform-origin: left center;
 }
 
@@ -49,7 +49,12 @@
 .doc-icon {
     flex-shrink: 0;
     color: #9ca3af;
-    transition: color var(--transition-fast);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.document-item:hover .doc-icon {
+    transform: scale(1.15) rotate(-5deg);
+    color: var(--primary);
 }
 
 .sidebar.dark .doc-icon {
