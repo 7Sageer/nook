@@ -1,6 +1,6 @@
-export namespace main {
+export namespace document {
 	
-	export class DocumentMeta {
+	export class Meta {
 	    id: string;
 	    title: string;
 	    folderId?: string;
@@ -9,7 +9,7 @@ export namespace main {
 	    updatedAt: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new DocumentMeta(source);
+	        return new Meta(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -22,17 +22,17 @@ export namespace main {
 	        this.updatedAt = source["updatedAt"];
 	    }
 	}
-	export class DocumentIndex {
-	    documents: DocumentMeta[];
+	export class Index {
+	    documents: Meta[];
 	    activeId: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new DocumentIndex(source);
+	        return new Index(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.documents = this.convertValues(source["documents"], DocumentMeta);
+	        this.documents = this.convertValues(source["documents"], Meta);
 	        this.activeId = source["activeId"];
 	    }
 	
@@ -54,23 +54,11 @@ export namespace main {
 		    return a;
 		}
 	}
+
+}
+
+export namespace folder {
 	
-	export class ExternalFile {
-	    path: string;
-	    name: string;
-	    content: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new ExternalFile(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.path = source["path"];
-	        this.name = source["name"];
-	        this.content = source["content"];
-	    }
-	}
 	export class Folder {
 	    id: string;
 	    name: string;
@@ -89,6 +77,27 @@ export namespace main {
 	        this.order = source["order"];
 	        this.createdAt = source["createdAt"];
 	        this.collapsed = source["collapsed"];
+	    }
+	}
+
+}
+
+export namespace main {
+	
+	export class ExternalFile {
+	    path: string;
+	    name: string;
+	    content: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExternalFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	        this.content = source["content"];
 	    }
 	}
 	export class SearchResult {

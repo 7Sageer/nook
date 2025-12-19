@@ -1,0 +1,98 @@
+/* ========== Drag and Drop Styles ========== */
+
+/* 文件夹拖拽包装器 */
+.folder-wrapper {
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.folder-wrapper:active {
+    cursor: grabbing;
+}
+
+/* 文件夹拖拽中 - 占位符状态 */
+.folder-wrapper.is-dragging {
+    opacity: 0.4;
+    background-color: rgba(37, 99, 235, 0.08);
+    border: 1px dashed rgba(37, 99, 235, 0.3);
+    border-radius: var(--radius-md);
+}
+
+.sidebar.dark .folder-wrapper.is-dragging {
+    background-color: rgba(37, 99, 235, 0.12);
+    border-color: rgba(37, 99, 235, 0.4);
+}
+
+/* 文件夹拖拽预览层 */
+.folder-item.drag-overlay {
+    background-color: #ffffff;
+    border-radius: var(--radius-md);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.2),
+        0 6px 12px rgba(0, 0, 0, 0.12);
+    transform: scale(1.02) rotate(1deg);
+    opacity: 0.95;
+    cursor: grabbing;
+    animation: dragOverlayAppear 0.15s ease-out forwards;
+}
+
+.sidebar.dark .folder-item.drag-overlay {
+    background-color: #2a2a2a;
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, 0.5),
+        0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.folder-item.drag-overlay .folder-header {
+    padding: 8px 12px;
+}
+
+/* 容器拖拽悬停反馈 */
+.uncategorized-section.drop-target,
+.folder-header.drop-target {
+    animation: containerPulse 1.5s ease-in-out infinite;
+}
+
+/* 未分类区域拖拽悬停 */
+.document-list.drop-before {
+    position: relative;
+    background-color: rgba(37, 99, 235, 0.03);
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast);
+}
+
+.sidebar.dark .document-list.drop-before {
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
+.document-list.drop-before::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    border-radius: 2px;
+    top: 8px;
+    pointer-events: none;
+    animation: dropIndicatorPulse 1s ease-in-out infinite;
+}
+
+/* 文件夹拖拽悬停指示器 */
+.folder-wrapper.drag-over-folder {
+    position: relative;
+}
+
+.folder-wrapper.drag-over-folder::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    border-radius: 2px;
+    animation: dropIndicatorPulse 1s ease-in-out infinite;
+}

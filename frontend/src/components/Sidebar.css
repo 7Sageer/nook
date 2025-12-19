@@ -1,3 +1,8 @@
+/* Import modular styles */
+@import '../styles/Search.css';
+@import '../styles/ExternalFile.css';
+@import '../styles/DragDrop.css';
+
 /* ========== Sidebar Wrapper ========== */
 .sidebar-wrapper {
     display: flex;
@@ -93,6 +98,11 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+}
+
+/* 拖拽时隐藏滚动条，避免抖动 */
+.sidebar-content.is-dragging {
+    overflow-y: hidden;
 }
 
 /* 窗口拖拽区域 + 工具按钮（与红黄绿同行） */
@@ -198,62 +208,6 @@
     height: 24px;
 }
 
-/* ========== Search ========== */
-.search-wrapper {
-    position: relative;
-    margin: 12px 16px;
-    overflow: visible;
-}
-
-.search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-    transition: all var(--transition-fast);
-    z-index: 1;
-}
-
-/* Search icon animation on focus */
-.search-wrapper:focus-within .search-icon {
-    color: var(--primary);
-    transform: translateY(-50%) scale(1.1);
-}
-
-.search-input {
-    width: 100%;
-    padding: 10px 12px 10px 38px;
-    border: 1px solid #e5e7eb;
-    border-radius: var(--radius-md);
-    outline: none;
-    font-size: 14px;
-    background-color: #ffffff;
-    transition: all var(--transition-fast);
-}
-
-.search-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    transform: scale(1.01);
-}
-
-.search-input::placeholder {
-    color: #9ca3af;
-}
-
-.sidebar.dark .search-input {
-    background-color: #252525;
-    border-color: #333;
-    color: #e5e7eb;
-}
-
-.sidebar.dark .search-input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-}
-
 /* ========== Section Labels ========== */
 .section-label-row {
     display: flex;
@@ -318,85 +272,6 @@
     color: var(--primary);
 }
 
-/* ========== 外部文件标签 ========== */
-.external-file-section {
-    margin-bottom: 8px;
-}
-
-.external-file-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    margin: 0 8px;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: #374151;
-    transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.external-file-item:hover {
-    background-color: #f3f4f6;
-}
-
-.external-file-item.active {
-    background-color: rgba(37, 99, 235, 0.1);
-    border-color: rgba(37, 99, 235, 0.3);
-    box-shadow: inset 3px 0 0 0 var(--primary);
-}
-
-.sidebar.dark .external-file-item {
-    color: #e5e7eb;
-}
-
-.sidebar.dark .external-file-item:hover {
-    background-color: #252525;
-}
-
-.sidebar.dark .external-file-item.active {
-    background-color: rgba(37, 99, 235, 0.15);
-    border-color: rgba(37, 99, 235, 0.4);
-}
-
-.external-file-item svg:first-child {
-    flex-shrink: 0;
-    color: var(--primary);
-}
-
-.external-file-name {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.close-external-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background-color: transparent;
-    color: #9ca3af;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-.close-external-btn:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-}
-
-.sidebar.dark .close-external-btn:hover {
-    background-color: rgba(239, 68, 68, 0.2);
-}
-
 /* ========== Folders Section ========== */
 .folders-section {
     margin-bottom: 8px;
@@ -423,103 +298,4 @@
     color: #9ca3af;
     font-size: 14px;
     text-align: center;
-}
-
-/* ========== Drag and Drop ========== */
-
-/* 文件夹拖拽包装器 */
-.folder-wrapper {
-    cursor: grab;
-    user-select: none;
-    touch-action: none;
-    transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-.folder-wrapper:active {
-    cursor: grabbing;
-}
-
-/* 文件夹拖拽中 - 占位符状态（实际预览由 DragOverlay 显示） */
-.folder-wrapper.is-dragging {
-    opacity: 0.4;
-    background-color: rgba(37, 99, 235, 0.08);
-    border: 1px dashed rgba(37, 99, 235, 0.3);
-    border-radius: var(--radius-md);
-}
-
-.sidebar.dark .folder-wrapper.is-dragging {
-    background-color: rgba(37, 99, 235, 0.12);
-    border-color: rgba(37, 99, 235, 0.4);
-}
-
-/* 文件夹拖拽预览层 - 动画定义在 styles/animations.css (使用 dragOverlayAppear) */
-.folder-item.drag-overlay {
-    background-color: #ffffff;
-    border-radius: var(--radius-md);
-    box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.2),
-        0 6px 12px rgba(0, 0, 0, 0.12);
-    transform: scale(1.02) rotate(1deg);
-    opacity: 0.95;
-    cursor: grabbing;
-    animation: dragOverlayAppear 0.15s ease-out forwards;
-}
-
-.sidebar.dark .folder-item.drag-overlay {
-    background-color: #2a2a2a;
-    box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.5),
-        0 6px 12px rgba(0, 0, 0, 0.4);
-}
-
-.folder-item.drag-overlay .folder-header {
-    padding: 8px 12px;
-}
-
-/* 容器拖拽悬停反馈 - 脉冲发光效果，动画定义在 styles/animations.css */
-.uncategorized-section.drop-target,
-.folder-header.drop-target {
-    animation: containerPulse 1.5s ease-in-out infinite;
-}
-
-/* 未分类区域拖拽悬停 */
-.document-list.drop-before {
-    position: relative;
-    background-color: rgba(37, 99, 235, 0.03);
-    border-radius: var(--radius-md);
-    transition: background-color var(--transition-fast);
-}
-
-.sidebar.dark .document-list.drop-before {
-    background-color: rgba(37, 99, 235, 0.08);
-}
-
-.document-list.drop-before::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
-    border-radius: 2px;
-    top: 8px;
-    pointer-events: none;
-    animation: dropIndicatorPulse 1s ease-in-out infinite;
-}
-
-/* 文件夹拖拽悬停指示器 */
-.folder-wrapper.drag-over-folder {
-    position: relative;
-}
-
-.folder-wrapper.drag-over-folder::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    right: 20px;
-    top: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
-    border-radius: 2px;
-    animation: dropIndicatorPulse 1s ease-in-out infinite;
 }

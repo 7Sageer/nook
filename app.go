@@ -16,23 +16,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// ========== 数据结构（保持与前端兼容） ==========
-
-// DocumentMeta 文档元数据
-type DocumentMeta struct {
-	ID        string `json:"id"`
-	Title     string `json:"title"`
-	FolderId  string `json:"folderId,omitempty"`
-	Order     int    `json:"order"`
-	CreatedAt int64  `json:"createdAt"`
-	UpdatedAt int64  `json:"updatedAt"`
-}
-
-// DocumentIndex 文档索引
-type DocumentIndex struct {
-	Documents []DocumentMeta `json:"documents"`
-	ActiveID  string         `json:"activeId"`
-}
+// ========== 前端专用数据结构 ==========
 
 // SearchResult 搜索结果
 type SearchResult struct {
@@ -44,15 +28,6 @@ type SearchResult struct {
 // Settings 用户设置
 type Settings struct {
 	Theme string `json:"theme"`
-}
-
-// Folder 文件夹（前端兼容）
-type Folder struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Order     int    `json:"order"`
-	CreatedAt int64  `json:"createdAt"`
-	Collapsed bool   `json:"collapsed"`
 }
 
 // App struct
@@ -145,38 +120,13 @@ func (a *App) flushPendingExternalFileOpens() {
 }
 
 // GetDocumentList 获取文档列表
-func (a *App) GetDocumentList() (DocumentIndex, error) {
-	index, err := a.docRepo.GetAll()
-	if err != nil {
-		return DocumentIndex{}, err
-	}
-	// 转换为前端兼容的类型
-	docs := make([]DocumentMeta, len(index.Documents))
-	for i, d := range index.Documents {
-		docs[i] = DocumentMeta{
-			ID:        d.ID,
-			Title:     d.Title,
-			FolderId:  d.FolderId,
-			Order:     d.Order,
-			CreatedAt: d.CreatedAt,
-			UpdatedAt: d.UpdatedAt,
-		}
-	}
-	return DocumentIndex{Documents: docs, ActiveID: index.ActiveID}, nil
+func (a *App) GetDocumentList() (document.Index, error) {
+	return a.docRepo.GetAll()
 }
 
 // CreateDocument 创建新文档
-func (a *App) CreateDocument(title string) (DocumentMeta, error) {
-	doc, err := a.docRepo.Create(title)
-	if err != nil {
-		return DocumentMeta{}, err
-	}
-	return DocumentMeta{
-		ID:        doc.ID,
-		Title:     doc.Title,
-		CreatedAt: doc.CreatedAt,
-		UpdatedAt: doc.UpdatedAt,
-	}, nil
+func (a *App) CreateDocument(title string) (document.Meta, error) {
+	return a.docRepo.Create(title)
 }
 
 // DeleteDocument 删除文档
@@ -258,36 +208,13 @@ func (a *App) SaveSettings(s Settings) error {
 // ========== 文件夹管理 ==========
 
 // GetFolders 获取所有文件夹
-func (a *App) GetFolders() ([]Folder, error) {
-	folders, err := a.folderRepo.GetAll()
-	if err != nil {
-		return []Folder{}, err
-	}
-	result := make([]Folder, len(folders))
-	for i, f := range folders {
-		result[i] = Folder{
-			ID:        f.ID,
-			Name:      f.Name,
-			Order:     f.Order,
-			CreatedAt: f.CreatedAt,
-			Collapsed: f.Collapsed,
-		}
-	}
-	return result, nil
+func (a *App) GetFolders() ([]folder.Folder, error) {
+	return a.folderRepo.GetAll()
 }
 
 // CreateFolder 创建新文件夹
-func (a *App) CreateFolder(name string) (Folder, error) {
-	f, err := a.folderRepo.Create(name)
-	if err != nil {
-		return Folder{}, err
-	}
-	return Folder{
-		ID:        f.ID,
-		Name:      f.Name,
-		CreatedAt: f.CreatedAt,
-		Collapsed: f.Collapsed,
-	}, nil
+func (a *App) CreateFolder(name string) (folder.Folder, error) {
+	return a.folderRepo.Create(name)
 }
 
 // DeleteFolder 删除文件夹

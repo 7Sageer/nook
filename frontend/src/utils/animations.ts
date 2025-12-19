@@ -31,23 +31,47 @@ export const listItemVariants: Variants = {
     initial: {
         opacity: 0,
         x: -12,
+        height: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
     },
     animate: (i: number) => ({
         opacity: 1,
         x: 0,
+        height: 'auto',
+        marginTop: undefined, // 恢复默认
+        marginBottom: 2, // 恢复 CSS 中定义的值
+        paddingTop: 10,
+        paddingBottom: 10,
         transition: {
             delay: i * durations.stagger,
             duration: durations.normal,
             ease: easings.standard,
+            // 高度先展开，再淡入
+            height: { duration: durations.fast },
+            paddingTop: { duration: durations.fast },
+            paddingBottom: { duration: durations.fast },
+            marginBottom: { duration: durations.fast },
         },
     }),
     exit: {
         opacity: 0,
         x: -20,
         scale: 0.95,
+        height: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
         transition: {
-            duration: durations.fast,
-            ease: easings.exit,
+            duration: durations.normal,
+            ease: easings.standard,
+            // 让视觉效果（opacity, x, scale）先完成
+            opacity: { duration: durations.fast },
+            x: { duration: durations.fast },
+            scale: { duration: durations.fast },
         },
     },
 };

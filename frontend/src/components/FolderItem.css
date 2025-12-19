@@ -149,6 +149,8 @@
 
 .folder-documents-inner {
     min-height: 0;
+    position: relative;
+    /* 用于 exit 动画的 absolute 定位 */
 }
 
 .folder-documents-inner,

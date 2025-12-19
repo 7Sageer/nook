@@ -4,6 +4,8 @@
     overflow-y: auto;
     list-style: none;
     padding: 8px;
+    position: relative;
+    /* 用于 exit 动画的 absolute 定位 */
 }
 
 .document-list.drop-before {
@@ -31,6 +33,8 @@
     border-radius: var(--radius-md);
     margin-bottom: 2px;
     position: relative;
+    overflow: hidden;
+    /* 退出动画高度收缩时隐藏溢出内容 */
     transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     transform-origin: left center;
 }
