@@ -528,8 +528,8 @@ export function Sidebar({
           <div className="sidebar-content">
             {/* 文件夹列表 */}
             {!query && folders.length > 0 && (
-              <div className="folders-section">
-                <div className="section-label-row">
+              <motion.div layout className="folders-section">
+                <motion.div layout className="section-label-row">
                   <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
                   <button
                     className="section-add-btn"
@@ -538,41 +538,45 @@ export function Sidebar({
                   >
                     <Plus size={14} />
                   </button>
-                </div>
+                </motion.div>
                 <SortableContext
                   items={sortedFolders.map((folder) => folderDndId(folder.id))}
                   strategy={verticalListSortingStrategy}
                 >
-                  {sortedFolders.map((folder) => (
-                    <SortableFolderWrapper
-                      key={folder.id}
-                      folder={folder}
-                      documents={docsByContainer.get(folder.id)!}
-                      disabled={editingFolderId === folder.id}
-                      activeDocId={activeExternalPath ? null : activeId}
-                      onToggleFolder={toggleFolderCollapsed}
-                      onRenameFolder={renameFolder}
-                      onDeleteFolder={handleDeleteFolderClick}
-                      onSelectDocument={handleSelect}
-                      onDeleteDocument={handleDeleteClick}
-                      onEditingFolderChange={setEditingFolderId}
-                      onAddDocumentInFolder={handleCreateInFolder}
-                      dropIndicator={docDropIndicator}
-                      containerDropIndicator={containerDropIndicator}
-                      justDroppedId={justDroppedId}
-                    />
-                  ))}
+                  <AnimatePresence mode="popLayout">
+                    {sortedFolders.map((folder, index) => (
+                      <SortableFolderWrapper
+                        key={folder.id}
+                        folder={folder}
+                        index={index}
+                        documents={docsByContainer.get(folder.id)!}
+                        disabled={editingFolderId === folder.id}
+                        activeDocId={activeExternalPath ? null : activeId}
+                        onToggleFolder={toggleFolderCollapsed}
+                        onRenameFolder={renameFolder}
+                        onDeleteFolder={handleDeleteFolderClick}
+                        onSelectDocument={handleSelect}
+                        onDeleteDocument={handleDeleteClick}
+                        onEditingFolderChange={setEditingFolderId}
+                        onAddDocumentInFolder={handleCreateInFolder}
+                        dropIndicator={docDropIndicator}
+                        containerDropIndicator={containerDropIndicator}
+                        justDroppedId={justDroppedId}
+                      />
+                    ))}
+                  </AnimatePresence>
                 </SortableContext>
-              </div>
+              </motion.div>
             )}
 
             {/* 未分类文档列表 */}
             {(displayList.length > 0 || query) && (
-              <div
+              <motion.div
+                layout
                 ref={setUncategorizedDroppableRef}
                 className="uncategorized-section"
               >
-                <div className="section-label-row">
+                <motion.div layout className="section-label-row">
                   <span className="section-label">
                     {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
                   </span>
@@ -585,8 +589,9 @@ export function Sidebar({
                       <Plus size={14} />
                     </button>
                   )}
-                </div>
-                <ul
+                </motion.div>
+                <motion.ul
+                  layout
                   className={`document-list ${
                     !query && containerDropIndicator?.containerId === UNCATEGORIZED_CONTAINER_ID ? 'drop-before' : ''
                   }`}
@@ -602,8 +607,8 @@ export function Sidebar({
                     dropIndicator={docDropIndicator}
                     justDroppedId={justDroppedId}
                   />
-                </ul>
-              </div>
+                </motion.ul>
+              </motion.div>
             )}
           </div>
 
@@ -647,8 +652,31 @@ export function Sidebar({
   );
 }
 
+const folderVariants = {
+  initial: { opacity: 0, x: -12 },
+  animate: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: {
+      delay: i * 0.04,
+      duration: 0.2,
+      ease: [0.4, 0, 0.2, 1] as const,
+    },
+  }),
+  exit: {
+    opacity: 0,
+    x: -20,
+    scale: 0.95,
+    transition: {
+      duration: 0.15,
+      ease: [0.4, 0, 1, 1] as const,
+    },
+  },
+};
+
 function SortableFolderWrapper({
   folder,
+  index,
   documents,
   disabled,
   activeDocId,
@@ -664,6 +692,7 @@ function SortableFolderWrapper({
   justDroppedId,
 }: {
   folder: Folder;
+  index: number;
   documents: DocumentMeta[];
   disabled: boolean;
   activeDocId: string | null;
@@ -721,9 +750,15 @@ function SortableFolderWrapper({
   }, [onAddDocumentInFolder, folder.id]);
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
+      layout
+      variants={folderVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      custom={index}
       className={`folder-wrapper sortable ${isDragging ? 'is-dragging' : ''}`}
     >
       <FolderItem
@@ -742,6 +777,6 @@ function SortableFolderWrapper({
         containerDropIndicator={containerDropIndicator}
         justDroppedId={justDroppedId}
       />
-    </div>
+    </motion.div>
   );
 }

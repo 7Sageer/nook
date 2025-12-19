@@ -2,10 +2,33 @@ import { memo, useMemo, useState } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
 import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { docContainerDndId, docDndId } from '../utils/dnd';
+
+const folderDocVariants = {
+    initial: { opacity: 0, x: -12 },
+    animate: (i: number) => ({
+        opacity: 1,
+        x: 0,
+        transition: {
+            delay: i * 0.03,
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1] as const,
+        },
+    }),
+    exit: {
+        opacity: 0,
+        x: -20,
+        scale: 0.95,
+        transition: {
+            duration: 0.15,
+            ease: [0.4, 0, 1, 1] as const,
+        },
+    },
+};
 
 interface FolderItemProps {
     folder: Folder;
@@ -154,18 +177,21 @@ export const FolderItem = memo(function FolderItem({
             <div className={`folder-documents ${folder.collapsed ? 'collapsed' : ''}`}>
                 <div className="folder-documents-inner">
                     <SortableContext items={sortedDocs.map((doc) => docDndId(doc.id))} strategy={verticalListSortingStrategy}>
-                        {sortedDocs.map((doc) => (
-                            <SortableFolderDocRow
-                                key={doc.id}
-                                doc={doc}
-                                containerId={folder.id}
-                                activeDocId={activeDocId}
-                                dropIndicator={dropIndicator}
-                                justDroppedId={justDroppedId}
-                                onSelectDocument={onSelectDocument}
-                                onDeleteDocument={onDeleteDocument}
-                            />
-                        ))}
+                        <AnimatePresence mode="popLayout">
+                            {sortedDocs.map((doc, index) => (
+                                <SortableFolderDocRow
+                                    key={doc.id}
+                                    doc={doc}
+                                    index={index}
+                                    containerId={folder.id}
+                                    activeDocId={activeDocId}
+                                    dropIndicator={dropIndicator}
+                                    justDroppedId={justDroppedId}
+                                    onSelectDocument={onSelectDocument}
+                                    onDeleteDocument={onDeleteDocument}
+                                />
+                            ))}
+                        </AnimatePresence>
                     </SortableContext>
                 </div>
             </div>
@@ -175,6 +201,7 @@ export const FolderItem = memo(function FolderItem({
 
 function SortableFolderDocRow({
     doc,
+    index,
     containerId,
     activeDocId,
     dropIndicator,
@@ -183,6 +210,7 @@ function SortableFolderDocRow({
     onDeleteDocument,
 }: {
     doc: DocumentMeta;
+    index: number;
     containerId: string;
     activeDocId: string | null;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
@@ -217,9 +245,15 @@ function SortableFolderDocRow({
     const isJustDropped = justDroppedId === doc.id;
 
     return (
-        <div
+        <motion.div
             ref={setNodeRef}
             style={style}
+            layout
+            variants={folderDocVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            custom={index}
             className={`document-item folder-doc sortable ${doc.id === activeDocId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
             onClick={() => onSelectDocument(doc.id)}
             {...attributes}
@@ -240,6 +274,6 @@ function SortableFolderDocRow({
                     <Trash2 size={14} />
                 </button>
             </div>
-        </div>
+        </motion.div>
     );
 }

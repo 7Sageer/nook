@@ -2,9 +2,32 @@ import { useMemo } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { docDndId } from '../utils/dnd';
+
+const listItemVariants = {
+    initial: { opacity: 0, x: -12 },
+    animate: (i: number) => ({
+        opacity: 1,
+        x: 0,
+        transition: {
+            delay: i * 0.03,
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1] as const,
+        },
+    }),
+    exit: {
+        opacity: 0,
+        x: -20,
+        scale: 0.95,
+        transition: {
+            duration: 0.15,
+            ease: [0.4, 0, 1, 1] as const,
+        },
+    },
+};
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -59,27 +82,36 @@ export function DocumentList({
         const sortableItems = sortedItems.map((item) => docDndId(item.id));
         return (
             <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
-                {sortedItems.map((item) => (
-                    <SortableDocumentRow
-                        key={item.id}
-                        item={item}
-                        activeId={activeId}
-                        containerId={containerId}
-                        dropIndicator={dropIndicator}
-                        justDroppedId={justDroppedId}
-                        onSelect={onSelect}
-                        onDelete={handleDeleteClick}
-                    />
-                ))}
+                <AnimatePresence mode="popLayout">
+                    {sortedItems.map((item, index) => (
+                        <SortableDocumentRow
+                            key={item.id}
+                            item={item}
+                            index={index}
+                            activeId={activeId}
+                            containerId={containerId}
+                            dropIndicator={dropIndicator}
+                            justDroppedId={justDroppedId}
+                            onSelect={onSelect}
+                            onDelete={handleDeleteClick}
+                        />
+                    ))}
+                </AnimatePresence>
             </SortableContext>
         );
     }
 
     return (
-        <>
-            {sortedItems.map((item) => (
-                <li
+        <AnimatePresence mode="popLayout">
+            {sortedItems.map((item, index) => (
+                <motion.li
                     key={item.id}
+                    layout
+                    variants={listItemVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    custom={index}
                     className={`document-item ${item.id === activeId ? 'active' : ''}`}
                     onClick={() => onSelect(item.id)}
                 >
@@ -98,14 +130,15 @@ export function DocumentList({
                             <Trash2 size={14} />
                         </button>
                     </div>
-                </li>
+                </motion.li>
             ))}
-        </>
+        </AnimatePresence>
     );
 }
 
 function SortableDocumentRow({
     item,
+    index,
     activeId,
     containerId,
     dropIndicator,
@@ -114,6 +147,7 @@ function SortableDocumentRow({
     onDelete,
 }: {
     item: DocumentMeta | SearchResult;
+    index: number;
     activeId: string | null;
     containerId: string;
     dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
@@ -148,9 +182,15 @@ function SortableDocumentRow({
     const isJustDropped = justDroppedId === item.id;
 
     return (
-        <li
+        <motion.li
             ref={setNodeRef}
             style={style}
+            layout
+            variants={listItemVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            custom={index}
             className={`document-item sortable ${item.id === activeId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
             onClick={() => onSelect(item.id)}
             {...attributes}
@@ -171,6 +211,6 @@ function SortableDocumentRow({
                     <Trash2 size={14} />
                 </button>
             </div>
-        </li>
+        </motion.li>
     );
 }

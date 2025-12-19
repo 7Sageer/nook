@@ -400,6 +400,7 @@
 /* ========== Folders Section ========== */
 .folders-section {
     margin-bottom: 8px;
+    overflow: hidden;
 }
 
 .uncategorized-section {
@@ -408,6 +409,7 @@
     transition: background-color var(--transition-fast);
     border-radius: var(--radius-md);
     margin: 0 8px;
+    overflow: hidden;
 }
 
 /* ========== Empty Hint ========== */

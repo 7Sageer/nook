@@ -20,6 +20,7 @@ body,
     color: #374151;
     transition: background-color var(--transition-normal), color var(--transition-normal);
     position: relative;
+    overflow: hidden;
 }
 
 .app-container.dark {
