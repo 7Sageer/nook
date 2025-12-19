@@ -1,11 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import { OpenExternalFile, SaveExternalFile } from '../../wailsjs/go/main/App';
+import type { ExternalFileInfo } from '../types/external-file';
 
-export interface ExternalFileInfo {
-    path: string;
-    name: string;
-    content: string;
-}
+// Re-export for convenience
+export type { ExternalFileInfo } from '../types/external-file';
+
 
 // 从路径中提取文件名
 function getFileName(path: string): string {

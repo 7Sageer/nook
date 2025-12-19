@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import {
     closestCenter,
     type CollisionDetection,
@@ -22,6 +22,7 @@ import {
     parseFolderId,
 } from '../utils/dnd';
 import type { Folder } from '../types/document';
+import { useDropIndicator } from './useDropIndicator';
 
 interface UseSidebarDndOptions {
     sortedFolders: Folder[];
@@ -33,20 +34,6 @@ interface UseSidebarDndOptions {
     reorderFolders: (ids: string[]) => Promise<void>;
 }
 
-interface DocDropIndicator {
-    docId: string;
-    position: 'before' | 'after';
-}
-
-interface ContainerDropIndicator {
-    containerId: string;
-}
-
-interface ActiveDragItem {
-    type: 'document' | 'folder';
-    id: string;
-}
-
 export function useSidebarDnd({
     sortedFolders,
     containerIdByDocId,
@@ -56,16 +43,25 @@ export function useSidebarDnd({
     reorderDocuments,
     reorderFolders,
 }: UseSidebarDndOptions) {
-    const [docDropIndicator, setDocDropIndicator] = useState<DocDropIndicator | null>(null);
-    const [containerDropIndicator, setContainerDropIndicator] = useState<ContainerDropIndicator | null>(null);
-    const [justDroppedId, setJustDroppedId] = useState<string | null>(null);
-    const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
+    const {
+        docDropIndicator,
+        containerDropIndicator,
+        justDroppedId,
+        activeDragItem,
+        setDocDropIndicator,
+        setContainerDropIndicator,
+        setActiveDragItem,
+        clearIndicators,
+        clearAll,
+        setDroppedWithAnimation,
+    } = useDropIndicator();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 8 },
         })
     );
+
 
     const collisionDetection: CollisionDetection = useCallback((args) => {
         const activeId = String(args.active.id);
@@ -187,11 +183,10 @@ export function useSidebarDnd({
             if (isDocDndId(activeId)) {
                 const droppedDocId = parseDocId(activeId);
                 if (droppedDocId) {
-                    setJustDroppedId(droppedDocId);
-                    // 动画结束后清除状态
-                    setTimeout(() => setJustDroppedId(null), 300);
+                    setDroppedWithAnimation(droppedDocId);
                 }
             }
+
 
             if (isFolderDndId(activeId) && isFolderDndId(overId)) {
                 const activeFolderId = parseFolderId(activeId);

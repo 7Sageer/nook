@@ -1,13 +1,13 @@
 import { memo, useMemo, useState } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
-import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText, Plus } from 'lucide-react';
+import type { DocDropIndicator, ContainerDropIndicator } from '../types/dnd';
+import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { docContainerDndId, docDndId } from '../utils/dnd';
-import { listItemVariants } from '../utils/animations';
+import { SortableDocItem } from './SortableDocItem';
 
 interface FolderItemProps {
     folder: Folder;
@@ -21,8 +21,8 @@ interface FolderItemProps {
     onEditingChange?: (isEditing: boolean) => void;
     onAddDocument?: () => void;
     folderDragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
-    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
-    containerDropIndicator?: { containerId: string } | null;
+    dropIndicator?: DocDropIndicator | null;
+    containerDropIndicator?: ContainerDropIndicator | null;
     justDroppedId?: string | null;
 }
 
@@ -158,16 +158,17 @@ export const FolderItem = memo(function FolderItem({
                     <SortableContext items={sortedDocs.map((doc) => docDndId(doc.id))} strategy={verticalListSortingStrategy}>
                         <AnimatePresence mode="popLayout">
                             {sortedDocs.map((doc, index) => (
-                                <SortableFolderDocRow
+                                <SortableDocItem
                                     key={doc.id}
-                                    doc={doc}
+                                    item={doc}
                                     index={index}
                                     containerId={folder.id}
-                                    activeDocId={activeDocId}
+                                    activeId={activeDocId}
                                     dropIndicator={dropIndicator}
                                     justDroppedId={justDroppedId}
-                                    onSelectDocument={onSelectDocument}
-                                    onDeleteDocument={onDeleteDocument}
+                                    onSelect={onSelectDocument}
+                                    onDelete={onDeleteDocument}
+                                    inFolder
                                 />
                             ))}
                         </AnimatePresence>
@@ -178,82 +179,3 @@ export const FolderItem = memo(function FolderItem({
     );
 });
 
-function SortableFolderDocRow({
-    doc,
-    index,
-    containerId,
-    activeDocId,
-    dropIndicator,
-    justDroppedId,
-    onSelectDocument,
-    onDeleteDocument,
-}: {
-    doc: DocumentMeta;
-    index: number;
-    containerId: string;
-    activeDocId: string | null;
-    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
-    justDroppedId?: string | null;
-    onSelectDocument: (id: string) => void;
-    onDeleteDocument: (id: string) => void;
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: docDndId(doc.id),
-        data: { type: 'document', containerId, docId: doc.id },
-    });
-
-    const style: React.CSSProperties = {
-        transform: CSS.Translate.toString(transform ? { ...transform, x: 0 } : null),
-        transition,
-    };
-
-    const dropClass =
-        dropIndicator?.docId === doc.id
-            ? dropIndicator.position === 'before'
-                ? 'drop-before'
-                : 'drop-after'
-            : '';
-
-    const isJustDropped = justDroppedId === doc.id;
-
-    return (
-        <motion.div
-            ref={setNodeRef}
-            style={style}
-            // 拖拽时禁用 layout 动画，避免与 dnd-kit transform 冲突
-            layout={!isDragging}
-            variants={listItemVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            custom={index}
-            className={`document-item folder-doc sortable ${doc.id === activeDocId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
-            onClick={() => onSelectDocument(doc.id)}
-            {...attributes}
-            {...listeners}
-        >
-            <FileText size={16} className="doc-icon" />
-            <span className="doc-title">{doc.title}</span>
-            <div className="doc-actions">
-                <button
-                    className="action-btn danger"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteDocument(doc.id);
-                    }}
-                    title={STRINGS.TOOLTIPS.DELETE}
-                >
-                    <Trash2 size={14} />
-                </button>
-            </div>
-        </motion.div>
-    );
-}

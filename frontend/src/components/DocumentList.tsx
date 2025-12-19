@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
+import type { DocDropIndicator } from '../types/dnd';
 import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { docDndId } from '../utils/dnd';
 import { listItemVariants } from '../utils/animations';
+import { SortableDocItem } from './SortableDocItem';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -16,7 +17,7 @@ interface DocumentListProps {
     onDelete: (id: string) => void;
     sortable?: boolean;
     containerId?: string;
-    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    dropIndicator?: DocDropIndicator | null;
     justDroppedId?: string | null;
 }
 
@@ -63,16 +64,17 @@ export function DocumentList({
             <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
                 <AnimatePresence mode="popLayout">
                     {sortedItems.map((item, index) => (
-                        <SortableDocumentRow
+                        <SortableDocItem
                             key={item.id}
                             item={item}
                             index={index}
-                            activeId={activeId}
                             containerId={containerId}
+                            activeId={activeId}
                             dropIndicator={dropIndicator}
                             justDroppedId={justDroppedId}
                             onSelect={onSelect}
-                            onDelete={handleDeleteClick}
+                            onDelete={onDelete}
+                            showSnippet={isSearchMode && 'snippet' in item}
                         />
                     ))}
                 </AnimatePresence>
@@ -80,6 +82,7 @@ export function DocumentList({
         );
     }
 
+    // 非 sortable 模式（搜索结果）
     return (
         <AnimatePresence mode="popLayout">
             {sortedItems.map((item, index) => (
@@ -115,82 +118,3 @@ export function DocumentList({
     );
 }
 
-function SortableDocumentRow({
-    item,
-    index,
-    activeId,
-    containerId,
-    dropIndicator,
-    justDroppedId,
-    onSelect,
-    onDelete,
-}: {
-    item: DocumentMeta | SearchResult;
-    index: number;
-    activeId: string | null;
-    containerId: string;
-    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
-    justDroppedId?: string | null;
-    onSelect: (id: string) => void;
-    onDelete: (e: React.MouseEvent, id: string) => void;
-}) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: docDndId(item.id),
-        data: { type: 'document', containerId, docId: item.id },
-    });
-
-    const style: React.CSSProperties = {
-        transform: CSS.Translate.toString(transform ? { ...transform, x: 0 } : null),
-        transition,
-    };
-
-    const dropClass =
-        dropIndicator?.docId === item.id
-            ? dropIndicator.position === 'before'
-                ? 'drop-before'
-                : 'drop-after'
-            : '';
-
-    const isJustDropped = justDroppedId === item.id;
-
-    return (
-        <motion.li
-            ref={setNodeRef}
-            style={style}
-            // 拖拽时禁用 layout 动画，避免与 dnd-kit transform 冲突
-            layout={!isDragging}
-            variants={listItemVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            custom={index}
-            className={`document-item sortable ${item.id === activeId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`}
-            onClick={() => onSelect(item.id)}
-            {...attributes}
-            {...listeners}
-        >
-            <FileText size={16} className="doc-icon" />
-            <div className="doc-content">
-                <span className="doc-title">{item.title}</span>
-                {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
-            </div>
-            <div className="doc-actions">
-                <button
-                    className="action-btn danger"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => onDelete(e, item.id)}
-                    title={STRINGS.TOOLTIPS.DELETE}
-                >
-                    <Trash2 size={14} />
-                </button>
-            </div>
-        </motion.li>
-    );
-}
