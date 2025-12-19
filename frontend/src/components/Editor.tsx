@@ -43,6 +43,11 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
           });
           view.updateState(newState);
           pluginInjectedRef.current = true;
+
+          // 自动聚焦编辑器，让用户可以直接开始输入
+          setTimeout(() => {
+            editor.focus();
+          }, 50);
         } catch (err) {
           console.warn("Failed to inject smooth caret plugin:", err);
         }
