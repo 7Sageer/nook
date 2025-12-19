@@ -114,6 +114,7 @@
 
 .folder-rename-input {
     flex: 1;
+    min-width: 0;
     padding: 4px 8px;
     border: 2px solid var(--primary);
     border-radius: var(--radius-sm);

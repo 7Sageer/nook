@@ -167,41 +167,45 @@ export function FolderItem({
                         }}
                     >{folder.name}</span>
                 )}
-                <span className="folder-count">{documents.length}</span>
-                <div className="folder-actions">
-                    {onAddDocument && (
+                {!isEditing && (
+                    <span className="folder-count">{documents.length}</span>
+                )}
+                {!isEditing && (
+                    <div className="folder-actions">
+                        {onAddDocument && (
+                            <button
+                                className="action-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onAddDocument();
+                                }}
+                                title={STRINGS.TOOLTIPS.FOLDER_ADD_DOC}
+                            >
+                                <Plus size={14} />
+                            </button>
+                        )}
                         <button
                             className="action-btn"
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onAddDocument();
+                                startEditing();
                             }}
-                            title={STRINGS.TOOLTIPS.FOLDER_ADD_DOC}
+                            title={STRINGS.TOOLTIPS.FOLDER_RENAME}
                         >
-                            <Plus size={14} />
+                            <Pencil size={14} />
                         </button>
-                    )}
-                    <button
-                        className="action-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            startEditing();
-                        }}
-                        title={STRINGS.TOOLTIPS.FOLDER_RENAME}
-                    >
-                        <Pencil size={14} />
-                    </button>
-                    <button
-                        className="action-btn danger"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete();
-                        }}
-                        title={STRINGS.TOOLTIPS.FOLDER_DELETE}
-                    >
-                        <Trash2 size={14} />
-                    </button>
-                </div>
+                        <button
+                            className="action-btn danger"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete();
+                            }}
+                            title={STRINGS.TOOLTIPS.FOLDER_DELETE}
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
+                )}
             </div>
             <div className={`folder-documents ${folder.collapsed ? 'collapsed' : ''}`}>
                 <div className="folder-documents-inner">
