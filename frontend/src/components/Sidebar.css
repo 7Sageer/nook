@@ -89,6 +89,7 @@
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     margin-bottom: 8px;
     flex: 1;
+    overflow-x: hidden;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -409,14 +410,6 @@
     margin: 0 8px;
 }
 
-.uncategorized-section.drag-over {
-    background-color: rgba(37, 99, 235, 0.1);
-}
-
-.sidebar.dark .uncategorized-section.drag-over {
-    background-color: rgba(37, 99, 235, 0.15);
-}
-
 /* ========== Empty Hint ========== */
 .empty-hint {
     display: flex;
@@ -446,13 +439,13 @@
 }
 
 .document-item.is-dragging,
-.folder-item.is-dragging {
+.folder-wrapper.is-dragging {
     background-color: rgba(37, 99, 235, 0.1);
     border-radius: var(--radius-md);
 }
 
 .sidebar.dark .document-item.is-dragging,
-.sidebar.dark .folder-item.is-dragging {
+.sidebar.dark .folder-wrapper.is-dragging {
     background-color: rgba(37, 99, 235, 0.2);
 }
 

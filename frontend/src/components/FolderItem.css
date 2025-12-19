@@ -12,6 +12,7 @@
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     user-select: none;
+    touch-action: none;
     position: relative;
 }
 
@@ -23,10 +24,16 @@
     background-color: #252525;
 }
 
-.folder-header.drag-over {
-    background-color: rgba(37, 99, 235, 0.15);
-    outline: 2px dashed var(--primary);
-    outline-offset: -2px;
+.folder-header.drop-target::after {
+    content: '';
+    position: absolute;
+    left: 24px;
+    right: 12px;
+    height: 2px;
+    background-color: var(--primary);
+    border-radius: 2px;
+    bottom: 0;
+    pointer-events: none;
 }
 
 .folder-chevron {

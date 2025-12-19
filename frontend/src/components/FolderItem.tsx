@@ -1,8 +1,11 @@
-import { useState, useMemo, useRef } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Folder, DocumentMeta } from '../types/document';
 import { ChevronRight, Folder as FolderIcon, FolderOpen, Pencil, Trash2, FileText, Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { docContainerDndId, docDndId } from '../utils/dnd';
 
 interface FolderItemProps {
     folder: Folder;
@@ -13,13 +16,14 @@ interface FolderItemProps {
     onDelete: () => void;
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
-    onMoveDocument: (docId: string, folderId: string) => void;
-    onReorderDocuments?: (ids: string[]) => void;
     onEditingChange?: (isEditing: boolean) => void;
     onAddDocument?: () => void;
+    folderDragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    containerDropIndicator?: { containerId: string } | null;
 }
 
-export function FolderItem({
+export const FolderItem = memo(function FolderItem({
     folder,
     documents,
     activeDocId,
@@ -28,20 +32,27 @@ export function FolderItem({
     onDelete,
     onSelectDocument,
     onDeleteDocument,
-    onMoveDocument,
-    onReorderDocuments,
     onEditingChange,
     onAddDocument,
+    folderDragHandleProps,
+    dropIndicator,
+    containerDropIndicator,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
-    const [dragOverId, setDragOverId] = useState<string | null>(null);
-    const [headerDragOver, setHeaderDragOver] = useState(false);
-    const draggedIdRef = useRef<string | null>(null);
 
     const sortedDocs = useMemo(() => {
         return [...documents].sort((a, b) => a.order - b.order);
     }, [documents]);
+
+    const {
+        setNodeRef: setHeaderDroppableRef,
+    } = useDroppable({
+        id: docContainerDndId(folder.id),
+        data: { type: 'doc-container', containerId: folder.id },
+    });
+
+    const isContainerDropTarget = containerDropIndicator?.containerId === folder.id;
 
     const handleRenameSubmit = () => {
         if (editName.trim() && editName !== folder.name) {
@@ -57,85 +68,13 @@ export function FolderItem({
         onEditingChange?.(true);
     };
 
-    // 文件夹头部拖拽处理（接收从其他地方拖来的文档）
-    const handleHeaderDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        setHeaderDragOver(true);
-    };
-
-    const handleHeaderDragLeave = () => {
-        setHeaderDragOver(false);
-    };
-
-    const handleHeaderDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        setHeaderDragOver(false);
-        const docId = e.dataTransfer.getData('text/plain');
-        if (docId) {
-            onMoveDocument(docId, folder.id);
-        }
-    };
-
-    // 文档拖拽开始
-    const handleDocDragStart = (e: React.DragEvent, docId: string) => {
-        draggedIdRef.current = docId;
-        e.dataTransfer.setData('text/plain', docId);
-        e.dataTransfer.effectAllowed = 'move';
-    };
-
-    // 文档拖拽悬停（用于排序）
-    const handleDocDragOver = (e: React.DragEvent, docId: string) => {
-        e.preventDefault();
-        if (draggedIdRef.current && draggedIdRef.current !== docId) {
-            setDragOverId(docId);
-        }
-    };
-
-    const handleDocDragLeave = () => {
-        setDragOverId(null);
-    };
-
-    // 文档放置（用于排序）
-    const handleDocDrop = (e: React.DragEvent, targetId: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDragOverId(null);
-
-        const draggedId = draggedIdRef.current;
-        draggedIdRef.current = null;
-
-        if (!draggedId || !onReorderDocuments) return;
-
-        // 检查是否是文件夹内的文档排序
-        const currentIds = sortedDocs.map(d => d.id);
-        const draggedIndex = currentIds.indexOf(draggedId);
-        const targetIndex = currentIds.indexOf(targetId);
-
-        if (draggedIndex !== -1 && targetIndex !== -1 && draggedId !== targetId) {
-            // 文件夹内排序
-            const newIds = [...currentIds];
-            newIds.splice(draggedIndex, 1);
-            newIds.splice(targetIndex, 0, draggedId);
-            onReorderDocuments(newIds);
-        } else if (draggedIndex === -1) {
-            // 从外部拖入：移动到文件夹
-            onMoveDocument(draggedId, folder.id);
-        }
-    };
-
-    const handleDocDragEnd = () => {
-        draggedIdRef.current = null;
-        setDragOverId(null);
-    };
-
     return (
         <div className="folder-item">
             <div
-                className={`folder-header ${headerDragOver ? 'drag-over' : ''}`}
+                ref={setHeaderDroppableRef}
+                className={`folder-header ${isContainerDropTarget ? 'drop-target' : ''}`}
                 onClick={onToggle}
-                onDragOver={handleHeaderDragOver}
-                onDragLeave={handleHeaderDragLeave}
-                onDrop={handleHeaderDrop}
+                {...folderDragHandleProps}
             >
                 <span className={`folder-chevron ${folder.collapsed ? 'collapsed' : 'expanded'}`}>
                     <ChevronRight size={16} />
@@ -156,7 +95,7 @@ export function FolderItem({
                         autoFocus
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
-                        onDragStart={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
                     />
                 ) : (
                     <span
@@ -175,6 +114,7 @@ export function FolderItem({
                         {onAddDocument && (
                             <button
                                 className="action-btn"
+                                onPointerDown={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onAddDocument();
@@ -186,6 +126,7 @@ export function FolderItem({
                         )}
                         <button
                             className="action-btn"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 startEditing();
@@ -196,6 +137,7 @@ export function FolderItem({
                         </button>
                         <button
                             className="action-btn danger"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onDelete();
@@ -209,42 +151,87 @@ export function FolderItem({
             </div>
             <div className={`folder-documents ${folder.collapsed ? 'collapsed' : ''}`}>
                 <div className="folder-documents-inner">
-                    <AnimatePresence mode="popLayout">
+                    <SortableContext items={sortedDocs.map((doc) => docDndId(doc.id))} strategy={verticalListSortingStrategy}>
                         {sortedDocs.map((doc) => (
-                            <motion.div
+                            <SortableFolderDocRow
                                 key={doc.id}
-                                layout
-                                initial={{ opacity: 0, x: -12 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -12, scale: 0.95 }}
-                                transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-                                className={`document-item folder-doc ${doc.id === activeDocId ? 'active' : ''} ${dragOverId === doc.id ? 'drag-over-item' : ''}`}
-                                onClick={() => onSelectDocument(doc.id)}
-                                draggable
-                                onDragStart={(e) => handleDocDragStart(e as unknown as React.DragEvent, doc.id)}
-                                onDragOver={(e) => handleDocDragOver(e as unknown as React.DragEvent, doc.id)}
-                                onDragLeave={handleDocDragLeave}
-                                onDrop={(e) => handleDocDrop(e as unknown as React.DragEvent, doc.id)}
-                                onDragEnd={handleDocDragEnd}
-                            >
-                                <FileText size={16} className="doc-icon" />
-                                <span className="doc-title">{doc.title}</span>
-                                <div className="doc-actions">
-                                    <button
-                                        className="action-btn danger"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteDocument(doc.id);
-                                        }}
-                                        title={STRINGS.TOOLTIPS.DELETE}
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
-                                </div>
-                            </motion.div>
+                                doc={doc}
+                                containerId={folder.id}
+                                activeDocId={activeDocId}
+                                dropIndicator={dropIndicator}
+                                onSelectDocument={onSelectDocument}
+                                onDeleteDocument={onDeleteDocument}
+                            />
                         ))}
-                    </AnimatePresence>
+                    </SortableContext>
                 </div>
+            </div>
+        </div>
+    );
+});
+
+function SortableFolderDocRow({
+    doc,
+    containerId,
+    activeDocId,
+    dropIndicator,
+    onSelectDocument,
+    onDeleteDocument,
+}: {
+    doc: DocumentMeta;
+    containerId: string;
+    activeDocId: string | null;
+    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    onSelectDocument: (id: string) => void;
+    onDeleteDocument: (id: string) => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
+        id: docDndId(doc.id),
+        data: { type: 'document', containerId, docId: doc.id },
+    });
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform ? { ...transform, x: 0 } : null),
+        transition,
+    };
+
+    const dropClass =
+        dropIndicator?.docId === doc.id
+            ? dropIndicator.position === 'before'
+                ? 'drop-before'
+                : 'drop-after'
+            : '';
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`document-item folder-doc sortable ${doc.id === activeDocId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass}`}
+            onClick={() => onSelectDocument(doc.id)}
+            {...attributes}
+            {...listeners}
+        >
+            <FileText size={16} className="doc-icon" />
+            <span className="doc-title">{doc.title}</span>
+            <div className="doc-actions">
+                <button
+                    className="action-btn danger"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteDocument(doc.id);
+                    }}
+                    title={STRINGS.TOOLTIPS.DELETE}
+                >
+                    <Trash2 size={14} />
+                </button>
             </div>
         </div>
     );

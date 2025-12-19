@@ -1,8 +1,10 @@
-import { useState, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import { motion, AnimatePresence } from 'framer-motion';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { docDndId } from '../utils/dnd';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -10,8 +12,9 @@ interface DocumentListProps {
     isSearchMode: boolean;
     onSelect: (id: string) => void;
     onDelete: (id: string) => void;
-    draggable?: boolean;
-    onReorder?: (ids: string[]) => void;
+    sortable?: boolean;
+    containerId?: string;
+    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
 }
 
 export function DocumentList({
@@ -20,12 +23,10 @@ export function DocumentList({
     isSearchMode,
     onSelect,
     onDelete,
-    draggable = false,
-    onReorder,
+    sortable = false,
+    containerId,
+    dropIndicator,
 }: DocumentListProps) {
-    const [dragOverId, setDragOverId] = useState<string | null>(null);
-    const draggedIdRef = useRef<string | null>(null);
-
     const sortedItems = useMemo(() => {
         if (isSearchMode) return items;
         return [...items].sort((a, b) => {
@@ -40,51 +41,6 @@ export function DocumentList({
         onDelete(id);
     };
 
-    const handleDragStart = (e: React.DragEvent, id: string) => {
-        draggedIdRef.current = id;
-        e.dataTransfer.setData('text/plain', id);
-        e.dataTransfer.effectAllowed = 'move';
-    };
-
-    const handleDragOver = (e: React.DragEvent, id: string) => {
-        e.preventDefault();
-        if (draggedIdRef.current && draggedIdRef.current !== id) {
-            setDragOverId(id);
-        }
-    };
-
-    const handleDragLeave = () => {
-        setDragOverId(null);
-    };
-
-    const handleDrop = (e: React.DragEvent, targetId: string) => {
-        e.preventDefault();
-        setDragOverId(null);
-        const draggedId = draggedIdRef.current;
-        draggedIdRef.current = null;
-
-        if (!draggedId || draggedId === targetId || !onReorder) return;
-
-        // 计算新顺序
-        const currentIds = sortedItems.map(item => item.id);
-        const draggedIndex = currentIds.indexOf(draggedId);
-        const targetIndex = currentIds.indexOf(targetId);
-
-        if (draggedIndex === -1 || targetIndex === -1) return;
-
-        // 移动元素
-        const newIds = [...currentIds];
-        newIds.splice(draggedIndex, 1);
-        newIds.splice(targetIndex, 0, draggedId);
-
-        onReorder(newIds);
-    };
-
-    const handleDragEnd = () => {
-        draggedIdRef.current = null;
-        setDragOverId(null);
-    };
-
     if (items.length === 0) {
         return (
             <li className="empty-hint">
@@ -94,43 +50,120 @@ export function DocumentList({
         );
     }
 
+    if (sortable) {
+        if (!containerId) {
+            throw new Error('DocumentList: containerId is required when sortable=true');
+        }
+        const sortableItems = sortedItems.map((item) => docDndId(item.id));
+        return (
+            <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
+                {sortedItems.map((item) => (
+                    <SortableDocumentRow
+                        key={item.id}
+                        item={item}
+                        activeId={activeId}
+                        containerId={containerId}
+                        dropIndicator={dropIndicator}
+                        onSelect={onSelect}
+                        onDelete={handleDeleteClick}
+                    />
+                ))}
+            </SortableContext>
+        );
+    }
+
     return (
-        <AnimatePresence mode="popLayout">
+        <>
             {sortedItems.map((item) => (
-                <motion.li
+                <li
                     key={item.id}
-                    layout
-                    initial={{ opacity: 0, x: -12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -12, scale: 0.95 }}
-                    transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-                    className={`document-item ${item.id === activeId ? 'active' : ''} ${dragOverId === item.id ? 'drag-over-item' : ''}`}
+                    className={`document-item ${item.id === activeId ? 'active' : ''}`}
                     onClick={() => onSelect(item.id)}
-                    draggable={draggable}
-                    onDragStart={draggable ? (e) => handleDragStart(e as unknown as React.DragEvent, item.id) : undefined}
-                    onDragOver={draggable ? (e) => handleDragOver(e as unknown as React.DragEvent, item.id) : undefined}
-                    onDragLeave={draggable ? handleDragLeave : undefined}
-                    onDrop={draggable ? (e) => handleDrop(e as unknown as React.DragEvent, item.id) : undefined}
-                    onDragEnd={draggable ? handleDragEnd : undefined}
                 >
                     <FileText size={16} className="doc-icon" />
                     <div className="doc-content">
                         <span className="doc-title">{item.title}</span>
-                        {'snippet' in item && (
-                            <span className="doc-snippet">{item.snippet}</span>
-                        )}
+                        {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
                     </div>
                     <div className="doc-actions">
                         <button
                             className="action-btn danger"
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => handleDeleteClick(e, item.id)}
                             title={STRINGS.TOOLTIPS.DELETE}
                         >
                             <Trash2 size={14} />
                         </button>
                     </div>
-                </motion.li>
+                </li>
             ))}
-        </AnimatePresence>
+        </>
+    );
+}
+
+function SortableDocumentRow({
+    item,
+    activeId,
+    containerId,
+    dropIndicator,
+    onSelect,
+    onDelete,
+}: {
+    item: DocumentMeta | SearchResult;
+    activeId: string | null;
+    containerId: string;
+    dropIndicator?: { docId: string; position: 'before' | 'after' } | null;
+    onSelect: (id: string) => void;
+    onDelete: (e: React.MouseEvent, id: string) => void;
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
+        id: docDndId(item.id),
+        data: { type: 'document', containerId, docId: item.id },
+    });
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform ? { ...transform, x: 0 } : null),
+        transition,
+    };
+
+    const dropClass =
+        dropIndicator?.docId === item.id
+            ? dropIndicator.position === 'before'
+                ? 'drop-before'
+                : 'drop-after'
+            : '';
+
+    return (
+        <li
+            ref={setNodeRef}
+            style={style}
+            className={`document-item sortable ${item.id === activeId ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass}`}
+            onClick={() => onSelect(item.id)}
+            {...attributes}
+            {...listeners}
+        >
+            <FileText size={16} className="doc-icon" />
+            <div className="doc-content">
+                <span className="doc-title">{item.title}</span>
+                {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
+            </div>
+            <div className="doc-actions">
+                <button
+                    className="action-btn danger"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => onDelete(e, item.id)}
+                    title={STRINGS.TOOLTIPS.DELETE}
+                >
+                    <Trash2 size={14} />
+                </button>
+            </div>
+        </li>
     );
 }
