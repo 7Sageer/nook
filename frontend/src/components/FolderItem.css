@@ -8,6 +8,8 @@
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
+    min-height: 40px;
+    /* Fixed height to prevent layout shift when rename input appears */
     cursor: pointer;
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);

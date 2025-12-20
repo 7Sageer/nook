@@ -111,7 +111,7 @@ export const SortableFolderWrapper = memo(function SortableFolderWrapper({
         <motion.div
             ref={setNodeRef}
             style={style}
-            layout
+            layout={!isDragging}
             variants={folderVariants}
             initial="initial"
             animate="animate"

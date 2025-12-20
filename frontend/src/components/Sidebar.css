@@ -96,6 +96,7 @@
     flex: 1;
     overflow-x: hidden;
     overflow-y: auto;
+    position: relative;
     display: flex;
     flex-direction: column;
 }
@@ -275,16 +276,19 @@
 /* ========== Folders Section ========== */
 .folders-section {
     margin-bottom: 8px;
-    overflow: hidden;
+    overflow: visible;
+    flex-shrink: 0;
 }
 
 .uncategorized-section {
-    flex: 1;
     min-height: 100px;
     transition: background-color var(--transition-fast);
+    background-color: inherit;
     border-radius: var(--radius-md);
     margin: 0 8px;
-    overflow: hidden;
+    overflow: visible;
+    flex-shrink: 0;
+    will-change: transform;
 }
 
 /* ========== Empty Hint ========== */

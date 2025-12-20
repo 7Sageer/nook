@@ -13,7 +13,7 @@ import { SidebarSearch } from './SidebarSearch';
 import { SortableFolderWrapper } from './SortableFolderWrapper';
 import { Plus } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import {
   DndContext,
   useDroppable,
@@ -210,89 +210,92 @@ export function Sidebar({
             handleDragCancel();
           }}
         >
-          <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
-            {/* 文件夹列表 */}
-            {!query && folders.length > 0 && (
-              <div className="folders-section">
-                <div className="section-label-row">
-                  <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
-                  <button
-                    className="section-add-btn"
-                    onClick={handleCreateFolder}
-                    title={STRINGS.TOOLTIPS.NEW_FOLDER}
-                  >
-                    <Plus size={14} />
-                  </button>
-                </div>
-                <SortableContext
-                  items={sortedFolders.map((folder) => folderDndId(folder.id))}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <AnimatePresence mode="popLayout">
-                    {sortedFolders.map((folder, index) => (
-                      <SortableFolderWrapper
-                        key={folder.id}
-                        folder={folder}
-                        index={index}
-                        documents={docsByContainer.get(folder.id)!}
-                        disabled={editingFolderId === folder.id}
-                        activeDocId={activeExternalPath ? null : activeId}
-                        onToggleFolder={toggleFolderCollapsed}
-                        onRenameFolder={renameFolder}
-                        onDeleteFolder={handleDeleteFolderClick}
-                        onSelectDocument={handleSelect}
-                        onDeleteDocument={handleDeleteClick}
-                        onEditingFolderChange={setEditingFolderId}
-                        onAddDocumentInFolder={handleCreateInFolder}
-                        dropIndicator={docDropIndicator}
-                        containerDropIndicator={containerDropIndicator}
-                        justDroppedId={justDroppedId}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </SortableContext>
-              </div>
-            )}
-
-            {/* 未分类文档列表 */}
-            {(displayList.length > 0 || query) && (
-              <div
-                ref={setUncategorizedDroppableRef}
-                className="uncategorized-section"
-              >
-                <div className="section-label-row">
-                  <span className="section-label">
-                    {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
-                  </span>
-                  {!query && (
+          <LayoutGroup>
+            <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
+              {/* 文件夹列表 */}
+              {!query && folders.length > 0 && (
+                <div className="folders-section">
+                  <div className="section-label-row">
+                    <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
                     <button
                       className="section-add-btn"
-                      onClick={handleCreate}
-                      title={STRINGS.TOOLTIPS.NEW_DOC}
+                      onClick={handleCreateFolder}
+                      title={STRINGS.TOOLTIPS.NEW_FOLDER}
                     >
                       <Plus size={14} />
                     </button>
-                  )}
+                  </div>
+                  <SortableContext
+                    items={sortedFolders.map((folder) => folderDndId(folder.id))}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {sortedFolders.map((folder, index) => (
+                        <SortableFolderWrapper
+                          key={folder.id}
+                          folder={folder}
+                          index={index}
+                          documents={docsByContainer.get(folder.id)!}
+                          disabled={editingFolderId === folder.id}
+                          activeDocId={activeExternalPath ? null : activeId}
+                          onToggleFolder={toggleFolderCollapsed}
+                          onRenameFolder={renameFolder}
+                          onDeleteFolder={handleDeleteFolderClick}
+                          onSelectDocument={handleSelect}
+                          onDeleteDocument={handleDeleteClick}
+                          onEditingFolderChange={setEditingFolderId}
+                          onAddDocumentInFolder={handleCreateInFolder}
+                          dropIndicator={docDropIndicator}
+                          containerDropIndicator={containerDropIndicator}
+                          justDroppedId={justDroppedId}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </SortableContext>
                 </div>
-                <ul
-                  className={`document-list ${!query && containerDropIndicator?.containerId === UNCATEGORIZED_CONTAINER_ID ? 'drop-before' : ''
-                    }`}
+              )}
+
+              {/* 未分类文档列表 */}
+              {(displayList.length > 0 || query) && (
+                <motion.div
+                  ref={setUncategorizedDroppableRef}
+                  className="uncategorized-section"
+                  layout={!isDragging ? 'position' : false}
                 >
-                  <DocumentList
-                    items={displayList}
-                    activeId={activeExternalPath ? null : activeId}
-                    isSearchMode={!!query}
-                    onSelect={handleSelect}
-                    onDelete={handleDeleteClick}
-                    sortable={!query}
-                    containerId={UNCATEGORIZED_CONTAINER_ID}
-                    dropIndicator={docDropIndicator}
-                    justDroppedId={justDroppedId}
-                  />
-                </ul>
-              </div>
-            )}
-          </div>
+                  <div className="section-label-row">
+                    <span className="section-label">
+                      {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
+                    </span>
+                    {!query && (
+                      <button
+                        className="section-add-btn"
+                        onClick={handleCreate}
+                        title={STRINGS.TOOLTIPS.NEW_DOC}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <ul
+                    className={`document-list ${!query && containerDropIndicator?.containerId === UNCATEGORIZED_CONTAINER_ID ? 'drop-before' : ''
+                      }`}
+                  >
+                    <DocumentList
+                      items={displayList}
+                      activeId={activeExternalPath ? null : activeId}
+                      isSearchMode={!!query}
+                      onSelect={handleSelect}
+                      onDelete={handleDeleteClick}
+                      sortable={!query}
+                      containerId={UNCATEGORIZED_CONTAINER_ID}
+                      dropIndicator={docDropIndicator}
+                      justDroppedId={justDroppedId}
+                    />
+                  </ul>
+                </motion.div>
+              )}
+            </div>
+          </LayoutGroup>
 
           <SidebarDragOverlay
             activeDragItem={activeDragItem}
@@ -307,4 +310,3 @@ export function Sidebar({
     </>
   );
 }
-
