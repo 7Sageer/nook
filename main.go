@@ -56,7 +56,7 @@ func main() {
 
 	// Add View menu
 	ViewMenu := AppMenu.AddSubmenu(constant.MenuView)
-	ViewMenu.AddText(constant.MenuViewToggleSidebar, keys.CmdOrCtrl("b"), func(_ *menu.CallbackData) {
+	ViewMenu.AddText(constant.MenuViewToggleSidebar, keys.CmdOrCtrl("\\"), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:toggle-sidebar")
 	})
 	ViewMenu.AddText(constant.MenuViewToggleTheme, keys.CmdOrCtrl("d"), func(_ *menu.CallbackData) {
