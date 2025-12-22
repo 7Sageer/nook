@@ -48,8 +48,8 @@ export function DocumentList({
 
     if (items.length === 0) {
         return (
-            <li className="empty-hint">
-                <FileSearch size={32} strokeWidth={1.5} />
+            <li className="empty-hint" role="status" aria-live="polite">
+                <FileSearch size={32} strokeWidth={1.5} aria-hidden="true" />
                 <span>{isSearchMode ? STRINGS.LABELS.NO_MATCH : STRINGS.LABELS.EMPTY_LIST}</span>
             </li>
         );
@@ -96,8 +96,11 @@ export function DocumentList({
                     custom={index}
                     className={`document-item ${item.id === activeId ? 'active' : ''}`}
                     onClick={() => onSelect(item.id)}
+                    role="option"
+                    aria-selected={item.id === activeId}
+                    tabIndex={0}
                 >
-                    <FileText size={16} className="doc-icon" />
+                    <FileText size={16} className="doc-icon" aria-hidden="true" />
                     <div className="doc-content">
                         <span className="doc-title">{item.title}</span>
                         {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
@@ -108,8 +111,9 @@ export function DocumentList({
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => handleDeleteClick(e, item.id)}
                             title={STRINGS.TOOLTIPS.DELETE}
+                            aria-label={`${STRINGS.TOOLTIPS.DELETE} ${item.title}`}
                         >
-                            <Trash2 size={14} />
+                            <Trash2 size={14} aria-hidden="true" />
                         </button>
                     </div>
                 </motion.li>

@@ -33,6 +33,7 @@ export const STRINGS = {
     },
 
     LABELS: {
+        SIDEBAR: "Sidebar Navigation",
         EXTERNAL_FILE: "External File",
         DOCUMENTS: "Documents",
         FOLDERS: "Folders",

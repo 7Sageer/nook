@@ -22,6 +22,11 @@
     background-color: #f3f4f6;
 }
 
+/* Keyboard focus indicator - using box-shadow instead of outline to avoid clipping */
+.folder-header:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+
 .sidebar.dark .folder-header:hover {
     background-color: #252525;
 }

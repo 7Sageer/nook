@@ -8,14 +8,15 @@ interface SidebarSearchProps {
 
 export function SidebarSearch({ query, onQueryChange }: SidebarSearchProps) {
     return (
-        <div className="search-wrapper">
-            <Search size={16} className="search-icon" />
+        <div className="search-wrapper" role="search">
+            <Search size={16} className="search-icon" aria-hidden="true" />
             <input
                 type="text"
                 className="search-input"
                 placeholder={STRINGS.LABELS.SEARCH_PLACEHOLDER}
                 value={query}
                 onChange={(e) => onQueryChange(e.target.value)}
+                aria-label={STRINGS.LABELS.SEARCH_PLACEHOLDER}
             />
         </div>
     );

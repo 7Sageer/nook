@@ -33,12 +33,20 @@ export function WindowToolbar({
             }
         };
 
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape' && isCreateMenuOpen) {
+                setIsCreateMenuOpen(false);
+            }
+        };
+
         if (isCreateMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
         };
     }, [isCreateMenuOpen]);
 
@@ -86,27 +94,40 @@ export function WindowToolbar({
                             className={`icon-btn icon-btn-sm primary create-menu-trigger ${isCreateMenuOpen ? 'menu-open' : ''}`}
                             onClick={() => setIsCreateMenuOpen(!isCreateMenuOpen)}
                             title={STRINGS.TOOLTIPS.NEW_DOC}
+                            aria-label={STRINGS.TOOLTIPS.NEW_DOC}
+                            aria-expanded={isCreateMenuOpen}
+                            aria-haspopup="menu"
                         >
-                            <Plus size={14} className="plus-icon" />
+                            <Plus size={14} className="plus-icon" aria-hidden="true" />
                         </button>
                         {isCreateMenuOpen && (
-                            <div className="create-menu-dropdown">
-                                <button className="create-menu-item" onClick={handleCreateDocument}>
-                                    <FileText size={16} />
+                            <div className="create-menu-dropdown" role="menu">
+                                <button className="create-menu-item" onClick={handleCreateDocument} role="menuitem">
+                                    <FileText size={16} aria-hidden="true" />
                                     <span>{STRINGS.MENU.NEW_DOC}</span>
                                 </button>
-                                <button className="create-menu-item" onClick={handleCreateFolder}>
-                                    <FolderPlus size={16} />
+                                <button className="create-menu-item" onClick={handleCreateFolder} role="menuitem">
+                                    <FolderPlus size={16} aria-hidden="true" />
                                     <span>{STRINGS.MENU.NEW_FOLDER}</span>
                                 </button>
                             </div>
                         )}
                     </div>
-                    <button className="icon-btn icon-btn-sm theme-btn" onClick={onToggleTheme} title={getThemeTooltip()}>
+                    <button
+                        className="icon-btn icon-btn-sm theme-btn"
+                        onClick={onToggleTheme}
+                        title={getThemeTooltip()}
+                        aria-label={getThemeTooltip()}
+                    >
                         {getThemeIcon()}
                     </button>
-                    <button className="icon-btn icon-btn-sm collapse-btn" onClick={onToggleSidebar} title={STRINGS.TOOLTIPS.COLLAPSE}>
-                        <PanelLeftClose size={14} />
+                    <button
+                        className="icon-btn icon-btn-sm collapse-btn"
+                        onClick={onToggleSidebar}
+                        title={STRINGS.TOOLTIPS.COLLAPSE}
+                        aria-label={STRINGS.TOOLTIPS.COLLAPSE}
+                    >
+                        <PanelLeftClose size={14} aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -117,8 +138,9 @@ export function WindowToolbar({
                     className="icon-btn icon-btn-sm expand-sidebar-btn"
                     onClick={onToggleSidebar}
                     title={STRINGS.TOOLTIPS.EXPAND}
+                    aria-label={STRINGS.TOOLTIPS.EXPAND}
                 >
-                    <PanelLeft size={14} />
+                    <PanelLeft size={14} aria-hidden="true" />
                 </button>
             </div>
         </div>

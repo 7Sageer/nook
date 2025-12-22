@@ -183,7 +183,11 @@ export function Sidebar({
 
   return (
     <>
-      <aside className={`sidebar ${theme} ${collapsed ? 'sidebar-hidden' : ''}`}>
+      <aside
+        className={`sidebar ${theme} ${collapsed ? 'sidebar-hidden' : ''}`}
+        role="complementary"
+        aria-label={STRINGS.LABELS.SIDEBAR}
+      >
         <SidebarSearch query={query} onQueryChange={setQuery} />
 
         <SidebarExternalFiles
@@ -214,15 +218,16 @@ export function Sidebar({
             <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
               {/* 文件夹列表 */}
               {!query && folders.length > 0 && (
-                <div className="folders-section">
+                <div className="folders-section" role="tree" aria-label={STRINGS.LABELS.FOLDERS}>
                   <div className="section-label-row">
                     <span className="section-label">{STRINGS.LABELS.FOLDERS}</span>
                     <button
                       className="section-add-btn"
                       onClick={handleCreateFolder}
                       title={STRINGS.TOOLTIPS.NEW_FOLDER}
+                      aria-label={STRINGS.TOOLTIPS.NEW_FOLDER}
                     >
-                      <Plus size={14} />
+                      <Plus size={14} aria-hidden="true" />
                     </button>
                   </div>
                   <SortableContext
@@ -274,14 +279,17 @@ export function Sidebar({
                         className="section-add-btn"
                         onClick={handleCreate}
                         title={STRINGS.TOOLTIPS.NEW_DOC}
+                        aria-label={STRINGS.TOOLTIPS.NEW_DOC}
                       >
-                        <Plus size={14} />
+                        <Plus size={14} aria-hidden="true" />
                       </button>
                     </div>
                   )}
                   <ul
                     className={`document-list ${!query && containerDropIndicator?.containerId === UNCATEGORIZED_CONTAINER_ID ? 'drop-before' : ''
                       }`}
+                    role="listbox"
+                    aria-label={STRINGS.LABELS.DOCUMENTS}
                   >
                     <DocumentList
                       items={displayList}

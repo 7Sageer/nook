@@ -22,6 +22,8 @@ export interface SortableDocItemProps {
     inFolder?: boolean;
     /** 是否显示 snippet (搜索结果模式) */
     showSnippet?: boolean;
+    /** 是否隐藏（折叠的文件夹内），隐藏时不可 Tab 聚焦 */
+    hidden?: boolean;
 }
 
 /**
@@ -39,6 +41,7 @@ export const SortableDocItem = memo(function SortableDocItem({
     onDelete,
     inFolder = false,
     showSnippet = false,
+    hidden = false,
 }: SortableDocItemProps) {
     const {
         attributes,
@@ -78,6 +81,16 @@ export const SortableDocItem = memo(function SortableDocItem({
         onDelete(item.id);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect(item.id);
+        } else if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            onDelete(item.id);
+        }
+    };
+
     const baseClassName = inFolder ? 'document-item folder-doc sortable' : 'document-item sortable';
     const className = `${baseClassName} ${isActive ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`;
 
@@ -98,8 +111,12 @@ export const SortableDocItem = memo(function SortableDocItem({
             onClick={() => onSelect(item.id)}
             {...attributes}
             {...listeners}
+            role="option"
+            aria-selected={isActive}
+            tabIndex={hidden ? -1 : 0}
+            onKeyDown={handleKeyDown}
         >
-            <FileText size={16} className="doc-icon" />
+            <FileText size={16} className="doc-icon" aria-hidden="true" />
             {hasSnippet ? (
                 <div className="doc-content">
                     <span className="doc-title">{item.title}</span>
@@ -114,8 +131,9 @@ export const SortableDocItem = memo(function SortableDocItem({
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={handleDelete}
                     title={STRINGS.TOOLTIPS.DELETE}
+                    aria-label={`${STRINGS.TOOLTIPS.DELETE} ${item.title}`}
                 >
-                    <Trash2 size={14} />
+                    <Trash2 size={14} aria-hidden="true" />
                 </button>
             </div>
         </MotionComponent>
