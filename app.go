@@ -329,3 +329,23 @@ func (a *App) CopyImageToClipboard(base64Data string) error {
 	clipboard.Write(clipboard.FmtImage, imgData)
 	return nil
 }
+
+// SaveImage 保存图片到本地并返回文件路径
+func (a *App) SaveImage(base64Data string, filename string) (string, error) {
+	imagesDir := filepath.Join(a.dataPath, "images")
+	os.MkdirAll(imagesDir, 0755)
+
+	imgPath := filepath.Join(imagesDir, filename)
+
+	imgData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return "", err
+	}
+
+	if err := os.WriteFile(imgPath, imgData, 0644); err != nil {
+		return "", err
+	}
+
+	// Return /images/ URL for use in the editor (served by ImageHandler)
+	return "/images/" + filename, nil
+}

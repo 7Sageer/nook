@@ -20,6 +20,16 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
 
   const editor = useCreateBlockNote({
     initialContent: initialContent && initialContent.length > 0 ? initialContent : undefined,
+    uploadFile: async (file: File): Promise<string> => {
+      // Convert file to Data URL (base64 embedded)
+      // This approach stores images directly in the document JSON
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    },
   });
 
   // Inject smooth caret plugin after editor is created (only once)

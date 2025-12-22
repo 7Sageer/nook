@@ -45,6 +45,8 @@ export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
 export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;
 
+export function SaveImage(arg1:string,arg2:string):Promise<string>;
+
 export function SaveSettings(arg1:main.Settings):Promise<void>;
 
 export function SearchDocuments(arg1:string):Promise<Array<main.SearchResult>>;

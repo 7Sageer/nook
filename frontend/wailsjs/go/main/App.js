@@ -82,6 +82,10 @@ export function SaveExternalFile(arg1, arg2) {
   return window['go']['main']['App']['SaveExternalFile'](arg1, arg2);
 }
 
+export function SaveImage(arg1, arg2) {
+  return window['go']['main']['App']['SaveImage'](arg1, arg2);
+}
+
 export function SaveSettings(arg1) {
   return window['go']['main']['App']['SaveSettings'](arg1);
 }

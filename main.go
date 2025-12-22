@@ -2,7 +2,11 @@ package main
 
 import (
 	"embed"
+	"net/http"
+	"os"
+	"path/filepath"
 	goruntime "runtime"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -17,6 +21,60 @@ import (
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+// ImageHandler 处理本地图片请求
+type ImageHandler struct {
+	imagesDir string
+}
+
+func NewImageHandler() *ImageHandler {
+	homeDir, _ := os.UserHomeDir()
+	return &ImageHandler{
+		imagesDir: filepath.Join(homeDir, ".Nook", "images"),
+	}
+}
+
+func (h *ImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 只处理 /images/ 路径
+	if !strings.HasPrefix(r.URL.Path, "/images/") {
+		http.NotFound(w, r)
+		return
+	}
+
+	filename := strings.TrimPrefix(r.URL.Path, "/images/")
+	filePath := filepath.Join(h.imagesDir, filename)
+
+	// 安全检查：防止路径遍历攻击
+	if !strings.HasPrefix(filepath.Clean(filePath), h.imagesDir) {
+		http.NotFound(w, r)
+		return
+	}
+
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// 设置 Content-Type
+	contentType := "application/octet-stream"
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".png":
+		contentType = "image/png"
+	case ".jpg", ".jpeg":
+		contentType = "image/jpeg"
+	case ".gif":
+		contentType = "image/gif"
+	case ".webp":
+		contentType = "image/webp"
+	case ".svg":
+		contentType = "image/svg+xml"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Write(data)
+}
 
 func main() {
 	// Create an instance of the app structure
@@ -79,7 +137,8 @@ func main() {
 		Height: 768,
 		Menu:   AppMenu,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets:  assets,
+			Handler: NewImageHandler(),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
