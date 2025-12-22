@@ -135,10 +135,10 @@ export function createSmoothCaretPlugin(options?: {
             return;
         }
 
-        // Check if this is a large jump (should skip animation)
-        const isLargeChange = state.lastSelectionRects.length !== rects.length ||
-            (rects.length > 0 && state.lastSelectionRects.length > 0 &&
-                Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 100);
+        // Only skip animation for truly large jumps (e.g., clicking to a completely different position)
+        // NOT for normal multi-line selection expansion
+        const isLargeJump = rects.length > 0 && state.lastSelectionRects.length > 0 &&
+            Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 200;
 
         // Ensure we have enough selection elements
         while (state.selectionElements.length < rects.length) {
@@ -150,13 +150,17 @@ export function createSmoothCaretPlugin(options?: {
         // Update or hide selection elements
         for (let i = 0; i < state.selectionElements.length; i++) {
             const elem = state.selectionElements[i];
+            const isNewElement = i >= state.lastSelectionRects.length;
 
             if (i < rects.length) {
                 const rect = rects[i];
                 const top = rect.top - editorRect.top + scrollTop;
                 const left = rect.left - editorRect.left + scrollLeft;
 
-                if (isLargeChange) {
+                // Skip animation for large jumps OR for newly appearing elements
+                const skipTransition = isLargeJump || isNewElement;
+
+                if (skipTransition) {
                     elem.style.transition = 'none';
                     // Force reflow
                     elem.offsetHeight;
@@ -168,13 +172,13 @@ export function createSmoothCaretPlugin(options?: {
                 elem.style.height = `${rect.height}px`;
                 elem.style.opacity = '1';
 
-                if (isLargeChange) {
+                if (skipTransition) {
                     requestAnimationFrame(() => {
                         elem.style.transition = `top ${transitionDuration}ms ease-out, left ${transitionDuration}ms ease-out, width ${transitionDuration}ms ease-out, height ${transitionDuration}ms ease-out, opacity 100ms ease`;
                     });
                 }
             } else {
-                // Hide unused elements
+                // Hide unused elements with fade out
                 elem.style.opacity = '0';
             }
         }
