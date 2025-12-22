@@ -15,6 +15,8 @@ export function DeleteDocument(arg1:string):Promise<void>;
 
 export function DeleteFolder(arg1:string):Promise<void>;
 
+export function ExportHTMLFile(arg1:string,arg2:string):Promise<void>;
+
 export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function GetDocumentList():Promise<document.Index>;
@@ -32,6 +34,8 @@ export function LoadExternalFile(arg1:string):Promise<string>;
 export function MoveDocumentToFolder(arg1:string,arg2:string):Promise<void>;
 
 export function OpenExternalFile():Promise<main.ExternalFile>;
+
+export function PrintHTML(arg1:string,arg2:string):Promise<void>;
 
 export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 

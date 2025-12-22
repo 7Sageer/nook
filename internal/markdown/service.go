@@ -82,3 +82,25 @@ func (s *Service) Export(content string, defaultName string) error {
 
 	return os.WriteFile(filePath, []byte(content), 0644)
 }
+
+// ExportHTML 导出为 HTML 文件
+func (s *Service) ExportHTML(content string, defaultName string) error {
+	if defaultName == "" {
+		defaultName = constant.DefaultExportName
+	}
+	filePath, err := runtime.SaveFileDialog(s.ctx, runtime.SaveDialogOptions{
+		Title:           constant.DialogTitleExportHTML,
+		DefaultFilename: defaultName + ".html",
+		Filters: []runtime.FileFilter{
+			{DisplayName: constant.FilterHTML, Pattern: "*.html"},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if filePath == "" {
+		return nil
+	}
+
+	return os.WriteFile(filePath, []byte(content), 0644)
+}

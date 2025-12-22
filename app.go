@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"notion-lite/internal/constant"
 	"notion-lite/internal/document"
@@ -169,6 +173,11 @@ func (a *App) ImportMarkdownFile() (*markdown.ImportResult, error) {
 // ExportMarkdownFile 导出为 Markdown 文件
 func (a *App) ExportMarkdownFile(content string, defaultName string) error {
 	return a.markdownService.Export(content, defaultName)
+}
+
+// ExportHTMLFile 导出为 HTML 文件
+func (a *App) ExportHTMLFile(content string, defaultName string) error {
+	return a.markdownService.ExportHTML(content, defaultName)
 }
 
 // ========== 搜索 ==========
@@ -348,4 +357,39 @@ func (a *App) SaveImage(base64Data string, filename string) (string, error) {
 
 	// Return /images/ URL for use in the editor (served by ImageHandler)
 	return "/images/" + filename, nil
+}
+
+// PrintHTML 保存 HTML 到临时文件并在浏览器中打开
+func (a *App) PrintHTML(htmlContent string, title string) error {
+	// 创建临时目录
+	tempDir := filepath.Join(a.dataPath, "temp")
+	os.MkdirAll(tempDir, 0755)
+
+	// 生成唯一文件名
+	filename := fmt.Sprintf("print_%s_%d.html", sanitizeFilename(title), time.Now().UnixMilli())
+	filePath := filepath.Join(tempDir, filename)
+
+	// 写入 HTML 文件
+	if err := os.WriteFile(filePath, []byte(htmlContent), 0644); err != nil {
+		return err
+	}
+
+	// 使用系统命令打开文件（macOS 使用 open 命令）
+	cmd := exec.Command("open", filePath)
+	return cmd.Start()
+}
+
+// sanitizeFilename 清理文件名中的非法字符
+func sanitizeFilename(name string) string {
+	// 替换非法字符为下划线
+	invalid := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
+	result := name
+	for _, char := range invalid {
+		result = strings.ReplaceAll(result, char, "_")
+	}
+	// 限制长度
+	if len(result) > 50 {
+		result = result[:50]
+	}
+	return result
 }

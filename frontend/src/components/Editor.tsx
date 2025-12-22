@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import "../plugins/smoothCaret.css";
+import { SaveImage } from "../../wailsjs/go/main/App";
 
 interface EditorProps {
   initialContent?: Block[];
@@ -21,14 +22,25 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
   const editor = useCreateBlockNote({
     initialContent: initialContent && initialContent.length > 0 ? initialContent : undefined,
     uploadFile: async (file: File): Promise<string> => {
-      // Convert file to Data URL (base64 embedded)
-      // This approach stores images directly in the document JSON
-      return new Promise((resolve, reject) => {
+      // Convert file to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove data URL prefix (data:image/png;base64,)
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
+
+      // Generate unique filename
+      const ext = file.name.split('.').pop() || 'png';
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+      // Save via Go backend and get file:// URL
+      return await SaveImage(base64, filename);
     },
   });
 

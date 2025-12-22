@@ -109,6 +109,13 @@ func main() {
 	FileMenu.AddText(constant.MenuFileExportImg, keys.Combo("p", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
 		runtime.EventsEmit(app.ctx, "menu:export-image")
 	})
+	FileMenu.AddText(constant.MenuFileExportHTML, keys.Combo("h", keys.CmdOrCtrlKey, keys.ShiftKey), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:export-html")
+	})
+	FileMenu.AddSeparator()
+	FileMenu.AddText(constant.MenuFilePrint, keys.CmdOrCtrl("p"), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:print")
+	})
 
 	// Add Edit menu (required on macOS for Cmd+C, Cmd+V, Cmd+Z shortcuts)
 	if goruntime.GOOS == "darwin" {

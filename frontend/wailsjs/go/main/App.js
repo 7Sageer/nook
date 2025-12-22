@@ -22,6 +22,10 @@ export function DeleteFolder(arg1) {
   return window['go']['main']['App']['DeleteFolder'](arg1);
 }
 
+export function ExportHTMLFile(arg1, arg2) {
+  return window['go']['main']['App']['ExportHTMLFile'](arg1, arg2);
+}
+
 export function ExportMarkdownFile(arg1, arg2) {
   return window['go']['main']['App']['ExportMarkdownFile'](arg1, arg2);
 }
@@ -56,6 +60,10 @@ export function MoveDocumentToFolder(arg1, arg2) {
 
 export function OpenExternalFile() {
   return window['go']['main']['App']['OpenExternalFile']();
+}
+
+export function PrintHTML(arg1, arg2) {
+  return window['go']['main']['App']['PrintHTML'](arg1, arg2);
 }
 
 export function RenameDocument(arg1, arg2) {

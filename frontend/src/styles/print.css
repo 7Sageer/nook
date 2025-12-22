@@ -1,0 +1,107 @@
+/* Print-optimized styles */
+@media print {
+
+    /* Hide all UI elements except editor content */
+    .sidebar-wrapper,
+    .window-toolbar,
+    header,
+    .Header,
+    .empty-state,
+    .loading {
+        display: none !important;
+    }
+
+    /* Reset main content to use full width */
+    .app-container {
+        display: block !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+    }
+
+    .editor-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Style the editor content for print */
+    .bn-editor {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove any background colors */
+    .app-container,
+    .main-content,
+    .editor-container,
+    .bn-editor {
+        background: white !important;
+        color: black !important;
+    }
+
+    /* Typography for print */
+    .bn-editor * {
+        color: black !important;
+    }
+
+    /* Code blocks */
+    .bn-editor pre,
+    .bn-editor code {
+        background: #f4f4f4 !important;
+        border: 1px solid #ddd !important;
+    }
+
+    /* Links - show URL */
+    .bn-editor a::after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #666;
+    }
+
+    /* Page break handling */
+    .bn-editor h1,
+    .bn-editor h2,
+    .bn-editor h3 {
+        page-break-after: avoid;
+    }
+
+    .bn-editor pre,
+    .bn-editor blockquote,
+    .bn-editor table {
+        page-break-inside: avoid;
+    }
+
+    /* Hide interactive elements */
+    .bn-side-menu,
+    .bn-formatting-toolbar,
+    .bn-link-toolbar,
+    .bn-image-toolbar,
+    .bn-slash-menu,
+    [data-drag-handle],
+    [data-side-menu] {
+        display: none !important;
+    }
+
+    /* Ensure images print properly */
+    .bn-editor img {
+        max-width: 100% !important;
+        page-break-inside: avoid;
+    }
+}
+
+/* Screen preview mode for print dialog */
+@media screen {
+
+    .print-preview-mode .sidebar-wrapper,
+    .print-preview-mode .window-toolbar,
+    .print-preview-mode header {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+}

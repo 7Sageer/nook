@@ -7,6 +7,7 @@ import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImportExport } from "./hooks/useImportExport";
 import { useExportImage } from "./hooks/useExportImage";
+import { useExport } from "./hooks/useExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
@@ -16,6 +17,7 @@ import { useAppEvents } from "./hooks/useAppEvents";
 import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
 import "./App.css";
+import "./styles/print.css";
 
 function AppContent() {
   const { theme, themeSetting, toggleTheme } = useTheme();
@@ -99,6 +101,20 @@ function AppContent() {
     onError: (err) => console.error(STRINGS.STATUS.EXPORT_IMAGE_FAILED, err),
   });
 
+  // 当前文档标题（需要在 useExport 之前计算）
+  const activeDoc = documents.find((d) => d.id === activeId);
+  const currentTitle = isExternalMode
+    ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
+    : activeDoc?.title || "";
+
+  // HTML 导出和打印功能
+  const { handleExportHTML, handlePrint } = useExport({
+    editorRef,
+    documentTitle: currentTitle,
+    onSuccess: (msg) => setStatus(msg),
+    onError: (err) => console.error('Export failed:', err),
+  });
+
   // 使用 useAppEvents 处理文件打开和保存事件
   const { handleChange } = useAppEvents({
     openExternalByPath,
@@ -158,6 +174,8 @@ function AppContent() {
     onImport: handleImport,
     onExport: handleExport,
     onExportImage: handleExportImage,
+    onExportHTML: handleExportHTML,
+    onPrint: handlePrint,
     onToggleSidebar: handleToggleSidebar,
     onToggleTheme: toggleTheme,
     onAbout: handleAbout,
@@ -190,13 +208,6 @@ function AppContent() {
       setContentLoading(false);
     }
   }, [activateExternal, externalFiles, openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
-
-  const activeDoc = documents.find((d) => d.id === activeId);
-
-  // 当前显示的标题
-  const currentTitle = isExternalMode
-    ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
-    : activeDoc?.title || "";
 
   return (
     <div className={`app-container ${theme}`}>
