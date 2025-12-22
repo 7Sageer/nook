@@ -7,7 +7,7 @@ import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
-import { useExternalFile } from "./hooks/useExternalFile";
+import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
@@ -51,7 +51,7 @@ function AppContent() {
     deactivateExternal,
     closeExternal,
     isExternalMode,
-  } = useExternalFile();
+  } = useExternalFileContext();
 
   // 编辑器状态管理
   const {
@@ -258,7 +258,9 @@ function App() {
   return (
     <ThemeProvider>
       <DocumentProvider>
-        <AppContent />
+        <ExternalFileProvider>
+          <AppContent />
+        </ExternalFileProvider>
       </DocumentProvider>
     </ThemeProvider>
   );

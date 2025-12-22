@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
 import { Block, BlockNoteEditor } from '@blocknote/core';
-import { ExternalFileInfo } from './useExternalFile';
+import { ExternalFileInfo } from '../contexts/ExternalFileContext';
 
 interface UseAppEventsOptions {
   // 外部文件操作

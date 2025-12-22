@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, X } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import type { ExternalFileInfo } from '../hooks/useExternalFile';
+import type { ExternalFileInfo } from '../contexts/ExternalFileContext';
 
 interface SidebarExternalFilesProps {
     externalFiles: ExternalFileInfo[];

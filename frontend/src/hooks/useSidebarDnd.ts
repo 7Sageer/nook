@@ -11,7 +11,6 @@ import {
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import {
     UNCATEGORIZED_CONTAINER_ID,
     isDocContainerDndId,
@@ -21,6 +20,13 @@ import {
     parseDocId,
     parseFolderId,
 } from '../utils/dnd';
+import {
+    handleFolderReorder,
+    handleDocumentDragEnd,
+    type DndDragEndContext,
+    type DndState,
+    type DndActions,
+} from '../utils/dndHandlers';
 import type { Folder } from '../types/document';
 import { useDropIndicator } from './useDropIndicator';
 
@@ -179,134 +185,39 @@ export function useSidebarDnd({
             const activeId = String(active.id);
             const overId = String(over.id);
 
-            // 设置刚放下的文档 ID，触发落地动画
-            if (isDocDndId(activeId)) {
-                const droppedDocId = parseDocId(activeId);
-                if (droppedDocId) {
-                    setDroppedWithAnimation(droppedDocId);
-                }
-            }
-
-
-            if (isFolderDndId(activeId) && isFolderDndId(overId)) {
-                const activeFolderId = parseFolderId(activeId);
-                const overFolderId = parseFolderId(overId);
-                if (!activeFolderId || !overFolderId || activeFolderId === overFolderId) return;
-
-                const currentIds = sortedFolders.map((f) => f.id);
-                const oldIndex = currentIds.indexOf(activeFolderId);
-                const newIndex = currentIds.indexOf(overFolderId);
-                if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-
-                await reorderFolders(arrayMove(currentIds, oldIndex, newIndex));
-                return;
-            }
-
-            if (!isDocDndId(activeId)) return;
-
-            const activeDocId = parseDocId(activeId);
-            if (!activeDocId) return;
-
-            const sourceContainerId =
-                (active.data.current as { containerId?: string } | null)?.containerId ??
-                containerIdByDocId.get(activeDocId) ??
-                UNCATEGORIZED_CONTAINER_ID;
-
-            const overContainerIdFromData = (over.data.current as { containerId?: string } | null)
-                ?.containerId;
-
-            const overContainerId =
-                overContainerIdFromData ??
-                (isDocContainerDndId(overId) ? parseDocContainerId(overId) : null) ??
-                UNCATEGORIZED_CONTAINER_ID;
-
-            if (!overContainerId) return;
-
-            const overDocId = isDocDndId(overId) ? parseDocId(overId) : null;
-            if (overDocId && overDocId === activeDocId && sourceContainerId === overContainerId) return;
-
-            const cloneDocIdsByContainer = (source: Map<string, string[]>) => {
-                const next = new Map<string, string[]>();
-                for (const [containerId, ids] of source) {
-                    next.set(containerId, [...ids]);
-                }
-                return next;
+            // Build context for handlers
+            const activeRect = active.rect.current.translated ?? active.rect.current.initial;
+            const context: DndDragEndContext = {
+                activeId,
+                overId,
+                activeRect: activeRect ? { top: activeRect.top, height: activeRect.height } : null,
+                overRect: { top: over.rect.top, height: over.rect.height },
+                activeDataContainerId: (active.data.current as { containerId?: string } | null)?.containerId,
+                overDataContainerId: (over.data.current as { containerId?: string } | null)?.containerId,
             };
 
-            const nextDocIdsByContainer = cloneDocIdsByContainer(docIdsByContainer);
-            const sourceIds = nextDocIdsByContainer.get(sourceContainerId) ?? [];
-            const targetIds = nextDocIdsByContainer.get(overContainerId) ?? [];
-
-            const oldIndex = sourceIds.indexOf(activeDocId);
-
-            const getInsertAfter = () => {
-                const activeRect = active.rect.current.translated ?? active.rect.current.initial;
-                if (!activeRect) return false;
-                const activeCenterY = activeRect.top + activeRect.height / 2;
-                const overMiddleY = over.rect.top + over.rect.height / 2;
-                return activeCenterY > overMiddleY;
+            const state: DndState = {
+                sortedFolders,
+                containerIdByDocId,
+                docIdsByContainer,
+                folderIdSet,
             };
 
-            if (sourceContainerId === overContainerId) {
-                if (oldIndex === -1) return;
-
-                const nextIds = [...sourceIds];
-                nextIds.splice(oldIndex, 1);
-
-                const insertIndex = (() => {
-                    if (!overDocId) return 0;
-                    const overIndex = nextIds.indexOf(overDocId);
-                    if (overIndex === -1) return 0;
-                    return overIndex + (getInsertAfter() ? 1 : 0);
-                })();
-
-                nextIds.splice(insertIndex, 0, activeDocId);
-                nextDocIdsByContainer.set(sourceContainerId, nextIds);
-            } else {
-                if (oldIndex === -1) return;
-
-                const nextSourceIds = [...sourceIds];
-                nextSourceIds.splice(oldIndex, 1);
-                nextDocIdsByContainer.set(sourceContainerId, nextSourceIds);
-
-                const nextTargetIds = [...targetIds];
-                const insertIndex = (() => {
-                    if (!overDocId) return 0;
-                    const overIndex = nextTargetIds.indexOf(overDocId);
-                    if (overIndex === -1) return 0;
-                    return overIndex + (getInsertAfter() ? 1 : 0);
-                })();
-                nextTargetIds.splice(insertIndex, 0, activeDocId);
-                nextDocIdsByContainer.set(overContainerId, nextTargetIds);
-
-                await moveDocumentToFolder(
-                    activeDocId,
-                    overContainerId === UNCATEGORIZED_CONTAINER_ID ? '' : overContainerId
-                );
-            }
-
-            const nextAllDocIds: string[] = [];
-            const seen = new Set<string>();
-
-            const pushAll = (ids: string[]) => {
-                for (const id of ids) {
-                    if (seen.has(id)) continue;
-                    seen.add(id);
-                    nextAllDocIds.push(id);
-                }
+            const actions: DndActions = {
+                moveDocumentToFolder,
+                reorderDocuments,
+                reorderFolders,
             };
 
-            pushAll(nextDocIdsByContainer.get(UNCATEGORIZED_CONTAINER_ID) ?? []);
-            for (const folder of sortedFolders) {
-                pushAll(nextDocIdsByContainer.get(folder.id) ?? []);
-            }
-            for (const [containerId, ids] of nextDocIdsByContainer) {
-                if (containerId === UNCATEGORIZED_CONTAINER_ID) continue;
-                if (folderIdSet.has(containerId)) continue;
-                pushAll(ids);
-            }
+            // Handle folder reordering
+            const folderHandled = await handleFolderReorder(context, state, actions);
+            if (folderHandled) return;
 
-            await reorderDocuments(nextAllDocIds);
+            // Handle document drag
+            const droppedDocId = await handleDocumentDragEnd(context, state, actions);
+            if (droppedDocId) {
+                setDroppedWithAnimation(droppedDocId);
+            }
         },
         [
             containerIdByDocId,
