@@ -6,6 +6,7 @@ interface SmoothCaretState {
     selectionElements: HTMLDivElement[];
     lastPos: { top: number; left: number; height: number } | null;
     lastSelectionRects: DOMRect[];
+    lastSelectionIsBackward: boolean | null;
     isBlinking: boolean;
     blinkTimeout: number | null;
 }
@@ -40,6 +41,7 @@ export function createSmoothCaretPlugin(options?: {
         selectionElements: [],
         lastPos: null,
         lastSelectionRects: [],
+        lastSelectionIsBackward: null,
         isBlinking: false,
         blinkTimeout: null,
     };
@@ -82,6 +84,65 @@ export function createSmoothCaretPlugin(options?: {
         return rect;
     }
 
+    /**
+     * Merge overlapping or adjacent rectangles to prevent duplicate highlights
+     */
+    function mergeRects(rects: DOMRect[]): DOMRect[] {
+        if (rects.length === 0) return [];
+
+        // Group rectangles by their vertical position (same row = similar top value)
+        const rowTolerance = 3; // pixels tolerance for same-row detection
+        const rows: DOMRect[][] = [];
+
+        for (const rect of rects) {
+            // Find existing row that matches this rect's vertical position
+            let foundRow = false;
+            for (const row of rows) {
+                if (Math.abs(row[0].top - rect.top) <= rowTolerance &&
+                    Math.abs(row[0].height - rect.height) <= rowTolerance) {
+                    row.push(rect);
+                    foundRow = true;
+                    break;
+                }
+            }
+            if (!foundRow) {
+                rows.push([rect]);
+            }
+        }
+
+        // Merge rectangles within each row
+        const merged: DOMRect[] = [];
+        for (const row of rows) {
+            // Sort by left position
+            row.sort((a, b) => a.left - b.left);
+
+            let current = row[0];
+            for (let i = 1; i < row.length; i++) {
+                const next = row[i];
+                // Check if rectangles overlap or are adjacent (within 2px)
+                if (next.left <= current.right + 2) {
+                    // Merge: extend current rect to include next
+                    const newRight = Math.max(current.right, next.right);
+                    const newTop = Math.min(current.top, next.top);
+                    const newBottom = Math.max(current.bottom, next.bottom);
+                    current = new DOMRect(
+                        current.left,
+                        newTop,
+                        newRight - current.left,
+                        newBottom - newTop
+                    );
+                } else {
+                    // No overlap, push current and start new
+                    merged.push(current);
+                    current = next;
+                }
+            }
+            merged.push(current);
+        }
+
+        return merged;
+    }
+
     function getSelectionRects(view: EditorView): DOMRect[] {
         const { selection } = view.state;
         if (selection.empty) return [];
@@ -95,11 +156,67 @@ export function createSmoothCaretPlugin(options?: {
             range.setStart(fromDOM.node, fromDOM.offset);
             range.setEnd(toDOM.node, toDOM.offset);
 
-            // Get all client rects for the range
-            const rects = Array.from(range.getClientRects());
+            // Collect rects only from text nodes to avoid block-level element boundaries
+            const allRects: DOMRect[] = [];
 
-            // Filter out zero-size rects and merge adjacent ones
-            return rects.filter(rect => rect.width > 0 && rect.height > 0);
+            // Use TreeWalker to iterate through text nodes in the range
+            const walker = document.createTreeWalker(
+                range.commonAncestorContainer,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        // Check if this text node is within our selection range
+                        const nodeRange = document.createRange();
+                        nodeRange.selectNodeContents(node);
+
+                        // Check if ranges intersect
+                        const startsBeforeEnd = nodeRange.compareBoundaryPoints(Range.START_TO_END, range) >= 0;
+                        const endsAfterStart = nodeRange.compareBoundaryPoints(Range.END_TO_START, range) <= 0;
+
+                        return (startsBeforeEnd && endsAfterStart)
+                            ? NodeFilter.FILTER_ACCEPT
+                            : NodeFilter.FILTER_REJECT;
+                    }
+                }
+            );
+
+            let textNode = walker.nextNode() as Text | null;
+            while (textNode) {
+                // Create a range for the portion of this text node within selection
+                const textRange = document.createRange();
+
+                if (textNode === fromDOM.node) {
+                    textRange.setStart(textNode, fromDOM.offset);
+                } else {
+                    textRange.setStart(textNode, 0);
+                }
+
+                if (textNode === toDOM.node) {
+                    textRange.setEnd(textNode, toDOM.offset);
+                } else {
+                    textRange.setEnd(textNode, textNode.length);
+                }
+
+                // Get rects for this text portion
+                const rects = textRange.getClientRects();
+                for (let i = 0; i < rects.length; i++) {
+                    if (rects[i].width > 0 && rects[i].height > 0) {
+                        allRects.push(rects[i]);
+                    }
+                }
+
+                textNode = walker.nextNode() as Text | null;
+            }
+
+            // If TreeWalker approach didn't get any rects, fallback to original method
+            if (allRects.length === 0) {
+                const fallbackRects = Array.from(range.getClientRects())
+                    .filter(rect => rect.width > 0 && rect.height > 0);
+                return mergeRects(fallbackRects);
+            }
+
+            // Merge overlapping rectangles
+            return mergeRects(allRects);
         } catch (e) {
             // Fallback: use simple bounding rect approach
             return [];
@@ -119,6 +236,16 @@ export function createSmoothCaretPlugin(options?: {
         return true;
     }
 
+    function sortRectsForDirection(rects: DOMRect[], isBackward: boolean): DOMRect[] {
+        const rowTolerance = 1; // px tolerance to treat rects as same row
+        return [...rects].sort((a, b) => {
+            if (Math.abs(a.top - b.top) > rowTolerance) {
+                return isBackward ? b.top - a.top : a.top - b.top;
+            }
+            return isBackward ? b.left - a.left : a.left - b.left;
+        });
+    }
+
     function updateSelectionHighlight(view: EditorView, editorWrapper: HTMLElement | null) {
         if (!editorWrapper) return;
 
@@ -127,17 +254,22 @@ export function createSmoothCaretPlugin(options?: {
         const scrollTop = view.dom.scrollTop || 0;
         const scrollLeft = view.dom.scrollLeft || 0;
 
+        const isBackwardSelection = selection.anchor > selection.head;
+
         // Get selection rectangles
-        const rects = getSelectionRects(view);
+        const rects = sortRectsForDirection(getSelectionRects(view), isBackwardSelection);
+
+        const directionChanged = state.lastSelectionIsBackward !== null &&
+            state.lastSelectionIsBackward !== isBackwardSelection;
 
         // Check if selection changed significantly
-        if (rectsAreEqual(rects, state.lastSelectionRects)) {
+        if (!directionChanged && rectsAreEqual(rects, state.lastSelectionRects)) {
             return;
         }
 
         // Only skip animation for truly large jumps (e.g., clicking to a completely different position)
         // NOT for normal multi-line selection expansion
-        const isLargeJump = rects.length > 0 && state.lastSelectionRects.length > 0 &&
+        const isLargeJump = !directionChanged && rects.length > 0 && state.lastSelectionRects.length > 0 &&
             Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 200;
 
         // Ensure we have enough selection elements
@@ -150,7 +282,7 @@ export function createSmoothCaretPlugin(options?: {
         // Update or hide selection elements
         for (let i = 0; i < state.selectionElements.length; i++) {
             const elem = state.selectionElements[i];
-            const isNewElement = i >= state.lastSelectionRects.length;
+            const isNewElement = directionChanged || i >= state.lastSelectionRects.length;
 
             if (i < rects.length) {
                 const rect = rects[i];
@@ -184,6 +316,7 @@ export function createSmoothCaretPlugin(options?: {
         }
 
         state.lastSelectionRects = rects;
+        state.lastSelectionIsBackward = isBackwardSelection;
     }
 
     function updateCursorPosition(view: EditorView) {
@@ -347,6 +480,7 @@ export function createSmoothCaretPlugin(options?: {
                         selectionElements: [],
                         lastPos: null,
                         lastSelectionRects: [],
+                        lastSelectionIsBackward: null,
                         isBlinking: false,
                         blinkTimeout: null,
                     };
