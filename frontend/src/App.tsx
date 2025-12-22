@@ -13,6 +13,7 @@ import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
 import { useH1Visibility } from "./hooks/useH1Visibility";
 import { useAppEvents } from "./hooks/useAppEvents";
+import { useExternalLinks } from "./hooks/useExternalLinks";
 import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
 import "./App.css";
@@ -79,6 +80,9 @@ function AppContent() {
 
   // H1 可见性检测（用于智能显示顶栏标题）
   const { isH1Visible } = useH1Visibility(editorKey, activeId);
+
+  // 拦截外部链接点击，在系统浏览器中打开
+  useExternalLinks();
 
   // 文档切换时重置标题同步状态
   useEffect(() => {

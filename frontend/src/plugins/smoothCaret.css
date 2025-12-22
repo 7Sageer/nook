@@ -5,16 +5,27 @@
     --smooth-caret-color: #2563eb;
     --smooth-caret-width: 2px;
     --smooth-caret-blink-duration: 1s;
+    --smooth-selection-color: rgba(37, 99, 235, 0.25);
 }
 
-/* Dark mode caret color */
+/* Dark mode colors */
 .app-container.dark {
     --smooth-caret-color: #60a5fa;
+    --smooth-selection-color: rgba(96, 165, 250, 0.35);
 }
 
 /* Hide native caret when smooth caret is enabled */
 .smooth-caret-enabled {
     caret-color: transparent !important;
+}
+
+/* Hide native selection when smooth selection is enabled */
+.smooth-caret-enabled ::selection {
+    background: transparent !important;
+}
+
+.smooth-caret-enabled ::-moz-selection {
+    background: transparent !important;
 }
 
 /* Smooth caret element */
@@ -24,6 +35,15 @@
     z-index: 1000;
     border-radius: 1px;
     will-change: top, left, height;
+}
+
+/* Smooth selection rectangle */
+.smooth-selection-rect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 999;
+    border-radius: 2px;
+    will-change: top, left, width, height, opacity;
 }
 
 /* Blink animation */

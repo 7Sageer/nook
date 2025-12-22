@@ -3,7 +3,9 @@ import { EditorView } from 'prosemirror-view';
 
 interface SmoothCaretState {
     cursorElement: HTMLDivElement | null;
+    selectionElements: HTMLDivElement[];
     lastPos: { top: number; left: number; height: number } | null;
+    lastSelectionRects: DOMRect[];
     isBlinking: boolean;
     blinkTimeout: number | null;
 }
@@ -11,6 +13,7 @@ interface SmoothCaretState {
 /**
  * Creates a smooth caret plugin for ProseMirror/BlockNote
  * This plugin creates a virtual cursor that animates smoothly between positions
+ * and also renders smooth animated text selection highlighting
  */
 export function createSmoothCaretPlugin(options?: {
     /** Transition duration in ms, default: 50 */
@@ -21,17 +24,22 @@ export function createSmoothCaretPlugin(options?: {
     cursorWidth?: number;
     /** Enable blinking animation, default: true */
     enableBlink?: boolean;
+    /** Selection highlight color, default: uses CSS variable */
+    selectionColor?: string;
 }) {
     const {
         transitionDuration = 50,
         cursorColor,
         cursorWidth = 2,
         enableBlink = true,
+        selectionColor,
     } = options || {};
 
     let state: SmoothCaretState = {
         cursorElement: null,
+        selectionElements: [],
         lastPos: null,
+        lastSelectionRects: [],
         isBlinking: false,
         blinkTimeout: null,
     };
@@ -54,6 +62,124 @@ export function createSmoothCaretPlugin(options?: {
         });
 
         return cursor;
+    }
+
+    function createSelectionElement(): HTMLDivElement {
+        const rect = document.createElement('div');
+        rect.className = 'smooth-selection-rect';
+        rect.setAttribute('data-smooth-selection', 'true');
+
+        Object.assign(rect.style, {
+            position: 'absolute',
+            backgroundColor: selectionColor || 'var(--smooth-selection-color, rgba(37, 99, 235, 0.25))',
+            pointerEvents: 'none',
+            zIndex: '999',
+            borderRadius: '2px',
+            transition: `top ${transitionDuration}ms ease-out, left ${transitionDuration}ms ease-out, width ${transitionDuration}ms ease-out, height ${transitionDuration}ms ease-out, opacity 100ms ease`,
+            opacity: '0',
+        });
+
+        return rect;
+    }
+
+    function getSelectionRects(view: EditorView): DOMRect[] {
+        const { selection } = view.state;
+        if (selection.empty) return [];
+
+        try {
+            // Get DOM range from ProseMirror selection
+            const fromDOM = view.domAtPos(selection.from);
+            const toDOM = view.domAtPos(selection.to);
+
+            const range = document.createRange();
+            range.setStart(fromDOM.node, fromDOM.offset);
+            range.setEnd(toDOM.node, toDOM.offset);
+
+            // Get all client rects for the range
+            const rects = Array.from(range.getClientRects());
+
+            // Filter out zero-size rects and merge adjacent ones
+            return rects.filter(rect => rect.width > 0 && rect.height > 0);
+        } catch (e) {
+            // Fallback: use simple bounding rect approach
+            return [];
+        }
+    }
+
+    function rectsAreEqual(a: DOMRect[], b: DOMRect[]): boolean {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (Math.abs(a[i].top - b[i].top) > 1 ||
+                Math.abs(a[i].left - b[i].left) > 1 ||
+                Math.abs(a[i].width - b[i].width) > 1 ||
+                Math.abs(a[i].height - b[i].height) > 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function updateSelectionHighlight(view: EditorView, editorWrapper: HTMLElement | null) {
+        if (!editorWrapper) return;
+
+        const { selection } = view.state;
+        const editorRect = view.dom.getBoundingClientRect();
+        const scrollTop = view.dom.scrollTop || 0;
+        const scrollLeft = view.dom.scrollLeft || 0;
+
+        // Get selection rectangles
+        const rects = getSelectionRects(view);
+
+        // Check if selection changed significantly
+        if (rectsAreEqual(rects, state.lastSelectionRects)) {
+            return;
+        }
+
+        // Check if this is a large jump (should skip animation)
+        const isLargeChange = state.lastSelectionRects.length !== rects.length ||
+            (rects.length > 0 && state.lastSelectionRects.length > 0 &&
+                Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 100);
+
+        // Ensure we have enough selection elements
+        while (state.selectionElements.length < rects.length) {
+            const elem = createSelectionElement();
+            editorWrapper.appendChild(elem);
+            state.selectionElements.push(elem);
+        }
+
+        // Update or hide selection elements
+        for (let i = 0; i < state.selectionElements.length; i++) {
+            const elem = state.selectionElements[i];
+
+            if (i < rects.length) {
+                const rect = rects[i];
+                const top = rect.top - editorRect.top + scrollTop;
+                const left = rect.left - editorRect.left + scrollLeft;
+
+                if (isLargeChange) {
+                    elem.style.transition = 'none';
+                    // Force reflow
+                    elem.offsetHeight;
+                }
+
+                elem.style.top = `${top}px`;
+                elem.style.left = `${left}px`;
+                elem.style.width = `${rect.width}px`;
+                elem.style.height = `${rect.height}px`;
+                elem.style.opacity = '1';
+
+                if (isLargeChange) {
+                    requestAnimationFrame(() => {
+                        elem.style.transition = `top ${transitionDuration}ms ease-out, left ${transitionDuration}ms ease-out, width ${transitionDuration}ms ease-out, height ${transitionDuration}ms ease-out, opacity 100ms ease`;
+                    });
+                }
+            } else {
+                // Hide unused elements
+                elem.style.opacity = '0';
+            }
+        }
+
+        state.lastSelectionRects = rects;
     }
 
     function updateCursorPosition(view: EditorView) {
@@ -142,11 +268,12 @@ export function createSmoothCaretPlugin(options?: {
         }, 530);
     }
 
-    function handleFocus(view: EditorView) {
+    function handleFocus(view: EditorView, editorWrapper: HTMLElement | null) {
         if (state.cursorElement) {
             state.cursorElement.style.opacity = '1';
             updateCursorPosition(view);
         }
+        updateSelectionHighlight(view, editorWrapper);
     }
 
     function handleBlur() {
@@ -154,6 +281,10 @@ export function createSmoothCaretPlugin(options?: {
             state.cursorElement.style.opacity = '0';
             state.cursorElement.classList.remove('smooth-caret-blink');
         }
+        // Hide all selection elements
+        state.selectionElements.forEach(elem => {
+            elem.style.opacity = '0';
+        });
     }
 
     return new Plugin({
@@ -174,32 +305,44 @@ export function createSmoothCaretPlugin(options?: {
                 editorWrapper.appendChild(state.cursorElement);
             }
 
-            // Add class to hide native caret
+            // Add class to hide native caret and selection
             editorView.dom.classList.add('smooth-caret-enabled');
 
             // Initial position update
-            setTimeout(() => updateCursorPosition(editorView), 0);
+            setTimeout(() => {
+                updateCursorPosition(editorView);
+                updateSelectionHighlight(editorView, editorWrapper);
+            }, 0);
 
             // Event listeners
-            editorView.dom.addEventListener('focus', () => handleFocus(editorView));
+            editorView.dom.addEventListener('focus', () => handleFocus(editorView, editorWrapper));
             editorView.dom.addEventListener('blur', handleBlur);
 
             return {
                 update(view: EditorView) {
                     updateCursorPosition(view);
+                    updateSelectionHighlight(view, editorWrapper);
                 },
                 destroy() {
-                    // Cleanup
+                    // Cleanup cursor
                     if (state.cursorElement && state.cursorElement.parentElement) {
                         state.cursorElement.parentElement.removeChild(state.cursorElement);
                     }
+                    // Cleanup selection elements
+                    state.selectionElements.forEach(elem => {
+                        if (elem.parentElement) {
+                            elem.parentElement.removeChild(elem);
+                        }
+                    });
                     if (state.blinkTimeout !== null) {
                         clearTimeout(state.blinkTimeout);
                     }
                     editorView.dom.classList.remove('smooth-caret-enabled');
                     state = {
                         cursorElement: null,
+                        selectionElements: [],
                         lastPos: null,
+                        lastSelectionRects: [],
                         isBlinking: false,
                         blinkTimeout: null,
                     };
