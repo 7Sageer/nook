@@ -262,11 +262,14 @@ export function Sidebar({
                   className="uncategorized-section"
                   layout={!isDragging ? 'position' : false}
                 >
-                  <div className="section-label-row">
-                    <span className="section-label">
-                      {query ? STRINGS.LABELS.DOCUMENTS : STRINGS.LABELS.UNCATEGORIZED}
-                    </span>
-                    {!query && (
+                  {/* 当有文件夹时显示分隔线，搜索模式下显示标题 */}
+                  {query ? (
+                    <div className="section-label-row">
+                      <span className="section-label">{STRINGS.LABELS.DOCUMENTS}</span>
+                    </div>
+                  ) : (
+                    <div className="section-label-row docs-section-header">
+                      {folders.length > 0 && <hr className="section-divider" />}
                       <button
                         className="section-add-btn"
                         onClick={handleCreate}
@@ -274,8 +277,8 @@ export function Sidebar({
                       >
                         <Plus size={14} />
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <ul
                     className={`document-list ${!query && containerDropIndicator?.containerId === UNCATEGORIZED_CONTAINER_ID ? 'drop-before' : ''
                       }`}
@@ -304,7 +307,7 @@ export function Sidebar({
             docsByContainer={docsByContainer}
           />
         </DndContext>
-      </aside>
+      </aside >
 
       <ConfirmModalComponent />
     </>

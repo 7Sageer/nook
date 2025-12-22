@@ -37,16 +37,24 @@ export const listItemVariants: Variants = {
         paddingTop: 0,
         paddingBottom: 0,
     },
-    animate: (i: number) => ({
+    animate: ({
+        index,
+        isActive,
+        staggerIndex,
+    }: {
+        index: number;
+        isActive?: boolean;
+        staggerIndex?: number;
+    }) => ({
         opacity: 1,
-        x: 0,
-        height: 'auto',
+        x: isActive ? 4 : 0,
+        height: 36,
         marginTop: undefined, // 恢复默认
         marginBottom: 2, // 恢复 CSS 中定义的值
         paddingTop: 10,
         paddingBottom: 10,
         transition: {
-            delay: i * durations.stagger,
+            delay: (staggerIndex ?? index) * durations.stagger,
             duration: durations.normal,
             ease: easings.standard,
             // 高度先展开，再淡入
@@ -102,7 +110,7 @@ export function getListItemAnimationProps(index: number, isDragging: boolean = f
         initial: 'initial',
         animate: 'animate',
         exit: 'exit',
-        custom: index,
+        custom: { index },
         // 拖拽时禁用 layout 动画，避免与 dnd-kit transform 冲突
         layout: !isDragging,
         layoutId: undefined, // 明确不使用 layoutId

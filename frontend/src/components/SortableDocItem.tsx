@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import type { DocDropIndicator } from '../types/dnd';
 import { FileText, Trash2 } from 'lucide-react';
@@ -68,6 +68,11 @@ export const SortableDocItem = memo(function SortableDocItem({
     const isActive = item.id === activeId;
     const hasSnippet = showSnippet && 'snippet' in item;
 
+    const hasAnimatedInRef = useRef(false);
+    useEffect(() => {
+        hasAnimatedInRef.current = true;
+    }, []);
+
     const handleDelete = (e: React.MouseEvent) => {
         e.stopPropagation();
         onDelete(item.id);
@@ -88,7 +93,7 @@ export const SortableDocItem = memo(function SortableDocItem({
             initial="initial"
             animate="animate"
             exit="exit"
-            custom={index}
+            custom={{ index, isActive, staggerIndex: hasAnimatedInRef.current ? 0 : index }}
             className={className}
             onClick={() => onSelect(item.id)}
             {...attributes}

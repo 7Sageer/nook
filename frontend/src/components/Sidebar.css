@@ -291,6 +291,28 @@
     will-change: transform;
 }
 
+/* ========== Documents Section Divider ========== */
+.docs-section-header {
+    justify-content: flex-end;
+    padding: 4px 16px;
+    position: relative;
+}
+
+.section-divider {
+    position: absolute;
+    left: 16px;
+    right: 48px;
+    top: 50%;
+    border: none;
+    height: 1px;
+    background-color: #e5e7eb;
+    margin: 0;
+}
+
+.sidebar.dark .section-divider {
+    background-color: #333;
+}
+
 /* ========== Empty Hint ========== */
 .empty-hint {
     display: flex;
