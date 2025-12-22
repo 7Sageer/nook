@@ -5,8 +5,7 @@ import { Header } from "./components/Header";
 import { WindowToolbar } from "./components/WindowToolbar";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
-import { useImportExport } from "./hooks/useImportExport";
-import { useExportImage } from "./hooks/useExportImage";
+import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
@@ -86,19 +85,11 @@ function AppContent() {
     resetTitleSync();
   }, [activeId, resetTitleSync]);
 
-  const { handleImport, handleExport } = useImportExport({
+  const { handleImport } = useImport({
     editorRef,
-    activeId,
-    documents,
     createDoc,
     saveContent,
     onContentChange: setContent,
-  });
-
-  // 导出图片功能
-  const { handleExportImage } = useExportImage({
-    onSuccess: () => setStatus(STRINGS.STATUS.IMAGE_COPIED),
-    onError: (err) => console.error(STRINGS.STATUS.EXPORT_IMAGE_FAILED, err),
   });
 
   // 当前文档标题（需要在 useExport 之前计算）
@@ -107,10 +98,12 @@ function AppContent() {
     ? activeExternalFile?.name || STRINGS.LABELS.EXTERNAL_FILE
     : activeDoc?.title || "";
 
-  // HTML 导出和打印功能
-  const { handleExportHTML, handlePrint } = useExport({
+  // 统一导出功能
+  const { handleExportMarkdown, handleExportHTML, handleCopyImage, handleSaveImage, handlePrint } = useExport({
     editorRef,
     documentTitle: currentTitle,
+    documents,
+    activeId,
     onSuccess: (msg) => setStatus(msg),
     onError: (err) => console.error('Export failed:', err),
   });
@@ -172,8 +165,9 @@ function AppContent() {
     onNewDocument: handleCreateInternalDocument,
     onNewFolder: createFolder,
     onImport: handleImport,
-    onExport: handleExport,
-    onExportImage: handleExportImage,
+    onExport: handleExportMarkdown,
+    onCopyImage: handleCopyImage,
+    onSaveImage: handleSaveImage,
     onExportHTML: handleExportHTML,
     onPrint: handlePrint,
     onToggleSidebar: handleToggleSidebar,

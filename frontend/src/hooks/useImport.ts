@@ -1,30 +1,28 @@
 import { useCallback } from 'react';
 import { Block, BlockNoteEditor } from '@blocknote/core';
-import { ImportMarkdownFile, ExportMarkdownFile } from '../../wailsjs/go/main/App';
+import { ImportMarkdownFile } from '../../wailsjs/go/main/App';
 import { DocumentMeta } from '../types/document';
 
-interface UseImportExportProps {
+interface UseImportProps {
     editorRef: React.MutableRefObject<BlockNoteEditor | null>;
-    activeId: string | null;
-    documents: DocumentMeta[];
     createDoc: (title?: string) => Promise<DocumentMeta>;
     saveContent: (id: string, content: Block[]) => Promise<void>;
     onContentChange?: (content: Block[]) => void;
 }
 
-interface UseImportExportReturn {
+interface UseImportReturn {
     handleImport: () => Promise<void>;
-    handleExport: () => Promise<void>;
 }
 
-export function useImportExport({
+/**
+ * Hook for importing Markdown files
+ */
+export function useImport({
     editorRef,
-    activeId,
-    documents,
     createDoc,
     saveContent,
     onContentChange,
-}: UseImportExportProps): UseImportExportReturn {
+}: UseImportProps): UseImportReturn {
     const handleImport = useCallback(async () => {
         const result = await ImportMarkdownFile();
         if (result && result.content && editorRef.current) {
@@ -34,25 +32,12 @@ export function useImportExport({
                 await saveContent(doc.id, blocks);
                 onContentChange?.(blocks);
             } catch (e) {
-                console.error('导入失败:', e);
+                console.error('Import failed:', e);
             }
         }
     }, [editorRef, createDoc, saveContent, onContentChange]);
 
-    const handleExport = useCallback(async () => {
-        if (editorRef.current && activeId) {
-            try {
-                const markdown = await editorRef.current.blocksToMarkdownLossy();
-                const activeDoc = documents.find((d) => d.id === activeId);
-                await ExportMarkdownFile(markdown, activeDoc?.title || 'document');
-            } catch (e) {
-                console.error('导出失败:', e);
-            }
-        }
-    }, [editorRef, activeId, documents]);
-
     return {
         handleImport,
-        handleExport,
     };
 }

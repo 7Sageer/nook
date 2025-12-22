@@ -6,7 +6,8 @@ interface MenuEventsOptions {
     onNewFolder?: () => void;
     onImport: () => void;
     onExport: () => void;
-    onExportImage?: () => void;
+    onCopyImage?: () => void;
+    onSaveImage?: () => void;
     onExportHTML?: () => void;
     onPrint?: () => void;
     onToggleSidebar: () => void;
@@ -20,7 +21,8 @@ export function useMenuEvents({
     onNewFolder,
     onImport,
     onExport,
-    onExportImage,
+    onCopyImage,
+    onSaveImage,
     onExportHTML,
     onPrint,
     onToggleSidebar,
@@ -46,8 +48,12 @@ export function useMenuEvents({
             unsubscribers.push(EventsOn('menu:open-external', onOpenExternal));
         }
 
-        if (onExportImage) {
-            unsubscribers.push(EventsOn('menu:export-image', onExportImage));
+        if (onCopyImage) {
+            unsubscribers.push(EventsOn('menu:copy-image', onCopyImage));
+        }
+
+        if (onSaveImage) {
+            unsubscribers.push(EventsOn('menu:save-image', onSaveImage));
         }
 
         if (onExportHTML) {
@@ -61,6 +67,5 @@ export function useMenuEvents({
         return () => {
             unsubscribers.forEach((unsubscribe) => unsubscribe());
         };
-    }, [onNewDocument, onNewFolder, onImport, onExport, onExportImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
+    }, [onNewDocument, onNewFolder, onImport, onExport, onCopyImage, onSaveImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
 }
-

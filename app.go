@@ -359,6 +359,38 @@ func (a *App) SaveImage(base64Data string, filename string) (string, error) {
 	return "/images/" + filename, nil
 }
 
+// SaveImageFile 保存图片到指定位置（通过文件对话框）
+func (a *App) SaveImageFile(base64Data string, defaultName string) error {
+	// Decode base64 data first to validate
+	imgData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return err
+	}
+
+	// Open save dialog
+	filePath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Save as Image",
+		DefaultFilename: defaultName + ".png",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PNG Image (*.png)", Pattern: "*.png"},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if filePath == "" {
+		return nil // User cancelled
+	}
+
+	// Ensure .png extension
+	if !strings.HasSuffix(strings.ToLower(filePath), ".png") {
+		filePath += ".png"
+	}
+
+	// Write image to file
+	return os.WriteFile(filePath, imgData, 0644)
+}
+
 // PrintHTML 保存 HTML 到临时文件并在浏览器中打开
 func (a *App) PrintHTML(htmlContent string, title string) error {
 	// 创建临时目录

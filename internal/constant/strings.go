@@ -32,6 +32,7 @@ const (
 	MenuFileImport     = "Import Markdown"
 	MenuFileExport     = "Export Markdown"
 	MenuFileExportImg  = "Copy as Image"
+	MenuFileSaveImg    = "Save as Image..."
 	MenuFileExportHTML = "Export HTML"
 	MenuFilePrint      = "Print"
 
