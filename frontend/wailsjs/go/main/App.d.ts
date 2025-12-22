@@ -5,6 +5,8 @@ import {folder} from '../models';
 import {main} from '../models';
 import {markdown} from '../models';
 
+export function CopyImageToClipboard(arg1:string):Promise<void>;
+
 export function CreateDocument(arg1:string):Promise<document.Meta>;
 
 export function CreateFolder(arg1:string):Promise<folder.Folder>;

@@ -6,6 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Nook is a local-first note-taking desktop application built with Wails (Go backend + React/TypeScript frontend). It uses BlockNote as the rich text editor and stores documents as JSON files locally. Documents can be organized into folders with drag-and-drop reordering.
 
+**Key dependencies:**
+- Go 1.23+, Wails v2
+- BlockNote (rich text editor), Mantine (UI components)
+- dnd-kit (drag-and-drop), Framer Motion (animations)
+
 ## Development Commands
 
 ```bash
@@ -19,6 +24,8 @@ wails build
 cd frontend && npm run dev      # Vite dev server
 cd frontend && npm run build    # Build frontend
 ```
+
+Note: No test suite is currently configured.
 
 ## Architecture
 
@@ -56,6 +63,7 @@ cd frontend && npm run build    # Build frontend
   - `useExternalFile` - External file editing mode
   - `useImportExport` - Markdown import/export
   - `useMenuEvents` - Native menu event listeners
+  - `useAppEvents` - File open events and save handling
   - `useSearch` - Document search
   - `useEditor` - BlockNote editor instance management
   - `useTitleSync` - Sync document title with first H1 block
@@ -75,6 +83,10 @@ All data stored in `~/.Nook/`:
 
 - Wails generates TypeScript bindings in `frontend/wailsjs/go/main/App.ts`
 - Events via `EventsEmit`/`EventsOn` for menu actions and file open notifications
+- Event naming conventions:
+  - `menu:*` - Native menu actions (e.g., `menu:new-document`, `menu:toggle-sidebar`)
+  - `file:*` - File operations (e.g., `file:open-external`)
+  - `app:*` - Application lifecycle (e.g., `app:frontend-ready`)
 - Frontend emits `app:frontend-ready` to signal readiness for deferred file opens
 
 ## Key Patterns

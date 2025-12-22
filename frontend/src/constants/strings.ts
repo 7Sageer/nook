@@ -6,6 +6,8 @@ export const STRINGS = {
         LOADING: "Loading...",
         SAVING: "Saving...",
         SAVED: "Saved",
+        IMAGE_COPIED: "Image copied",
+        EXPORT_IMAGE_FAILED: "Export image failed:",
     },
 
     BUTTONS: {
@@ -20,6 +22,7 @@ export const STRINGS = {
         OPEN_FILE: "Open File",
         IMPORT: "Import Markdown",
         EXPORT: "Export Markdown",
+        EXPORT_IMAGE: "Export as Image to Clipboard",
         THEME_LIGHT: "Light Mode (click to switch)",
         THEME_DARK: "Dark Mode (click to switch)",
         THEME_SYSTEM: "Follow System (click to switch)",

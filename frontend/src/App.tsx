@@ -6,6 +6,7 @@ import { WindowToolbar } from "./components/WindowToolbar";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImportExport } from "./hooks/useImportExport";
+import { useExportImage } from "./hooks/useExportImage";
 import { useExternalFile } from "./hooks/useExternalFile";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
@@ -92,6 +93,12 @@ function AppContent() {
     onContentChange: setContent,
   });
 
+  // 导出图片功能
+  const { handleExportImage } = useExportImage({
+    onSuccess: () => setStatus(STRINGS.STATUS.IMAGE_COPIED),
+    onError: (err) => console.error(STRINGS.STATUS.EXPORT_IMAGE_FAILED, err),
+  });
+
   // 使用 useAppEvents 处理文件打开和保存事件
   const { handleChange } = useAppEvents({
     openExternalByPath,
@@ -150,6 +157,7 @@ function AppContent() {
     onNewFolder: createFolder,
     onImport: handleImport,
     onExport: handleExport,
+    onExportImage: handleExportImage,
     onToggleSidebar: handleToggleSidebar,
     onToggleTheme: toggleTheme,
     onAbout: handleAbout,

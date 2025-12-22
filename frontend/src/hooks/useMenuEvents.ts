@@ -6,6 +6,7 @@ interface MenuEventsOptions {
     onNewFolder?: () => void;
     onImport: () => void;
     onExport: () => void;
+    onExportImage?: () => void;
     onToggleSidebar: () => void;
     onToggleTheme: () => void;
     onAbout: () => void;
@@ -17,6 +18,7 @@ export function useMenuEvents({
     onNewFolder,
     onImport,
     onExport,
+    onExportImage,
     onToggleSidebar,
     onToggleTheme,
     onAbout,
@@ -40,8 +42,12 @@ export function useMenuEvents({
             unsubscribers.push(EventsOn('menu:open-external', onOpenExternal));
         }
 
+        if (onExportImage) {
+            unsubscribers.push(EventsOn('menu:export-image', onExportImage));
+        }
+
         return () => {
             unsubscribers.forEach((unsubscribe) => unsubscribe());
         };
-    }, [onNewDocument, onNewFolder, onImport, onExport, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
+    }, [onNewDocument, onNewFolder, onImport, onExport, onExportImage, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
 }

@@ -29,6 +29,7 @@ const (
 	MenuFileOpen      = "Open File"
 	MenuFileImport    = "Import Markdown"
 	MenuFileExport    = "Export Markdown"
+	MenuFileExportImg = "Copy as Image"
 
 	// Menu - View
 	MenuView              = "View"

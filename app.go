@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"path/filepath"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"notion-lite/internal/settings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"golang.design/x/clipboard"
 )
 
 // ========== 前端专用数据结构 ==========
@@ -305,4 +307,25 @@ func (a *App) LoadExternalFile(path string) (string, error) {
 		return "", err
 	}
 	return string(data), nil
+}
+
+// ========== 剪贴板图片 ==========
+
+// CopyImageToClipboard 将 base64 编码的 PNG 图片复制到剪贴板
+func (a *App) CopyImageToClipboard(base64Data string) error {
+	// Initialize clipboard (required for golang.design/x/clipboard)
+	err := clipboard.Init()
+	if err != nil {
+		return err
+	}
+
+	// Decode base64 data
+	imgData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return err
+	}
+
+	// Write image to clipboard
+	clipboard.Write(clipboard.FmtImage, imgData)
+	return nil
 }
