@@ -137,7 +137,12 @@ func (a *App) CreateDocument(title string) (document.Meta, error) {
 
 // DeleteDocument 删除文档
 func (a *App) DeleteDocument(id string) error {
-	return a.docRepo.Delete(id)
+	err := a.docRepo.Delete(id)
+	if err == nil {
+		// 异步清理未使用的图像
+		go a.cleanupUnusedImages()
+	}
+	return err
 }
 
 // RenameDocument 重命名文档
