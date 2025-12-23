@@ -34,6 +34,10 @@ export function ExportMarkdownFile(arg1, arg2) {
   return window['go']['main']['App']['ExportMarkdownFile'](arg1, arg2);
 }
 
+export function FetchLinkMetadata(arg1) {
+  return window['go']['main']['App']['FetchLinkMetadata'](arg1);
+}
+
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }

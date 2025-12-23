@@ -150,3 +150,30 @@ export namespace markdown {
 
 }
 
+export namespace opengraph {
+	
+	export class LinkMetadata {
+	    url: string;
+	    title: string;
+	    description: string;
+	    image: string;
+	    favicon: string;
+	    siteName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new LinkMetadata(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.title = source["title"];
+	        this.description = source["description"];
+	        this.image = source["image"];
+	        this.favicon = source["favicon"];
+	        this.siteName = source["siteName"];
+	    }
+	}
+
+}
+

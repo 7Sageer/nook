@@ -46,6 +46,14 @@ export function createSmoothCaretPlugin(options?: {
         blinkTimeout: null,
     };
 
+    function isNativeTextInputFocused(view: EditorView): boolean {
+        const activeElement = view.dom.ownerDocument.activeElement as HTMLElement | null;
+        if (!activeElement) return false;
+        if (!view.dom.contains(activeElement)) return false;
+        const tag = activeElement.tagName;
+        return tag === "INPUT" || tag === "TEXTAREA";
+    }
+
     function createCursorElement(): HTMLDivElement {
         const cursor = document.createElement('div');
         cursor.className = 'smooth-caret';
@@ -248,6 +256,13 @@ export function createSmoothCaretPlugin(options?: {
 
     function updateSelectionHighlight(view: EditorView, editorWrapper: HTMLElement | null) {
         if (!editorWrapper) return;
+        if (!view.hasFocus() || isNativeTextInputFocused(view)) {
+            // Ensure selection decorations don't remain visible while focus is in a native input.
+            state.selectionElements.forEach((elem) => {
+                elem.style.opacity = '0';
+            });
+            return;
+        }
 
         const { selection } = view.state;
         const editorRect = view.dom.getBoundingClientRect();
@@ -343,6 +358,10 @@ export function createSmoothCaretPlugin(options?: {
 
     function updateCursorPosition(view: EditorView) {
         if (!state.cursorElement) return;
+        if (!view.hasFocus() || isNativeTextInputFocused(view)) {
+            state.cursorElement.style.opacity = '0';
+            return;
+        }
 
         const { selection } = view.state;
 

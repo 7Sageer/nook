@@ -15,6 +15,7 @@ import (
 	"notion-lite/internal/document"
 	"notion-lite/internal/folder"
 	"notion-lite/internal/markdown"
+	"notion-lite/internal/opengraph"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
 
@@ -429,4 +430,11 @@ func sanitizeFilename(name string) string {
 		result = result[:50]
 	}
 	return result
+}
+
+// ========== Open Graph ==========
+
+// FetchLinkMetadata 获取链接的 Open Graph 元数据
+func (a *App) FetchLinkMetadata(url string) (*opengraph.LinkMetadata, error) {
+	return opengraph.Fetch(url)
 }

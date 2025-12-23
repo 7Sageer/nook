@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/otiai10/opengraph/v2 v2.2.0
 	github.com/wailsapp/wails/v2 v2.11.0
 	golang.design/x/clipboard v0.7.1
 )

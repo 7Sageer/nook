@@ -88,3 +88,8 @@
 .bn-editor {
     position: relative;
 }
+
+/* Hide virtual caret when bookmark input is being edited */
+.bn-editor.bookmark-input-active .smooth-caret {
+    display: none !important;
+}
