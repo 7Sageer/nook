@@ -19,6 +19,12 @@
     caret-color: transparent !important;
 }
 
+/* Keep caret visible for native inputs inside the editor (e.g. bookmark URL input) */
+.smooth-caret-enabled input,
+.smooth-caret-enabled textarea {
+    caret-color: auto !important;
+}
+
 /* Hide native selection when smooth selection is enabled */
 .smooth-caret-enabled ::selection {
     background: transparent !important;
@@ -26,6 +32,17 @@
 
 .smooth-caret-enabled ::-moz-selection {
     background: transparent !important;
+}
+
+/* Restore native selection styles for inputs/textareas */
+.smooth-caret-enabled input::selection,
+.smooth-caret-enabled textarea::selection {
+    background: revert !important;
+}
+
+.smooth-caret-enabled input::-moz-selection,
+.smooth-caret-enabled textarea::-moz-selection {
+    background: revert !important;
 }
 
 /* Smooth caret element */
