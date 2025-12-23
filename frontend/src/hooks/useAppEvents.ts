@@ -1,4 +1,5 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
+import { useDebounce } from './useDebounce';
 import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
 import { Block, BlockNoteEditor } from '@blocknote/core';
 import { ExternalFileInfo } from '../contexts/ExternalFileContext';
@@ -70,38 +71,45 @@ export function useAppEvents({
     return () => unsubscribe();
   }, [openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
+  // 内部文档保存逻辑（抽离出来以便防抖）
+  const debouncedSaveInternal = useDebounce(async (id: string, blocks: Block[]) => {
+    await saveContent(id, blocks);
+    setStatus(statusSavedText);
+    setTimeout(() => setStatus(""), 1000);
+  }, 800);
+
+  // 外部文件保存逻辑（抽离出来以便防抖）
+  const debouncedSaveExternal = useDebounce(async (content: string) => {
+    await saveExternal(content);
+    setStatus(statusSavedText);
+    setTimeout(() => setStatus(""), 1000);
+  }, 800);
+
   // 保存文档的处理函数
   const handleChange = useCallback(async (blocks: Block[]) => {
     if (isExternalMode && activeExternalFile && editorRef.current) {
-      // 保存外部文件
+      // 保存外部文件 - 防抖
       try {
         const markdown = await editorRef.current.blocksToMarkdownLossy();
-        await saveExternal(markdown);
-        setStatus(statusSavedText);
-        setTimeout(() => setStatus(""), 1000);
+        debouncedSaveExternal(markdown);
       } catch (e) {
         console.error('保存外部文件失败:', e);
       }
     } else if (activeId) {
-      // 保存内部文档
-      saveContent(activeId, blocks).then(() => {
-        setStatus(statusSavedText);
-        setTimeout(() => setStatus(""), 1000);
-      });
+      // 保存内部文档 - 防抖
+      debouncedSaveInternal(activeId, blocks);
 
-      // 自动同步 H1 标题
+      // 自动同步 H1 标题 - 保持实时（它是内存操作，不涉及 I/O）
       syncTitleFromBlocks(blocks);
     }
   }, [
     isExternalMode,
     activeExternalFile,
     editorRef,
-    saveExternal,
+    debouncedSaveExternal,
     activeId,
-    saveContent,
+    debouncedSaveInternal,
     syncTitleFromBlocks,
-    setStatus,
-    statusSavedText,
   ]);
 
   return {
