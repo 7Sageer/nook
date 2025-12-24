@@ -208,5 +208,15 @@ export const BookmarkBlock = createReactBlockSpec(
                 </div>
             );
         },
+        toExternalHTML: (props) => {
+            const { url, title } = props.block.props;
+            if (!url) return <span />;
+            const label = title?.trim() ? title : url;
+            return (
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                    {label}
+                </a>
+            );
+        },
     }
 );

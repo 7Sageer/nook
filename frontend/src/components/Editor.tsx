@@ -6,14 +6,90 @@ import {
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
-import { BlockNoteSchema, defaultBlockSpecs } from "@blocknote/core";
+import { BlockNoteSchema, defaultBlockSpecs, createExtension } from "@blocknote/core";
+import { Extension } from "@tiptap/core";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { useEffect, useRef, useMemo } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
+import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import "../plugins/smoothCaret.css";
 import { SaveImage } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
+
+/**
+ * Module-level state to track Chinese IME composition.
+ * Used to prevent slash menu from triggering during IME input.
+ */
+let isComposing = false;
+
+const chineseIMEPluginKey = new PluginKey("chineseIMEFix");
+
+/**
+ * ProseMirror plugin to fix Chinese IME breaking slash menu.
+ * Tracks composition state and closes the suggestion menu if triggered during composition.
+ */
+function createChineseIMEPlugin(editor: any) {
+  return new Plugin({
+    key: chineseIMEPluginKey,
+    props: {
+      handleDOMEvents: {
+        compositionstart: () => {
+          isComposing = true;
+          return false;
+        },
+        compositionend: () => {
+          // Use setTimeout to ensure compositionend fires after the last input event
+          setTimeout(() => {
+            isComposing = false;
+          }, 0);
+          return false;
+        },
+      },
+    },
+    view: () => ({
+      update: () => {
+        // If we're composing and the suggestion menu is shown, close it
+        if (isComposing) {
+          try {
+            // Access BlockNote's internal suggestion menu state
+            const suggestionMenuExt = editor._extensions?.suggestionMenu;
+            if (suggestionMenuExt?.shown?.()) {
+              suggestionMenuExt.closeMenu?.();
+            }
+          } catch {
+            // Silently ignore if we can't access the menu
+          }
+        }
+      },
+      destroy: () => { },
+    }),
+  });
+}
+
+// Export composition state getter for external use
+export function getIsComposing(): boolean {
+  return isComposing;
+}
+
+// TipTap extension to make bookmark node atomic (prevents selecting internal content)
+const BookmarkAtomTiptapExtension = Extension.create({
+  name: "bookmarkAtom",
+  extendNodeSchema(extension) {
+    // Only set atom: true for the bookmark node type
+    if (extension.name === "bookmark") {
+      return { atom: true };
+    }
+    return {};
+  },
+});
+
+// BlockNote extension wrapper for the TipTap extension
+const bookmarkAtomExtension = createExtension({
+  key: "bookmarkAtom",
+  tiptapExtensions: [BookmarkAtomTiptapExtension],
+});
 
 interface EditorProps {
   initialContent?: any[];
@@ -95,6 +171,7 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
 
   const editor = useCreateBlockNote({
     schema,
+    extensions: [bookmarkAtomExtension],
     initialContent:
       initialContent && initialContent.length > 0 ? initialContent : undefined,
     uploadFile: async (file: File): Promise<string> => {
@@ -121,12 +198,20 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
   });
 
   // Inject smooth caret plugin after editor is created (only once)
+  // Also set bookmark node's atom property to true
   useEffect(() => {
     if (editor && editor._tiptapEditor && !pluginInjectedRef.current) {
       // Access the ProseMirror view and register the plugin
       const view = editor._tiptapEditor.view;
       if (view) {
         try {
+          // Set bookmark node as atomic to prevent selecting internal content
+          const bookmarkNodeType = view.state.schema.nodes.bookmark;
+          if (bookmarkNodeType) {
+            // Directly modify the node type spec to make it atomic
+            (bookmarkNodeType.spec as any).atom = true;
+          }
+
           // Create plugin instance
           const smoothCaretPlugin = createSmoothCaretPlugin({
             transitionDuration: 60,
@@ -134,10 +219,16 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
             enableBlink: true,
           });
 
-          // Add plugin to the editor's state
+          // Create bookmark selection plugin
+          const bookmarkSelectionPlugin = createBookmarkSelectionPlugin();
+
+          // Create Chinese IME fix plugin (prevents slash menu during composition)
+          const chineseIMEPlugin = createChineseIMEPlugin(editor);
+
+          // Add plugins to the editor's state
           const { state } = view;
           const newState = state.reconfigure({
-            plugins: [...state.plugins, smoothCaretPlugin],
+            plugins: [...state.plugins, smoothCaretPlugin, bookmarkSelectionPlugin, chineseIMEPlugin],
           });
           view.updateState(newState);
           pluginInjectedRef.current = true;

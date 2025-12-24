@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, forwardRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import type { DocDropIndicator } from '../types/dnd';
 import { FileText, Trash2 } from 'lucide-react';
@@ -30,7 +30,7 @@ export interface SortableDocItemProps {
  * 通用可排序文档项组件
  * 统一了 DocumentList 和 FolderItem 中的重复实现
  */
-export const SortableDocItem = memo(function SortableDocItem({
+export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, SortableDocItemProps>(function SortableDocItem({
     item,
     index,
     containerId,
@@ -42,7 +42,7 @@ export const SortableDocItem = memo(function SortableDocItem({
     inFolder = false,
     showSnippet = false,
     hidden = false,
-}: SortableDocItemProps) {
+}, ref) {
     const {
         attributes,
         listeners,
@@ -138,4 +138,4 @@ export const SortableDocItem = memo(function SortableDocItem({
             </div>
         </MotionComponent>
     );
-});
+}));

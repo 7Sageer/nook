@@ -5,6 +5,13 @@
     transition: box-shadow 0.2s ease, transform 0.2s ease;
     margin: 8px 0;
     font-family: inherit;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.bookmark-block * {
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Input State */
@@ -21,6 +28,8 @@
     font-size: 14px;
     color: inherit;
     outline: none;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .bookmark-input input::placeholder {
@@ -82,12 +91,25 @@
 /* Card State */
 .bookmark-card {
     display: flex;
+    width: 100%;
     position: relative;
     border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
     background: var(--bn-colors-editor-background, #fff);
     text-decoration: none;
     color: inherit;
     overflow: hidden;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.bookmark-card * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.bookmark-favicon,
+.bookmark-image img {
+    -webkit-user-drag: none;
 }
 
 .bookmark-card:hover {

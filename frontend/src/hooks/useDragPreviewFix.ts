@@ -1,5 +1,12 @@
 import { useEffect, useRef } from "react";
 
+// Set to true to enable debug logging
+const DEBUG = false;
+
+function debugLog(...args: unknown[]) {
+    if (DEBUG) console.log('[DragFix]', ...args);
+}
+
 /**
  * useDragPreviewFix - Fixes the drag preview (ghost image) issue in Wails WebView.
  * 
@@ -11,13 +18,40 @@ import { useEffect, useRef } from "react";
  */
 export function useDragPreviewFix() {
     const overlayRef = useRef<HTMLDivElement | null>(null);
+    const dragImageRef = useRef<HTMLImageElement | null>(null);
     const isDraggingRef = useRef(false);
 
     useEffect(() => {
-        console.log('[DragFix] Hook initialized');
+        // Only enable this workaround inside Wails (WKWebView) runtime.
+        // In a regular browser BlockNote's native drag preview works correctly.
+        if (typeof (window as any).runtime === "undefined") {
+            return;
+        }
+
+        debugLog('Hook initialized');
 
         let mouseX = 0;
         let mouseY = 0;
+
+        // Create a tiny invisible image used to override the native drag ghost.
+        // WebKit is picky here: using an actual <img> is the most reliable option.
+        // It also needs to be attached to the DOM.
+        const dragImageEl = new Image();
+        dragImageEl.src =
+            "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        dragImageEl.alt = "";
+        dragImageEl.id = "bn-transparent-drag-image";
+        dragImageEl.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        `;
+        document.body.appendChild(dragImageEl);
+        dragImageRef.current = dragImageEl;
 
         /**
          * Track mouse position for overlay positioning
@@ -36,42 +70,55 @@ export function useDragPreviewFix() {
          * Handle drag start - create overlay
          */
         const handleDragStart = (e: DragEvent) => {
-            console.log('[DragFix] dragstart event fired');
-            console.log('[DragFix] target:', e.target);
-            console.log('[DragFix] dataTransfer:', e.dataTransfer);
+            const isCapturePhase = e.eventPhase === Event.CAPTURING_PHASE;
 
-            const target = e.target as HTMLElement;
+            debugLog('dragstart event fired');
 
-            // Check if this is a BlockNote drag handle (using data-test attribute from the SVG)
-            const dragHandle = target.closest('[draggable="true"]');
-            console.log('[DragFix] dragHandle found:', dragHandle);
+            const target = e.target as HTMLElement | null;
+            if (!target) return;
 
-            if (!dragHandle) {
-                console.log('[DragFix] No draggable element found, skipping');
+            // We run in both capture and bubble phases:
+            // - capture: try to override BEFORE BlockNote
+            // - bubble: try to override AFTER BlockNote
+            // WKWebView differs across versions on which call "wins".
+            const sideMenu = target.closest('.bn-side-menu');
+
+            if (!sideMenu) {
                 return;
             }
 
             // Make sure we're in the BlockNote editor
-            const editorWrapper = target.closest('.bn-editor');
-            console.log('[DragFix] editorWrapper:', editorWrapper);
+            const editorWrapper = target.closest('.bn-editor') ?? document.querySelector('.bn-editor');
 
             if (!editorWrapper) {
-                console.log('[DragFix] Not in BlockNote editor, skipping');
+                return;
+            }
+
+            // Always override the native ghost (WKWebView may snapshot the wrong region).
+            if (e.dataTransfer && dragImageRef.current) {
+                try {
+                    e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
+                    debugLog('setDragImage called');
+                } catch (err) {
+                    console.error('[DragFix] setDragImage error:', err);
+                }
+            }
+
+            // Only build the custom overlay once, in capture phase.
+            if (!isCapturePhase) {
                 return;
             }
 
             // Find the hovered block
             const hoveredBlock = findHoveredBlock(target);
-            console.log('[DragFix] hoveredBlock:', hoveredBlock);
 
             if (!hoveredBlock) {
-                console.log('[DragFix] No block found, skipping');
+                debugLog('No block found');
                 return;
             }
 
             // Create and show the custom overlay
             const overlay = createOverlay(hoveredBlock);
-            console.log('[DragFix] overlay created:', overlay);
 
             if (overlay) {
                 overlay.style.left = `${mouseX + 15}px`;
@@ -80,23 +127,12 @@ export function useDragPreviewFix() {
                 overlayRef.current = overlay;
                 isDraggingRef.current = true;
 
-                console.log('[DragFix] Overlay added to DOM');
+                // Trigger fade-in animation
+                requestAnimationFrame(() => {
+                    if (overlay) overlay.style.opacity = '1';
+                });
 
-                // Make the native ghost image transparent
-                // Create a 1x1 transparent image
-                const transparentImg = new Image();
-                transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-
-                if (e.dataTransfer) {
-                    try {
-                        e.dataTransfer.setDragImage(transparentImg, 0, 0);
-                        console.log('[DragFix] setDragImage called with transparent image');
-                    } catch (err) {
-                        console.error('[DragFix] setDragImage error:', err);
-                    }
-                } else {
-                    console.log('[DragFix] dataTransfer is null');
-                }
+                debugLog('Overlay added to DOM');
             }
         };
 
@@ -104,11 +140,10 @@ export function useDragPreviewFix() {
          * Handle drag end - remove overlay
          */
         const handleDragEnd = () => {
-            console.log('[DragFix] dragend/drop event');
+            debugLog('dragend/drop event');
             if (overlayRef.current) {
                 overlayRef.current.remove();
                 overlayRef.current = null;
-                console.log('[DragFix] Overlay removed');
             }
             isDraggingRef.current = false;
         };
@@ -129,18 +164,21 @@ export function useDragPreviewFix() {
             }
         };
 
-        // Use capture phase to intercept events early
+        // Use capture phase for motion updates.
         document.addEventListener('mousemove', handleMouseMove);
+        // Listen to dragstart in BOTH phases (see comment in handler).
         document.addEventListener('dragstart', handleDragStart, true);
+        document.addEventListener('dragstart', handleDragStart);
         document.addEventListener('drag', handleDrag, true);
         document.addEventListener('dragend', handleDragEnd, true);
         document.addEventListener('drop', handleDragEnd, true);
 
-        console.log('[DragFix] Event listeners registered');
+        debugLog('Event listeners registered');
 
         return () => {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('dragstart', handleDragStart, true);
+            document.removeEventListener('dragstart', handleDragStart);
             document.removeEventListener('drag', handleDrag, true);
             document.removeEventListener('dragend', handleDragEnd, true);
             document.removeEventListener('drop', handleDragEnd, true);
@@ -149,7 +187,11 @@ export function useDragPreviewFix() {
                 overlayRef.current.remove();
                 overlayRef.current = null;
             }
-            console.log('[DragFix] Cleanup complete');
+            if (dragImageRef.current) {
+                dragImageRef.current.remove();
+                dragImageRef.current = null;
+            }
+            debugLog('Cleanup complete');
         };
     }, []);
 }
@@ -158,42 +200,172 @@ export function useDragPreviewFix() {
  * Find the block element being dragged
  */
 function findHoveredBlock(target: HTMLElement): Element | null {
-    // Method 1: BlockNote marks hovered blocks
+    // Method 1: BlockNote marks hovered blocks with data attribute
     const hoveredBlock = document.querySelector('.bn-block-outer[data-is-hovered="true"]');
-    console.log('[DragFix] findHoveredBlock - Method 1 (data-is-hovered):', hoveredBlock);
     if (hoveredBlock) return hoveredBlock;
 
-    // Method 2: Find by side menu position
+    // Method 2: Find by side menu position - use center point for better accuracy
     const sideMenu = target.closest('.bn-side-menu');
-    console.log('[DragFix] findHoveredBlock - sideMenu:', sideMenu);
     if (sideMenu) {
         const menuRect = sideMenu.getBoundingClientRect();
+        // Use the vertical center of the side menu for matching
+        const menuCenterY = menuRect.top + menuRect.height / 2;
+
         const blocks = document.querySelectorAll('.bn-block-outer');
-        console.log('[DragFix] findHoveredBlock - blocks count:', blocks.length);
+        let bestMatch: Element | null = null;
+        let bestDistance = Infinity;
+
         for (const block of blocks) {
             const blockRect = block.getBoundingClientRect();
-            if (menuRect.top >= blockRect.top - 10 && menuRect.top <= blockRect.bottom + 10) {
-                console.log('[DragFix] findHoveredBlock - Method 2 found:', block);
-                return block;
+            const blockCenterY = blockRect.top + blockRect.height / 2;
+
+            // Check if menu center is within the block's vertical bounds
+            if (menuCenterY >= blockRect.top && menuCenterY <= blockRect.bottom) {
+                return block; // Direct hit - return immediately
             }
+
+            // Track the closest block
+            const distance = Math.abs(menuCenterY - blockCenterY);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestMatch = block;
+            }
+        }
+
+        // Return the closest block if within reasonable distance (50px)
+        if (bestMatch && bestDistance < 50) {
+            return bestMatch;
         }
     }
 
-    // Method 3: Closest block outer
-    const closest = target.closest('.bn-block-outer');
-    console.log('[DragFix] findHoveredBlock - Method 3 (closest):', closest);
-    return closest;
+    // Method 3: Fallback - closest block outer from target
+    return target.closest('.bn-block-outer');
+}
+
+/**
+ * Check if the block is a bookmark block
+ */
+function isBookmarkBlock(element: Element): boolean {
+    return element.querySelector('.bookmark-block') !== null ||
+        element.querySelector('[data-content-type="bookmark"]') !== null;
+}
+
+/**
+ * Create a compact preview for bookmark blocks with image thumbnail
+ */
+function createBookmarkPreview(blockElement: Element, isDark: boolean): HTMLDivElement {
+    const overlay = document.createElement('div');
+    overlay.className = 'bn-drag-overlay bn-drag-overlay-bookmark';
+    overlay.id = 'bn-custom-drag-overlay';
+
+    const bookmarkCard = blockElement.querySelector('.bookmark-card');
+    if (!bookmarkCard) {
+        // Fallback: show a simple bookmark icon
+        overlay.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span style="opacity: 0.7;">Bookmark</span>
+            </div>
+        `;
+    } else {
+        // Extract key info for compact preview
+        const title = bookmarkCard.querySelector('.bookmark-title')?.textContent || '';
+        const domain = bookmarkCard.querySelector('.bookmark-domain')?.textContent || '';
+        const faviconEl = bookmarkCard.querySelector('.bookmark-favicon') as HTMLImageElement | null;
+        const faviconSrc = faviconEl?.src || '';
+
+        // Get the OG image if available
+        const imageEl = bookmarkCard.querySelector('.bookmark-image img') as HTMLImageElement | null;
+        const imageSrc = imageEl?.src || '';
+
+        // Build the preview with optional image thumbnail
+        const imageHtml = imageSrc ? `
+            <div style="
+                width: 64px;
+                height: 48px;
+                flex-shrink: 0;
+                border-radius: 6px;
+                overflow: hidden;
+                background: ${isDark ? '#333' : '#f0f0f0'};
+            ">
+                <img src="${imageSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'" />
+            </div>
+        ` : '';
+
+        const faviconHtml = faviconSrc
+            ? `<img src="${faviconSrc}" style="width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0;" onerror="this.style.display='none'" />`
+            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; opacity: 0.5;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>`;
+
+        overlay.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; max-width: 320px;">
+                ${imageHtml}
+                <div style="min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="font-weight: 500; font-size: 13px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${escapeHtml(title)}</div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        ${faviconHtml}
+                        <span style="font-size: 11px; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(domain)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    overlay.style.cssText = `
+        position: fixed;
+        z-index: 99999;
+        padding: 10px 14px;
+        background: ${isDark ? 'rgba(45, 45, 45, 0.98)' : 'rgba(255, 255, 255, 0.98)'};
+        border: 1px solid ${isDark ? '#505050' : '#e0e0e0'};
+        border-radius: 10px;
+        box-shadow: 0 8px 32px ${isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)'}, 0 2px 8px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.08)'};
+        pointer-events: none;
+        color: ${isDark ? '#e5e5e5' : '#333333'};
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        transition: opacity 0.15s ease-out;
+        transform: scale(1.02);
+    `;
+
+    return overlay;
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 /**
  * Create the overlay element showing block preview
  */
 function createOverlay(blockElement: Element): HTMLDivElement | null {
+    // Detect theme - check for app's theme class on .app-container
+    const appContainer = document.querySelector('.app-container');
+    const isDark = appContainer?.classList.contains('dark')
+        || document.documentElement.classList.contains('dark')
+        || document.body.classList.contains('dark')
+        || document.documentElement.getAttribute('data-color-scheme') === 'dark'
+        || document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark';
+
+    // Special handling for bookmark blocks
+    if (isBookmarkBlock(blockElement)) {
+        return createBookmarkPreview(blockElement, isDark);
+    }
+
     const blockContent = blockElement.querySelector('.bn-block-content')
         || blockElement.querySelector('[data-content-type]')
         || blockElement;
-
-    console.log('[DragFix] createOverlay - blockContent:', blockContent);
 
     if (!blockContent) return null;
 
@@ -201,46 +373,49 @@ function createOverlay(blockElement: Element): HTMLDivElement | null {
     overlay.className = 'bn-drag-overlay';
     overlay.id = 'bn-custom-drag-overlay';
 
-    // Detect theme
-    const isDark = document.documentElement.classList.contains('dark')
-        || document.body.classList.contains('dark')
-        || document.documentElement.getAttribute('data-color-scheme') === 'dark'
-        || document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark';
-
-    console.log('[DragFix] createOverlay - isDark:', isDark);
-
     overlay.style.cssText = `
-    position: fixed;
-    z-index: 99999;
-    padding: 10px 14px;
-    background: ${isDark ? 'rgba(45, 45, 45, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
-    border: 1px solid ${isDark ? '#404040' : '#e0e0e0'};
-    border-radius: 8px;
-    box-shadow: 0 8px 24px ${isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.18)'};
-    max-width: 350px;
-    max-height: 150px;
-    overflow: hidden;
-    pointer-events: none;
-    color: ${isDark ? '#e0e0e0' : '#333333'};
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  `;
+        position: fixed;
+        z-index: 99999;
+        padding: 10px 14px;
+        background: ${isDark ? 'rgba(45, 45, 45, 0.98)' : 'rgba(255, 255, 255, 0.98)'};
+        border: 1px solid ${isDark ? '#505050' : '#e0e0e0'};
+        border-radius: 10px;
+        box-shadow: 0 8px 32px ${isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)'}, 0 2px 8px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.08)'};
+        max-width: 350px;
+        max-height: 120px;
+        overflow: hidden;
+        pointer-events: none;
+        color: ${isDark ? '#e5e5e5' : '#333333'};
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        transition: opacity 0.15s ease-out;
+        transform: scale(1.02);
+    `;
 
     // Clone content
     const clone = blockContent.cloneNode(true) as HTMLElement;
 
-    // Remove interactive elements
-    clone.querySelectorAll('button, input, textarea, .bn-side-menu, [data-drag-handle]').forEach(el => el.remove());
+    // Remove interactive elements and action buttons
+    clone.querySelectorAll('button, input, textarea, .bn-side-menu, [data-drag-handle], .bookmark-actions').forEach(el => el.remove());
     clone.querySelectorAll('[contenteditable]').forEach(el => {
         (el as HTMLElement).contentEditable = 'false';
     });
 
-    // Reset styles
+    // Reset styles on clone
     clone.style.pointerEvents = 'none';
     clone.style.userSelect = 'none';
+    clone.style.margin = '0';
+
+    // For images in the clone, ensure they display correctly
+    clone.querySelectorAll('img').forEach(img => {
+        img.style.maxWidth = '100%';
+        img.style.maxHeight = '80px';
+        img.style.objectFit = 'contain';
+    });
 
     overlay.appendChild(clone);
 

@@ -1,4 +1,4 @@
-import { useMemo, useCallback, memo } from 'react';
+import { useMemo, useCallback, memo, forwardRef } from 'react';
 import type { DocumentMeta, Folder } from '../types/document';
 import type { DocDropIndicator, ContainerDropIndicator } from '../types/dnd';
 import { FolderItem } from './FolderItem';
@@ -48,7 +48,7 @@ interface SortableFolderWrapperProps {
     justDroppedId?: string | null;
 }
 
-export const SortableFolderWrapper = memo(function SortableFolderWrapper({
+export const SortableFolderWrapper = memo(forwardRef<HTMLDivElement, SortableFolderWrapperProps>(function SortableFolderWrapper({
     folder,
     index,
     documents,
@@ -64,7 +64,7 @@ export const SortableFolderWrapper = memo(function SortableFolderWrapper({
     dropIndicator,
     containerDropIndicator,
     justDroppedId,
-}: SortableFolderWrapperProps) {
+}, ref) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: folderDndId(folder.id),
         disabled,
@@ -137,4 +137,4 @@ export const SortableFolderWrapper = memo(function SortableFolderWrapper({
             />
         </motion.div>
     );
-});
+}));
