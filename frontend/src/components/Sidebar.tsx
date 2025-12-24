@@ -271,6 +271,14 @@ export function Sidebar({
                   {query ? (
                     <div className="section-label-row">
                       <span className="section-label">{STRINGS.LABELS.DOCUMENTS}</span>
+                      <button
+                        className="section-add-btn"
+                        onClick={handleCreate}
+                        title={STRINGS.TOOLTIPS.NEW_DOC}
+                        aria-label={STRINGS.TOOLTIPS.NEW_DOC}
+                      >
+                        <Plus size={14} aria-hidden="true" />
+                      </button>
                     </div>
                   ) : (
                     <div className="section-label-row docs-section-header">

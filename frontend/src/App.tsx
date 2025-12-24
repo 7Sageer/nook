@@ -102,10 +102,16 @@ function AppContent() {
           console.warn('[App] 外部修改被忽略：用户有未保存更改');
           return;
         }
-        const blocks = await loadContent(event.docId);
-        if (blocks) {
-          setContent(blocks);
-          setEditorKey(`doc-${event.docId}-${Date.now()}`);
+        // 锁定编辑器，防止用户在加载期间编辑
+        setContentLoading(true);
+        try {
+          const blocks = await loadContent(event.docId);
+          if (blocks) {
+            setContent(blocks);
+            setEditorKey(`doc-${event.docId}-${Date.now()}`);
+          }
+        } finally {
+          setContentLoading(false);
         }
       }
     },

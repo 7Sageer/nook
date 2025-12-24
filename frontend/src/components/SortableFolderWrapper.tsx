@@ -7,25 +7,44 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { folderDndId } from '../utils/dnd';
 
-// 文件夹动画配置
+// 文件夹动画配置 - 与文档动画保持一致
 export const folderVariants = {
-    initial: { opacity: 0, x: -12 },
+    initial: {
+        opacity: 0,
+        x: -12,
+        height: 0,
+        marginBottom: 0,
+        overflow: 'hidden' as const,
+    },
     animate: (i: number) => ({
         opacity: 1,
         x: 0,
+        height: 'auto',
+        marginBottom: 4, // 恢复 CSS 中定义的值
+        overflow: 'visible' as const,
         transition: {
-            delay: i * 0.04,
+            delay: i * 0.03, // 与文档动画一致
             duration: 0.2,
             ease: [0.4, 0, 0.2, 1] as const,
+            // 高度先展开，再淡入
+            height: { duration: 0.15 },
+            marginBottom: { duration: 0.15 },
         },
     }),
     exit: {
         opacity: 0,
         x: -20,
         scale: 0.95,
+        height: 0,
+        marginBottom: 0,
+        overflow: 'hidden' as const,
         transition: {
-            duration: 0.15,
-            ease: [0.4, 0, 1, 1] as const,
+            duration: 0.2,
+            ease: [0.4, 0, 0.2, 1] as const,
+            // 让视觉效果先完成
+            opacity: { duration: 0.15 },
+            x: { duration: 0.15 },
+            scale: { duration: 0.15 },
         },
     },
 };

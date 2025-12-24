@@ -191,16 +191,22 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleFolderCollapsed = useCallback(async (id: string): Promise<void> => {
-    const folder = folders.find(f => f.id === id);
-    if (!folder) return;
+    // 使用函数式更新，避免闭包陷阱
+    let newCollapsed: boolean | null = null;
 
-    const newCollapsed = !folder.collapsed;
-    await SetFolderCollapsed(id, newCollapsed);
-    // 增量更新
-    setFolders(prev =>
-      prev.map(f => f.id === id ? { ...f, collapsed: newCollapsed } : f)
-    );
-  }, [folders]);
+    setFolders(prev => {
+      const folder = prev.find(f => f.id === id);
+      if (!folder) return prev;
+      newCollapsed = !folder.collapsed;
+      // 使用 newCollapsed! 断言，因为此处必定为 boolean
+      return prev.map(f => f.id === id ? { ...f, collapsed: newCollapsed! } : f);
+    });
+
+    // 只有找到文件夹时才调用后端
+    if (newCollapsed !== null) {
+      await SetFolderCollapsed(id, newCollapsed);
+    }
+  }, []);  // 移除 folders 依赖
 
   const moveDocumentToFolderFn = useCallback(async (docId: string, folderId: string): Promise<void> => {
     await MoveDocumentToFolder(docId, folderId);
