@@ -67,6 +67,9 @@ function AppContent() {
     setEditorKey,
     editorRef,
     parseMarkdownToBlocks,
+    isDirty,
+    markDirty,
+    clearDirty,
   } = useEditor({
     isExternalMode,
     activeId,
@@ -89,13 +92,16 @@ function AppContent() {
   // 监听文件系统变化（外部 Agent 修改时）
   useFileWatcher({
     onIndexChange: () => {
-      console.log('[App] Index changed, refreshing documents...');
       refreshDocuments();
     },
     onDocumentChange: async (event) => {
-      console.log('[App] Document changed:', event.docId);
-      // 如果当前活动文档被修改，重新加载内容
+      // 如果当前活动文档被修改，检查是否有未保存更改
       if (event.docId === activeId && !isExternalMode) {
+        // 如果用户有未保存更改，不自动重载（避免数据丢失）
+        if (isDirty) {
+          console.warn('[App] 外部修改被忽略：用户有未保存更改');
+          return;
+        }
         const blocks = await loadContent(event.docId);
         if (blocks) {
           setContent(blocks);
@@ -147,6 +153,8 @@ function AppContent() {
     activeId,
     saveContent,
     syncTitleFromBlocks,
+    markDirty,
+    clearDirty,
     setStatus,
     statusSavedText: STRINGS.STATUS.SAVED,
   });

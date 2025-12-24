@@ -17,6 +17,12 @@ interface UseEditorReturn {
     setEditorKey: React.Dispatch<React.SetStateAction<string | null>>;
     editorRef: MutableRefObject<BlockNoteEditor | null>;
     parseMarkdownToBlocks: (markdownText: string) => Promise<Block[]>;
+    /** 脏标记：用户是否有未保存的更改 */
+    isDirty: boolean;
+    /** 标记有未保存更改 */
+    markDirty: () => void;
+    /** 清除脏标记（保存后调用） */
+    clearDirty: () => void;
 }
 
 /**
@@ -33,6 +39,17 @@ export function useEditor({
     const [editorKey, setEditorKey] = useState<string | null>(null);
     const editorRef = useRef<BlockNoteEditor | null>(null);
     const loadingIdRef = useRef(0);
+
+    // 脏标记：跟踪用户是否有未保存的更改
+    const [isDirty, setIsDirty] = useState(false);
+
+    const markDirty = useCallback(() => {
+        setIsDirty(true);
+    }, []);
+
+    const clearDirty = useCallback(() => {
+        setIsDirty(false);
+    }, []);
 
     const parseMarkdownToBlocks = useCallback(async (markdownText: string) => {
         const editor = editorRef.current ?? BlockNoteEditor.create();
@@ -110,5 +127,8 @@ export function useEditor({
         setEditorKey,
         editorRef,
         parseMarkdownToBlocks,
+        isDirty,
+        markDirty,
+        clearDirty,
     };
 }

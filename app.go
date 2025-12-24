@@ -144,6 +144,14 @@ func (a *App) flushPendingExternalFileOpens() {
 	}
 }
 
+// markIndexWrite 标记 index.json 即将被写入
+func (a *App) markIndexWrite() {
+	if a.watcherService != nil {
+		indexPath := filepath.Join(a.dataPath, "index.json")
+		a.watcherService.MarkWrite(indexPath)
+	}
+}
+
 // GetDocumentList 获取文档列表
 func (a *App) GetDocumentList() (document.Index, error) {
 	return a.docRepo.GetAll()
@@ -151,11 +159,19 @@ func (a *App) GetDocumentList() (document.Index, error) {
 
 // CreateDocument 创建新文档
 func (a *App) CreateDocument(title string) (document.Meta, error) {
-	return a.docRepo.Create(title)
+	// 创建文档会修改 index.json 和新建文档文件
+	a.markIndexWrite()
+	doc, err := a.docRepo.Create(title)
+	if err == nil && a.watcherService != nil {
+		docPath := filepath.Join(a.dataPath, "documents", doc.ID+".json")
+		a.watcherService.MarkWrite(docPath)
+	}
+	return doc, err
 }
 
 // DeleteDocument 删除文档
 func (a *App) DeleteDocument(id string) error {
+	a.markIndexWrite()
 	err := a.docRepo.Delete(id)
 	if err == nil {
 		// 异步清理未使用的图像
@@ -166,6 +182,7 @@ func (a *App) DeleteDocument(id string) error {
 
 // RenameDocument 重命名文档
 func (a *App) RenameDocument(id string, newTitle string) error {
+	a.markIndexWrite()
 	return a.docRepo.Rename(id, newTitle)
 }
 
@@ -183,6 +200,14 @@ func (a *App) LoadDocumentContent(id string) (string, error) {
 
 // SaveDocumentContent 保存指定文档内容
 func (a *App) SaveDocumentContent(id string, content string) error {
+	// 标记文件路径，避免触发自己的文件监听事件
+	if a.watcherService != nil {
+		docPath := filepath.Join(a.dataPath, "documents", id+".json")
+		a.watcherService.MarkWrite(docPath)
+		// 同时标记 index.json（因为 UpdateTimestamp 会修改它）
+		indexPath := filepath.Join(a.dataPath, "index.json")
+		a.watcherService.MarkWrite(indexPath)
+	}
 	a.docRepo.UpdateTimestamp(id)
 	return a.docStorage.Save(id, content)
 }

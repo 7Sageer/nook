@@ -1,6 +1,7 @@
 /* ========== 文档列表 ========== */
 .document-list {
     flex: 1;
+    overflow-x: hidden;
     overflow-y: auto;
     list-style: none;
     padding: 8px;

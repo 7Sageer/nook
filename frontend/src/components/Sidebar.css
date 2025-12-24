@@ -286,7 +286,7 @@
     background-color: inherit;
     border-radius: var(--radius-md);
     margin: 0 8px;
-    overflow: visible;
+    overflow: hidden;
     flex-shrink: 0;
     will-change: transform;
 }

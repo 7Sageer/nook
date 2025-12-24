@@ -23,6 +23,10 @@ interface UseAppEventsOptions {
   saveContent: (id: string, content: Block[]) => Promise<void>;
   syncTitleFromBlocks: (blocks: Block[]) => void;
 
+  // 脏标记操作（跟踪未保存更改）
+  markDirty: () => void;
+  clearDirty: () => void;
+
   // 状态回调
   setStatus: (status: string) => void;
   statusSavedText: string;
@@ -41,6 +45,8 @@ export function useAppEvents({
   activeId,
   saveContent,
   syncTitleFromBlocks,
+  markDirty,
+  clearDirty,
   setStatus,
   statusSavedText,
 }: UseAppEventsOptions) {
@@ -74,6 +80,7 @@ export function useAppEvents({
   // 内部文档保存逻辑（抽离出来以便防抖）
   const debouncedSaveInternal = useDebounce(async (id: string, blocks: Block[]) => {
     await saveContent(id, blocks);
+    clearDirty();  // 保存成功后清除脏标记
     setStatus(statusSavedText);
     setTimeout(() => setStatus(""), 1000);
   }, 800);
@@ -81,12 +88,16 @@ export function useAppEvents({
   // 外部文件保存逻辑（抽离出来以便防抖）
   const debouncedSaveExternal = useDebounce(async (content: string) => {
     await saveExternal(content);
+    clearDirty();  // 保存成功后清除脏标记
     setStatus(statusSavedText);
     setTimeout(() => setStatus(""), 1000);
   }, 800);
 
   // 保存文档的处理函数
   const handleChange = useCallback(async (blocks: Block[]) => {
+    // 标记有未保存更改
+    markDirty();
+
     if (isExternalMode && activeExternalFile && editorRef.current) {
       // 保存外部文件 - 防抖
       try {
@@ -103,6 +114,7 @@ export function useAppEvents({
       syncTitleFromBlocks(blocks);
     }
   }, [
+    markDirty,
     isExternalMode,
     activeExternalFile,
     editorRef,

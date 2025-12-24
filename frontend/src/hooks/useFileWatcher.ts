@@ -57,7 +57,6 @@ export function useFileWatcher({
         // 监听索引变化事件
         unsubscribers.push(
             EventsOn('file:index-changed', (event: FileChangeEvent) => {
-                console.log('[FileWatcher] Index changed:', event);
                 onIndexChangeRef.current?.(event);
             })
         );
@@ -65,7 +64,6 @@ export function useFileWatcher({
         // 监听文档内容变化事件
         unsubscribers.push(
             EventsOn('file:document-changed', (event: FileChangeEvent) => {
-                console.log('[FileWatcher] Document changed:', event);
                 onDocumentChangeRef.current?.(event);
             })
         );

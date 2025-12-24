@@ -26,11 +26,15 @@ type Service struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	debounceDelay time.Duration
+	ignoreWindow  time.Duration // 忽略自己写入的时间窗口
 
 	// 防抖相关
 	mu            sync.Mutex
 	pendingEvents map[string]*FileChangeEvent
 	debounceTimer *time.Timer
+
+	// 追踪应用自己的写入，避免触发自己的事件
+	recentWrites map[string]time.Time
 }
 
 // NewService 创建文件监听服务
@@ -44,8 +48,48 @@ func NewService(dataPath string) (*Service, error) {
 		dataPath:      dataPath,
 		watcher:       watcher,
 		debounceDelay: 300 * time.Millisecond,
+		ignoreWindow:  2 * time.Second, // 2秒内的事件视为自己触发（需要足够长以覆盖防抖延迟）
 		pendingEvents: make(map[string]*FileChangeEvent),
+		recentWrites:  make(map[string]time.Time),
 	}, nil
+}
+
+// MarkWrite 标记文件为应用自己写入（供外部调用）
+func (s *Service) MarkWrite(filePath string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.recentWrites[filePath] = time.Now()
+}
+
+// isRecentWrite 检查文件是否是应用最近写入的
+func (s *Service) isRecentWrite(filePath string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	writeTime, exists := s.recentWrites[filePath]
+	if !exists {
+		return false
+	}
+
+	// 如果超过忽略窗口，删除记录并返回 false
+	if time.Since(writeTime) > s.ignoreWindow {
+		delete(s.recentWrites, filePath)
+		return false
+	}
+
+	// 在忽略窗口内，返回 true（不删除记录，因为可能有多个事件）
+	return true
+}
+
+// cleanupRecentWrites 定期清理过期的 recentWrites 记录
+func (s *Service) cleanupRecentWrites() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for path, writeTime := range s.recentWrites {
+		if time.Since(writeTime) > s.ignoreWindow*2 {
+			delete(s.recentWrites, path)
+		}
+	}
 }
 
 // Start 启动文件监听
@@ -114,7 +158,13 @@ func (s *Service) processEvent(event fsnotify.Event) {
 		return
 	}
 
-	runtime.LogDebug(s.ctx, "File watcher received event: "+event.String())
+	// 忽略应用自己的写入
+	if s.isRecentWrite(event.Name) {
+		runtime.LogDebug(s.ctx, "File watcher: ignoring self-triggered event for "+event.Name)
+		return
+	}
+
+	runtime.LogDebug(s.ctx, "File watcher received external event: "+event.String())
 
 	// 判断事件类型
 	var eventType string

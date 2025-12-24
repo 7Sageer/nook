@@ -118,17 +118,20 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const deleteDoc = useCallback(async (id: string): Promise<void> => {
     await DeleteDocument(id);
-    // 增量更新
-    setDocuments(prev => prev.filter(d => d.id !== id));
-    // 如果删除的是当前活动文档，切换到第一个
-    setActiveId(prev => {
-      if (prev === id) {
-        const remaining = documents.filter(d => d.id !== id);
-        return remaining.length > 0 ? remaining[0].id : null;
-      }
-      return prev;
+    // 使用函数式更新，同时处理文档列表和活动 ID
+    // 将 setActiveId 嵌套在 setDocuments 回调中，确保使用最新数据
+    setDocuments(prev => {
+      const remaining = prev.filter(d => d.id !== id);
+      // 同步更新 activeId（使用 remaining 而非外部 documents）
+      setActiveId(currentActiveId => {
+        if (currentActiveId === id) {
+          return remaining.length > 0 ? remaining[0].id : null;
+        }
+        return currentActiveId;
+      });
+      return remaining;
     });
-  }, [documents]);
+  }, []);  // 移除对 documents 的依赖，避免闭包陷阱
 
   const renameDoc = useCallback(async (id: string, newTitle: string): Promise<void> => {
     await RenameDocument(id, newTitle);
