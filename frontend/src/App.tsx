@@ -14,6 +14,7 @@ import { useTitleSync } from "./hooks/useTitleSync";
 import { useH1Visibility } from "./hooks/useH1Visibility";
 import { useAppEvents } from "./hooks/useAppEvents";
 import { useExternalLinks } from "./hooks/useExternalLinks";
+import { useFileWatcher } from "./hooks/useFileWatcher";
 import { Block } from "@blocknote/core";
 import { STRINGS } from "./constants/strings";
 import "./App.css";
@@ -35,6 +36,7 @@ function AppContent() {
     loadContent,
     saveContent,
     createFolder,
+    refreshDocuments,
   } = useDocumentContext();
 
   const [status, setStatus] = useState<string>("");
@@ -83,6 +85,25 @@ function AppContent() {
 
   // 拦截外部链接点击，在系统浏览器中打开
   useExternalLinks();
+
+  // 监听文件系统变化（外部 Agent 修改时）
+  useFileWatcher({
+    onIndexChange: () => {
+      console.log('[App] Index changed, refreshing documents...');
+      refreshDocuments();
+    },
+    onDocumentChange: async (event) => {
+      console.log('[App] Document changed:', event.docId);
+      // 如果当前活动文档被修改，重新加载内容
+      if (event.docId === activeId && !isExternalMode) {
+        const blocks = await loadContent(event.docId);
+        if (blocks) {
+          setContent(blocks);
+          setEditorKey(`doc-${event.docId}-${Date.now()}`);
+        }
+      }
+    },
+  });
 
   // 文档切换时重置标题同步状态
   useEffect(() => {

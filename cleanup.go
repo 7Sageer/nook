@@ -12,6 +12,10 @@ import (
 
 // shutdown 应用关闭时调用
 func (a *App) shutdown(ctx context.Context) {
+	// 停止文件监听服务
+	if a.watcherService != nil {
+		a.watcherService.Stop()
+	}
 	a.Cleanup()
 }
 

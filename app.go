@@ -18,6 +18,7 @@ import (
 	"notion-lite/internal/opengraph"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
+	"notion-lite/internal/watcher"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/clipboard"
@@ -47,6 +48,7 @@ type App struct {
 	searchService   *search.Service
 	settingsService *settings.Service
 	markdownService *markdown.Service
+	watcherService  *watcher.Service
 
 	pendingExternalOpensMu sync.Mutex
 	pendingExternalOpens   []string
@@ -64,6 +66,13 @@ func NewApp() *App {
 	docStorage := document.NewStorage(dataPath)
 	folderRepo := folder.NewRepository(dataPath)
 
+	// 创建文件监听服务
+	watcherService, err := watcher.NewService(dataPath)
+	if err != nil {
+		// 文件监听失败不影响应用启动，仅记录警告
+		watcherService = nil
+	}
+
 	return &App{
 		dataPath:        dataPath,
 		docRepo:         docRepo,
@@ -72,6 +81,7 @@ func NewApp() *App {
 		searchService:   search.NewService(docRepo, docStorage),
 		settingsService: settings.NewService(dataPath),
 		markdownService: markdown.NewService(),
+		watcherService:  watcherService,
 	}
 }
 
@@ -79,6 +89,14 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
+
+	// 启动文件监听服务
+	if a.watcherService != nil {
+		if err := a.watcherService.Start(ctx); err != nil {
+			runtime.LogError(ctx, "Failed to start file watcher: "+err.Error())
+		}
+	}
+
 	runtime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
 		a.pendingExternalOpensMu.Lock()
 		a.frontendReady = true

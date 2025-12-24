@@ -46,6 +46,9 @@ interface DocumentContextType {
   // 内容操作
   loadContent: (id: string) => Promise<Block[] | undefined>;
   saveContent: (id: string, content: Block[]) => Promise<void>;
+
+  // 刷新操作
+  refreshDocuments: () => Promise<void>;
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
@@ -77,6 +80,25 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       }
     };
     init();
+  }, []);
+
+  // 刷新文档列表和文件夹
+  const refreshDocuments = useCallback(async (): Promise<void> => {
+    try {
+      const [index, folderList] = await Promise.all([
+        GetDocumentList(),
+        GetFolders(),
+      ]);
+      setDocuments(index.documents || []);
+      setActiveId(prev => {
+        // 如果当前活动文档仍存在，保持不变
+        const exists = (index.documents || []).some(d => d.id === prev);
+        return exists ? prev : (index.activeId || null);
+      });
+      setFolders(folderList || []);
+    } catch (e) {
+      console.error('刷新文档列表失败:', e);
+    }
   }, []);
 
   // ========== 文档操作 ==========
@@ -240,6 +262,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     // 内容操作
     loadContent,
     saveContent,
+
+    // 刷新操作
+    refreshDocuments,
   };
 
   return (
