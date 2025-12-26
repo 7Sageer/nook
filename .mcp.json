@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "nook": {
+      "command": "./bin/nook-mcp",
+      "args": []
+    }
+  }
+}

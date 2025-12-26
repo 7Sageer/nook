@@ -41,27 +41,27 @@ else
 fi
 
 # Install Claude skill
-echo ""
-echo "🔧 Installing Claude skill..."
+# echo ""
+# echo "🔧 Installing Claude skill..."
 
-if [ ! -d "$SKILL_SOURCE" ]; then
-    echo "⚠️  Warning: $SKILL_SOURCE not found. Skipping skill installation."
-else
-    # Create ~/.claude/skills directory if it doesn't exist
-    mkdir -p "$HOME/.claude/skills"
+# if [ ! -d "$SKILL_SOURCE" ]; then
+#     echo "⚠️  Warning: $SKILL_SOURCE not found. Skipping skill installation."
+# else
+#     # Create ~/.claude/skills directory if it doesn't exist
+#     mkdir -p "$HOME/.claude/skills"
 
-    # Remove existing skill if present
-    if [ -d "$SKILL_DEST" ]; then
-        echo "📦 Removing existing skill installation..."
-        rm -rf "$SKILL_DEST"
-    fi
+#     # Remove existing skill if present
+#     if [ -d "$SKILL_DEST" ]; then
+#         echo "📦 Removing existing skill installation..."
+#         rm -rf "$SKILL_DEST
+#     fi
 
-    # Copy the skill
-    cp -r "$SKILL_SOURCE" "$SKILL_DEST"
+#     # Copy the skill
+#     cp -r "$SKILL_SOURCE" "$SKILL_DEST"
 
-    if [ $? -eq 0 ]; then
-        echo "✅ Claude skill '$SKILL_NAME' installed to ~/.claude/skills/"
-    else
-        echo "❌ Failed to install Claude skill."
-    fi
-fi
+#     if [ $? -eq 0 ]; then
+#         echo "✅ Claude skill '$SKILL_NAME' installed to ~/.claude/skills/"
+#     else
+#         echo "❌ Failed to install Claude skill."
+#     fi
+# fi
