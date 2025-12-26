@@ -3,8 +3,8 @@ package search
 import (
 	"strings"
 
-	"notion-lite/internal/document"
 	"notion-lite/internal/constant"
+	"notion-lite/internal/document"
 )
 
 // Result 搜索结果
@@ -49,6 +49,23 @@ func (s *Service) Search(query string) ([]Result, error) {
 				Title:   doc.Title,
 				Snippet: constant.SearchTitleMatch,
 			})
+			continue
+		}
+
+		// 搜索标签
+		tagMatch := false
+		for _, tag := range doc.Tags {
+			if strings.Contains(strings.ToLower(tag), query) {
+				results = append(results, Result{
+					ID:      doc.ID,
+					Title:   doc.Title,
+					Snippet: "标签: " + tag,
+				})
+				tagMatch = true
+				break
+			}
+		}
+		if tagMatch {
 			continue
 		}
 

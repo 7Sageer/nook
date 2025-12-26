@@ -13,12 +13,13 @@ import (
 
 // Meta 文档元数据
 type Meta struct {
-	ID        string `json:"id"`
-	Title     string `json:"title"`
-	FolderId  string `json:"folderId,omitempty"`
-	Order     int    `json:"order"`
-	CreatedAt int64  `json:"createdAt"`
-	UpdatedAt int64  `json:"updatedAt"`
+	ID        string   `json:"id"`
+	Title     string   `json:"title"`
+	FolderId  string   `json:"folderId,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+	Order     int      `json:"order"`
+	CreatedAt int64    `json:"createdAt"`
+	UpdatedAt int64    `json:"updatedAt"`
 }
 
 // Index 文档索引
@@ -199,6 +200,53 @@ func (r *Repository) Reorder(ids []string) error {
 	for i, d := range index.Documents {
 		if order, ok := orderMap[d.ID]; ok {
 			index.Documents[i].Order = order
+		}
+	}
+	return r.saveIndex(index)
+}
+
+// AddTag 为文档添加标签
+func (r *Repository) AddTag(docId string, tag string) error {
+	if tag == "" {
+		return nil
+	}
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
+	for i, d := range index.Documents {
+		if d.ID == docId {
+			// 检查标签是否已存在
+			for _, t := range d.Tags {
+				if t == tag {
+					return nil // 已存在，无需添加
+				}
+			}
+			index.Documents[i].Tags = append(index.Documents[i].Tags, tag)
+			index.Documents[i].UpdatedAt = time.Now().UnixMilli()
+			break
+		}
+	}
+	return r.saveIndex(index)
+}
+
+// RemoveTag 移除文档标签
+func (r *Repository) RemoveTag(docId string, tag string) error {
+	index, err := r.GetAll()
+	if err != nil {
+		return err
+	}
+	for i, d := range index.Documents {
+		if d.ID == docId {
+			newTags := []string{}
+			for _, t := range d.Tags {
+				if t != tag {
+					newTags = append(newTags, t)
+				}
+			}
+			index.Documents[i].Tags = newTags
+			index.Documents[i].UpdatedAt = time.Now().UnixMilli()
+			break
 		}
 	}
 	return r.saveIndex(index)

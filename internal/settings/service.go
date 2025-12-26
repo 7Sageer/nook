@@ -8,7 +8,8 @@ import (
 
 // Settings 用户设置
 type Settings struct {
-	Theme string `json:"theme"`
+	Theme    string `json:"theme"`
+	Language string `json:"language"`
 }
 
 // Service 设置服务
@@ -26,12 +27,15 @@ func (s *Service) Get() (Settings, error) {
 	settingsPath := filepath.Join(s.dataPath, "settings.json")
 	data, err := os.ReadFile(settingsPath)
 	if err != nil {
-		return Settings{Theme: "light"}, nil
+		return Settings{Theme: "light", Language: "zh"}, nil
 	}
 	var settings Settings
 	json.Unmarshal(data, &settings)
 	if settings.Theme == "" {
 		settings.Theme = "light"
+	}
+	if settings.Language == "" {
+		settings.Language = "zh"
 	}
 	return settings, nil
 }

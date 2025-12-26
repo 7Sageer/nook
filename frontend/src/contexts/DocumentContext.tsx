@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { DocumentMeta, Folder } from '../types/document';
 import { Block } from '@blocknote/core';
+import { getStrings } from '../constants/strings';
+import { useSettings } from './SettingsContext';
 import {
   GetDocumentList,
   CreateDocument,
@@ -17,6 +19,8 @@ import {
   SetFolderCollapsed,
   MoveDocumentToFolder,
   ReorderFolders,
+  AddDocumentTag,
+  RemoveDocumentTag,
 } from '../../wailsjs/go/main/App';
 
 interface DocumentContextType {
@@ -43,6 +47,10 @@ interface DocumentContextType {
   moveDocumentToFolder: (docId: string, folderId: string) => Promise<void>;
   reorderFolders: (ids: string[]) => Promise<void>;
 
+  // 标签操作
+  addTag: (docId: string, tag: string) => Promise<void>;
+  removeTag: (docId: string, tag: string) => Promise<void>;
+
   // 内容操作
   loadContent: (id: string) => Promise<Block[] | undefined>;
   saveContent: (id: string, content: Block[]) => Promise<void>;
@@ -54,6 +62,9 @@ interface DocumentContextType {
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
 export function DocumentProvider({ children }: { children: ReactNode }) {
+  const { language } = useSettings();
+  const STRINGS = getStrings(language);
+
   // 文档状态
   const [documents, setDocuments] = useState<DocumentMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -103,7 +114,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   // ========== 文档操作 ==========
 
-  const createDoc = useCallback(async (title: string = '无标题', folderId?: string): Promise<DocumentMeta> => {
+  const createDoc = useCallback(async (title: string = STRINGS.DEFAULTS.UNTITLED, folderId?: string): Promise<DocumentMeta> => {
     const doc = await CreateDocument(title);
     // 如果指定了文件夹，移动到该文件夹
     if (folderId) {
@@ -228,6 +239,30 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  // ========== 标签操作 ==========
+
+  const addTag = useCallback(async (docId: string, tag: string): Promise<void> => {
+    await AddDocumentTag(docId, tag);
+    // 增量更新
+    setDocuments(prev =>
+      prev.map(d => d.id === docId
+        ? { ...d, tags: [...(d.tags || []), tag], updatedAt: Date.now() }
+        : d
+      )
+    );
+  }, []);
+
+  const removeTag = useCallback(async (docId: string, tag: string): Promise<void> => {
+    await RemoveDocumentTag(docId, tag);
+    // 增量更新
+    setDocuments(prev =>
+      prev.map(d => d.id === docId
+        ? { ...d, tags: (d.tags || []).filter(t => t !== tag), updatedAt: Date.now() }
+        : d
+      )
+    );
+  }, []);
+
   // ========== 内容操作 ==========
 
   const loadContent = useCallback(async (id: string): Promise<Block[] | undefined> => {
@@ -267,6 +302,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     toggleFolderCollapsed,
     moveDocumentToFolder: moveDocumentToFolderFn,
     reorderFolders: reorderFoldersFn,
+
+    // 标签操作
+    addTag,
+    removeTag,
 
     // 内容操作
     loadContent,

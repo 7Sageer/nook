@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, Moon, Sun, Monitor, PanelLeftClose, PanelLeft, FileText, FolderPlus } from 'lucide-react';
-import { STRINGS } from '../constants/strings';
+import { getStrings } from '../constants/strings';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface WindowToolbarProps {
     sidebarCollapsed: boolean;
@@ -21,6 +22,8 @@ export function WindowToolbar({
     onToggleTheme,
     theme,
 }: WindowToolbarProps) {
+    const { language } = useSettings();
+    const STRINGS = getStrings(language);
     // 下拉菜单状态
     const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
     const createMenuRef = useRef<HTMLDivElement>(null);

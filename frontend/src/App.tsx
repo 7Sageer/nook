@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Editor } from "./components/Editor";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { WindowToolbar } from "./components/WindowToolbar";
-import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
+import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
@@ -16,12 +16,13 @@ import { useAppEvents } from "./hooks/useAppEvents";
 import { useExternalLinks } from "./hooks/useExternalLinks";
 import { useFileWatcher } from "./hooks/useFileWatcher";
 import { Block } from "@blocknote/core";
-import { STRINGS } from "./constants/strings";
+import { getStrings } from "./constants/strings";
 import "./App.css";
 import "./styles/print.css";
 
 function AppContent() {
-  const { theme, themeSetting, toggleTheme } = useTheme();
+  const { theme, themeSetting, toggleTheme, language } = useSettings();
+  const STRINGS = useMemo(() => getStrings(language), [language]);
 
   // 从 Context 获取文档和文件夹状态
   const {
@@ -295,13 +296,13 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
+    <SettingsProvider>
       <DocumentProvider>
         <ExternalFileProvider>
           <AppContent />
         </ExternalFileProvider>
       </DocumentProvider>
-    </ThemeProvider>
+    </SettingsProvider>
   );
 }
 

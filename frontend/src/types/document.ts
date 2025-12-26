@@ -2,6 +2,7 @@ export interface DocumentMeta {
   id: string;
   title: string;
   folderId?: string;
+  tags?: string[];
   order: number;
   createdAt: number;
   updatedAt: number;

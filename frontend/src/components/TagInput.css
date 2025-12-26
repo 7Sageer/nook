@@ -1,0 +1,142 @@
+.tag-container {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin-left: 8px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 12px;
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tag-badge:hover {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+.tag-badge.tag-more {
+    background-color: #e5e7eb;
+    color: #6b7280;
+    cursor: default;
+}
+
+.sidebar.dark .tag-badge.tag-more {
+    background-color: #374151;
+    color: #9ca3af;
+}
+
+.sidebar.dark .tag-badge {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+.sidebar.dark .tag-badge:hover {
+    background-color: rgba(37, 99, 235, 0.3);
+}
+
+.tag-remove {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.6;
+}
+
+.tag-badge:hover .tag-remove {
+    display: flex;
+}
+
+.tag-remove:hover {
+    opacity: 1;
+}
+
+/* Add tag button */
+.add-tag-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: 1px dashed #d1d5db;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    opacity: 0;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.document-item:hover .add-tag-btn {
+    opacity: 1;
+}
+
+.add-tag-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.sidebar.dark .add-tag-btn {
+    border-color: #4b5563;
+    color: #6b7280;
+}
+
+.sidebar.dark .add-tag-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Tag input */
+.tag-input-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.tag-input {
+    padding: 2px 8px;
+    font-size: 11px;
+    border: 1px solid var(--primary);
+    border-radius: 12px;
+    outline: none;
+    background-color: #fff;
+    color: #374151;
+    width: 80px;
+}
+
+.tag-input::placeholder {
+    color: #9ca3af;
+}
+
+.sidebar.dark .tag-input {
+    background-color: #252525;
+    color: #e5e7eb;
+}
+
+.sidebar.dark .tag-input::placeholder {
+    color: #6b7280;
+}

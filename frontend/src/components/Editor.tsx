@@ -10,7 +10,8 @@ import { BlockNoteSchema, defaultBlockSpecs, createExtension } from "@blocknote/
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { useEffect, useRef, useMemo } from "react";
-import { useTheme } from "../contexts/ThemeContext";
+import { getStrings } from "../constants/strings";
+import { useSettings } from "../contexts/SettingsContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import "../plugins/smoothCaret.css";
@@ -134,8 +135,8 @@ function insertOrUpdateBookmarkForSlashMenu(editor: any) {
 }
 
 // Custom slash menu item for bookmark
-const insertBookmark = (editor: any) => ({
-  title: "Bookmark",
+const insertBookmark = (editor: any, STRINGS: any) => ({
+  title: STRINGS.LABELS.EXTERNAL_FILE,
   onItemClick: () => {
     insertOrUpdateBookmarkForSlashMenu(editor);
   },
@@ -147,11 +148,12 @@ const insertBookmark = (editor: any) => ({
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </svg>
   ),
-  subtext: "Embed a link with preview",
+  subtext: STRINGS.TOOLTIPS.OPEN_FILE,
 });
 
 export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
-  const { theme } = useTheme();
+  const { theme, language } = useSettings();
+  const STRINGS = useMemo(() => getStrings(language), [language]);
   const pluginInjectedRef = useRef(false);
 
   // Fix for drag preview in Wails WebView
@@ -262,7 +264,7 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
       <SuggestionMenuController
         triggerCharacter="/"
         getItems={async (query) => {
-          const allItems = [...getDefaultReactSlashMenuItems(editor), insertBookmark(editor)];
+          const allItems = [...getDefaultReactSlashMenuItems(editor), insertBookmark(editor, STRINGS)];
           if (!query) return allItems;
           const lowerQuery = query.toLowerCase();
           return allItems.filter(

@@ -6,6 +6,8 @@ import {opengraph} from '../models';
 import {main} from '../models';
 import {markdown} from '../models';
 
+export function AddDocumentTag(arg1:string,arg2:string):Promise<void>;
+
 export function Cleanup():Promise<void>;
 
 export function CopyImageToClipboard(arg1:string):Promise<void>;
@@ -41,6 +43,8 @@ export function MoveDocumentToFolder(arg1:string,arg2:string):Promise<void>;
 export function OpenExternalFile():Promise<main.ExternalFile>;
 
 export function PrintHTML(arg1:string,arg2:string):Promise<void>;
+
+export function RemoveDocumentTag(arg1:string,arg2:string):Promise<void>;
 
 export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 

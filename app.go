@@ -35,7 +35,8 @@ type SearchResult struct {
 
 // Settings 用户设置
 type Settings struct {
-	Theme string `json:"theme"`
+	Theme    string `json:"theme"`
+	Language string `json:"language"`
 }
 
 // App struct
@@ -255,14 +256,14 @@ func (a *App) SearchDocuments(query string) ([]SearchResult, error) {
 func (a *App) GetSettings() (Settings, error) {
 	s, err := a.settingsService.Get()
 	if err != nil {
-		return Settings{Theme: "light"}, nil
+		return Settings{Theme: "light", Language: "zh"}, nil
 	}
-	return Settings{Theme: s.Theme}, nil
+	return Settings{Theme: s.Theme, Language: s.Language}, nil
 }
 
 // SaveSettings 保存用户设置
 func (a *App) SaveSettings(s Settings) error {
-	return a.settingsService.Save(settings.Settings{Theme: s.Theme})
+	return a.settingsService.Save(settings.Settings{Theme: s.Theme, Language: s.Language})
 }
 
 // ========== 文件夹管理 ==========
@@ -312,6 +313,18 @@ func (a *App) ReorderDocuments(ids []string) error {
 // ReorderFolders 重新排序文件夹
 func (a *App) ReorderFolders(ids []string) error {
 	return a.folderRepo.Reorder(ids)
+}
+
+// AddDocumentTag 为文档添加标签
+func (a *App) AddDocumentTag(docId string, tag string) error {
+	a.markIndexWrite()
+	return a.docRepo.AddTag(docId, tag)
+}
+
+// RemoveDocumentTag 移除文档标签
+func (a *App) RemoveDocumentTag(docId string, tag string) error {
+	a.markIndexWrite()
+	return a.docRepo.RemoveTag(docId, tag)
 }
 
 // ========== 外部文件编辑 ==========

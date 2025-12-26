@@ -19,6 +19,9 @@ interface DocumentListProps {
     containerId?: string;
     dropIndicator?: DocDropIndicator | null;
     justDroppedId?: string | null;
+    onAddTag?: (docId: string, tag: string) => void;
+    onRemoveTag?: (docId: string, tag: string) => void;
+    onTagClick?: (tag: string) => void;
 }
 
 export function DocumentList({
@@ -31,6 +34,9 @@ export function DocumentList({
     containerId,
     dropIndicator,
     justDroppedId,
+    onAddTag,
+    onRemoveTag,
+    onTagClick,
 }: DocumentListProps) {
     const sortedItems = useMemo(() => {
         if (isSearchMode) return items;
@@ -75,6 +81,9 @@ export function DocumentList({
                             onSelect={onSelect}
                             onDelete={onDelete}
                             showSnippet={isSearchMode && 'snippet' in item}
+                            onAddTag={onAddTag}
+                            onRemoveTag={onRemoveTag}
+                            onTagClick={onTagClick}
                         />
                     ))}
                 </AnimatePresence>

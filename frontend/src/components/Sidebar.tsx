@@ -1,7 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import type { DocumentMeta, Folder } from '../types/document';
 import type { ExternalFileInfo } from '../types/external-file';
-import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
@@ -12,7 +12,7 @@ import { SidebarDragOverlay } from './SidebarDragOverlay';
 import { SidebarSearch } from './SidebarSearch';
 import { SortableFolderWrapper } from './SortableFolderWrapper';
 import { Plus } from 'lucide-react';
-import { STRINGS } from '../constants/strings';
+import { getStrings } from '../constants/strings';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import {
   DndContext,
@@ -56,8 +56,11 @@ export function Sidebar({
     toggleFolderCollapsed,
     moveDocumentToFolder,
     reorderFolders,
+    addTag,
+    removeTag,
   } = useDocumentContext();
-  const { theme } = useTheme();
+  const { theme, language } = useSettings();
+  const STRINGS = getStrings(language);
   const { query, results, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
@@ -154,7 +157,7 @@ export function Sidebar({
   }, [createDoc]);
 
   const handleCreateInFolder = useCallback(async (folderId: string) => {
-    await createDoc('无标题', folderId);
+    await createDoc(STRINGS.DEFAULTS.UNTITLED, folderId);
   }, [createDoc]);
 
   const handleCreateFolder = useCallback(() => {
@@ -253,6 +256,8 @@ export function Sidebar({
                           dropIndicator={docDropIndicator}
                           containerDropIndicator={containerDropIndicator}
                           justDroppedId={justDroppedId}
+                          onAddTag={addTag}
+                          onRemoveTag={removeTag}
                         />
                       ))}
                     </AnimatePresence>
@@ -309,6 +314,8 @@ export function Sidebar({
                       containerId={UNCATEGORIZED_CONTAINER_ID}
                       dropIndicator={docDropIndicator}
                       justDroppedId={justDroppedId}
+                      onAddTag={addTag}
+                      onRemoveTag={removeTag}
                     />
                   </ul>
                 </motion.div>

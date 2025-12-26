@@ -8,6 +8,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { docDndId } from '../utils/dnd';
 import { listItemVariants } from '../utils/animations';
+import { TagInput } from './TagInput';
 
 export interface SortableDocItemProps {
     item: DocumentMeta | SearchResult;
@@ -24,6 +25,10 @@ export interface SortableDocItemProps {
     showSnippet?: boolean;
     /** 是否隐藏（折叠的文件夹内），隐藏时不可 Tab 聚焦 */
     hidden?: boolean;
+    /** Tag handlers */
+    onAddTag?: (docId: string, tag: string) => void;
+    onRemoveTag?: (docId: string, tag: string) => void;
+    onTagClick?: (tag: string) => void;
 }
 
 /**
@@ -42,6 +47,9 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
     inFolder = false,
     showSnippet = false,
     hidden = false,
+    onAddTag,
+    onRemoveTag,
+    onTagClick,
 }, ref) {
     const {
         attributes,
@@ -123,7 +131,18 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
                     <span className="doc-snippet">{(item as SearchResult).snippet}</span>
                 </div>
             ) : (
-                <span className="doc-title">{item.title}</span>
+                <div className="doc-content">
+                    <span className="doc-title">{item.title}</span>
+                    {onAddTag && onRemoveTag && !('snippet' in item) && (
+                        <TagInput
+                            tags={(item as DocumentMeta).tags || []}
+                            docId={item.id}
+                            onAddTag={onAddTag}
+                            onRemoveTag={onRemoveTag}
+                            onTagClick={onTagClick}
+                        />
+                    )}
+                </div>
             )}
             <div className="doc-actions">
                 <button

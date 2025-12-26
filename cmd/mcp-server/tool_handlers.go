@@ -34,6 +34,10 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolMoveDocument(params.Arguments)
 	case "get_blocknote_schema":
 		result = s.toolGetBlockNoteSchema()
+	case "add_tag":
+		result = s.toolAddTag(params.Arguments)
+	case "remove_tag":
+		result = s.toolRemoveTag(params.Arguments)
 	default:
 		result = ToolCallResult{
 			Content: []ContentBlock{{Type: "text", Text: "Unknown tool: " + params.Name}},

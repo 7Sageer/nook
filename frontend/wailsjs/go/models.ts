@@ -4,6 +4,7 @@ export namespace document {
 	    id: string;
 	    title: string;
 	    folderId?: string;
+	    tags?: string[];
 	    order: number;
 	    createdAt: number;
 	    updatedAt: number;
@@ -17,6 +18,7 @@ export namespace document {
 	        this.id = source["id"];
 	        this.title = source["title"];
 	        this.folderId = source["folderId"];
+	        this.tags = source["tags"];
 	        this.order = source["order"];
 	        this.createdAt = source["createdAt"];
 	        this.updatedAt = source["updatedAt"];
@@ -118,6 +120,7 @@ export namespace main {
 	}
 	export class Settings {
 	    theme: string;
+	    language: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -126,6 +129,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.theme = source["theme"];
+	        this.language = source["language"];
 	    }
 	}
 

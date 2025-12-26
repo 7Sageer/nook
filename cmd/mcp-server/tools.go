@@ -97,6 +97,30 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			Description: "Get the BlockNote JSON schema documentation. Call this before creating or updating document content to understand the correct format.",
 			InputSchema: InputSchema{Type: "object"},
 		},
+		{
+			Name:        "add_tag",
+			Description: "Add a tag to a document. Tags help categorize and filter documents.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id": {Type: "string", Description: "Document ID"},
+					"tag":    {Type: "string", Description: "Tag name to add"},
+				},
+				Required: []string{"doc_id", "tag"},
+			},
+		},
+		{
+			Name:        "remove_tag",
+			Description: "Remove a tag from a document",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id": {Type: "string", Description: "Document ID"},
+					"tag":    {Type: "string", Description: "Tag name to remove"},
+				},
+				Required: []string{"doc_id", "tag"},
+			},
+		},
 	}
 
 	return &JSONRPCResponse{

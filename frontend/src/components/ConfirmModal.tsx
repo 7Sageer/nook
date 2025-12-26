@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { AlertTriangle, X } from 'lucide-react';
 import './ConfirmModal.css';
-import { STRINGS } from '../constants/strings';
+import { getStrings } from '../constants/strings';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -19,7 +19,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  const { theme } = useTheme();
+  const { theme, language } = useSettings();
+  const STRINGS = getStrings(language);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +77,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <button
           className="modal-close"
           onClick={onCancel}
-          aria-label="Close dialog"
+          aria-label={STRINGS.BUTTONS.CANCEL}
         >
           <X size={18} aria-hidden="true" />
         </button>
