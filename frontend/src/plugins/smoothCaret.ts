@@ -9,6 +9,7 @@ interface SmoothCaretState {
     lastSelectionIsBackward: boolean | null;
     isBlinking: boolean;
     blinkTimeout: number | null;
+    isComposing: boolean;
 }
 
 /**
@@ -44,6 +45,7 @@ export function createSmoothCaretPlugin(options?: {
         lastSelectionIsBackward: null,
         isBlinking: false,
         blinkTimeout: null,
+        isComposing: false,
     };
 
     function isNativeTextInputFocused(view: EditorView): boolean {
@@ -256,6 +258,12 @@ export function createSmoothCaretPlugin(options?: {
 
     function updateSelectionHighlight(view: EditorView, editorWrapper: HTMLElement | null) {
         if (!editorWrapper) return;
+
+        // Skip selection updates during IME composition to prevent flickering
+        if (state.isComposing) {
+            return;
+        }
+
         if (!view.hasFocus() || isNativeTextInputFocused(view)) {
             // Ensure selection decorations don't remain visible while focus is in a native input.
             state.selectionElements.forEach((elem) => {
@@ -496,6 +504,19 @@ export function createSmoothCaretPlugin(options?: {
             editorView.dom.addEventListener('focus', () => handleFocus(editorView, editorWrapper));
             editorView.dom.addEventListener('blur', handleBlur);
 
+            // Track IME composition state to prevent selection flickering during Chinese/Japanese input
+            editorView.dom.addEventListener('compositionstart', () => {
+                state.isComposing = true;
+            });
+            editorView.dom.addEventListener('compositionend', () => {
+                // Use setTimeout to ensure compositionend fires after the last input event
+                setTimeout(() => {
+                    state.isComposing = false;
+                    // Trigger selection update after composition ends
+                    updateSelectionHighlight(editorView, editorWrapper);
+                }, 0);
+            });
+
             return {
                 update(view: EditorView) {
                     updateCursorPosition(view);
@@ -524,6 +545,7 @@ export function createSmoothCaretPlugin(options?: {
                         lastSelectionIsBackward: null,
                         isBlinking: false,
                         blinkTimeout: null,
+                        isComposing: false,
                     };
                 },
             };
