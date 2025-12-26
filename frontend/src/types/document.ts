@@ -31,3 +31,8 @@ export interface Folder {
   collapsed: boolean;
 }
 
+export interface TagInfo {
+  name: string;
+  count: number;
+  color?: string;
+}

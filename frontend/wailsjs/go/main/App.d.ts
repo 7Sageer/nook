@@ -26,11 +26,15 @@ export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function FetchLinkMetadata(arg1:string):Promise<opengraph.LinkMetadata>;
 
+export function GetAllTags():Promise<Array<main.TagInfo>>;
+
 export function GetDocumentList():Promise<document.Index>;
 
 export function GetFolders():Promise<Array<folder.Folder>>;
 
 export function GetSettings():Promise<main.Settings>;
+
+export function GetTagColors():Promise<Record<string, string>>;
 
 export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
@@ -69,3 +73,5 @@ export function SearchDocuments(arg1:string):Promise<Array<main.SearchResult>>;
 export function SetActiveDocument(arg1:string):Promise<void>;
 
 export function SetFolderCollapsed(arg1:string,arg2:boolean):Promise<void>;
+
+export function SetTagColor(arg1:string,arg2:string):Promise<void>;

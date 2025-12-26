@@ -11,6 +11,7 @@ import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarDragOverlay } from './SidebarDragOverlay';
 import { SidebarSearch } from './SidebarSearch';
 import { SortableFolderWrapper } from './SortableFolderWrapper';
+import { TagList } from './TagList';
 import { Plus } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
@@ -58,6 +59,10 @@ export function Sidebar({
     reorderFolders,
     addTag,
     removeTag,
+    allTags,
+    selectedTag,
+    setSelectedTag,
+    tagColors,
   } = useDocumentContext();
   const { theme, language } = useSettings();
   const STRINGS = getStrings(language);
@@ -135,7 +140,23 @@ export function Sidebar({
   });
 
   const uncategorizedDocs = docsByContainer.get(UNCATEGORIZED_CONTAINER_ID)!;
-  const displayList = query ? results : uncategorizedDocs;
+
+  // Create filtered version of docsByContainer when a tag is selected
+  const filteredDocsByContainer = useMemo(() => {
+    if (!selectedTag) return docsByContainer;
+
+    const filtered = new Map<string, DocumentMeta[]>();
+    for (const [containerId, docs] of docsByContainer) {
+      filtered.set(containerId, docs.filter(doc => doc.tags?.includes(selectedTag)));
+    }
+    return filtered;
+  }, [docsByContainer, selectedTag]);
+
+  // Apply tag filter for uncategorized display
+  const tagFilteredDocs = selectedTag
+    ? uncategorizedDocs.filter(doc => doc.tags?.includes(selectedTag))
+    : uncategorizedDocs;
+  const displayList = query ? results : tagFilteredDocs;
 
   const { setNodeRef: setUncategorizedDroppableRef } = useDroppable({
     id: docContainerDndId(UNCATEGORIZED_CONTAINER_ID),
@@ -200,6 +221,15 @@ export function Sidebar({
           onCloseExternal={onCloseExternal}
         />
 
+        {!query && allTags.length > 0 && (
+          <TagList
+            tags={allTags}
+            selectedTag={selectedTag}
+            onSelectTag={setSelectedTag}
+            tagColors={tagColors}
+          />
+        )}
+
         <DndContext
           sensors={sensors}
           collisionDetection={collisionDetection}
@@ -243,7 +273,7 @@ export function Sidebar({
                           key={folder.id}
                           folder={folder}
                           index={index}
-                          documents={docsByContainer.get(folder.id)!}
+                          documents={filteredDocsByContainer.get(folder.id) || []}
                           disabled={editingFolderId === folder.id}
                           activeDocId={activeExternalPath ? null : activeId}
                           onToggleFolder={toggleFolderCollapsed}

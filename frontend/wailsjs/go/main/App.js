@@ -42,6 +42,10 @@ export function FetchLinkMetadata(arg1) {
   return window['go']['main']['App']['FetchLinkMetadata'](arg1);
 }
 
+export function GetAllTags() {
+  return window['go']['main']['App']['GetAllTags']();
+}
+
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }
@@ -52,6 +56,10 @@ export function GetFolders() {
 
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
+}
+
+export function GetTagColors() {
+  return window['go']['main']['App']['GetTagColors']();
 }
 
 export function ImportMarkdownFile() {
@@ -128,4 +136,8 @@ export function SetActiveDocument(arg1) {
 
 export function SetFolderCollapsed(arg1, arg2) {
   return window['go']['main']['App']['SetFolderCollapsed'](arg1, arg2);
+}
+
+export function SetTagColor(arg1, arg2) {
+  return window['go']['main']['App']['SetTagColor'](arg1, arg2);
 }

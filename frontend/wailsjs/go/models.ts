@@ -132,6 +132,22 @@ export namespace main {
 	        this.language = source["language"];
 	    }
 	}
+	export class TagInfo {
+	    name: string;
+	    count: number;
+	    color?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TagInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	        this.color = source["color"];
+	    }
+	}
 
 }
 

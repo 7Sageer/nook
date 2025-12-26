@@ -140,3 +140,88 @@
 .sidebar.dark .tag-input::placeholder {
     color: #6b7280;
 }
+
+/* Tag badge with color */
+.tag-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Input wrapper for positioning suggestions */
+.tag-input-wrapper {
+    position: relative;
+}
+
+/* Autocomplete suggestions dropdown */
+.tag-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    min-width: 140px;
+    max-width: 200px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    overflow: hidden;
+}
+
+.sidebar.dark .tag-suggestions {
+    background: #252525;
+    border-color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tag-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 11px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color var(--transition-fast);
+}
+
+.tag-suggestion-item:hover,
+.tag-suggestion-item.selected {
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
+.sidebar.dark .tag-suggestion-item {
+    color: #e5e7eb;
+}
+
+.sidebar.dark .tag-suggestion-item:hover,
+.sidebar.dark .tag-suggestion-item.selected {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.tag-suggestion-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.tag-suggestion-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tag-suggestion-count {
+    font-size: 10px;
+    color: #9ca3af;
+    flex-shrink: 0;
+}

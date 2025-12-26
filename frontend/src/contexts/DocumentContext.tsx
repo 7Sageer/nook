@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { DocumentMeta, Folder } from '../types/document';
+import { DocumentMeta, Folder, TagInfo } from '../types/document';
 import { Block } from '@blocknote/core';
 import { getStrings } from '../constants/strings';
 import { useSettings } from './SettingsContext';
@@ -21,6 +21,9 @@ import {
   ReorderFolders,
   AddDocumentTag,
   RemoveDocumentTag,
+  GetAllTags,
+  GetTagColors,
+  SetTagColor,
 } from '../../wailsjs/go/main/App';
 
 interface DocumentContextType {
@@ -31,6 +34,11 @@ interface DocumentContextType {
 
   // 文件夹状态
   folders: Folder[];
+
+  // 标签状态
+  allTags: TagInfo[];
+  selectedTag: string | null;
+  tagColors: Record<string, string>;
 
   // 文档操作
   createDoc: (title?: string, folderId?: string) => Promise<DocumentMeta>;
@@ -50,6 +58,9 @@ interface DocumentContextType {
   // 标签操作
   addTag: (docId: string, tag: string) => Promise<void>;
   removeTag: (docId: string, tag: string) => Promise<void>;
+  setSelectedTag: (tag: string | null) => void;
+  setTagColor: (tagName: string, color: string) => Promise<void>;
+  refreshTags: () => Promise<void>;
 
   // 内容操作
   loadContent: (id: string) => Promise<Block[] | undefined>;
@@ -73,17 +84,26 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   // 文件夹状态
   const [folders, setFolders] = useState<Folder[]>([]);
 
+  // 标签状态
+  const [allTags, setAllTags] = useState<TagInfo[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [tagColors, setTagColors] = useState<Record<string, string>>({});
+
   // 初始化加载
   useEffect(() => {
     const init = async () => {
       try {
-        const [index, folderList] = await Promise.all([
+        const [index, folderList, tags, colors] = await Promise.all([
           GetDocumentList(),
           GetFolders(),
+          GetAllTags(),
+          GetTagColors(),
         ]);
         setDocuments(index.documents || []);
         setActiveId(index.activeId || null);
         setFolders(folderList || []);
+        setAllTags(tags || []);
+        setTagColors(colors || {});
       } catch (e) {
         console.error('初始化加载失败:', e);
       } finally {
@@ -287,6 +307,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     activeId,
     isLoading,
     folders,
+    allTags,
+    selectedTag,
+    tagColors,
 
     // 文档操作
     createDoc,
@@ -306,6 +329,17 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     // 标签操作
     addTag,
     removeTag,
+    setSelectedTag,
+    setTagColor: async (tagName: string, color: string) => {
+      await SetTagColor(tagName, color);
+      setTagColors(prev => ({ ...prev, [tagName]: color }));
+      setAllTags(prev => prev.map(t => t.name === tagName ? { ...t, color } : t));
+    },
+    refreshTags: async () => {
+      const [tags, colors] = await Promise.all([GetAllTags(), GetTagColors()]);
+      setAllTags(tags || []);
+      setTagColors(colors || {});
+    },
 
     // 内容操作
     loadContent,

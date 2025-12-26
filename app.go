@@ -18,6 +18,7 @@ import (
 	"notion-lite/internal/opengraph"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
+	"notion-lite/internal/tag"
 	"notion-lite/internal/watcher"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -50,6 +51,7 @@ type App struct {
 	settingsService *settings.Service
 	markdownService *markdown.Service
 	watcherService  *watcher.Service
+	tagStore        *tag.Store
 
 	pendingExternalOpensMu sync.Mutex
 	pendingExternalOpens   []string
@@ -83,6 +85,7 @@ func NewApp() *App {
 		settingsService: settings.NewService(dataPath),
 		markdownService: markdown.NewService(),
 		watcherService:  watcherService,
+		tagStore:        tag.NewStore(dataPath),
 	}
 }
 
@@ -325,6 +328,54 @@ func (a *App) AddDocumentTag(docId string, tag string) error {
 func (a *App) RemoveDocumentTag(docId string, tag string) error {
 	a.markIndexWrite()
 	return a.docRepo.RemoveTag(docId, tag)
+}
+
+// TagInfo 标签信息（包含使用次数和颜色）
+type TagInfo struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
+	Color string `json:"color,omitempty"`
+}
+
+// GetAllTags 获取所有标签及其使用次数
+func (a *App) GetAllTags() ([]TagInfo, error) {
+	index, err := a.docRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// 统计每个标签的使用次数
+	tagCounts := make(map[string]int)
+	for _, doc := range index.Documents {
+		for _, t := range doc.Tags {
+			tagCounts[t]++
+		}
+	}
+
+	// 获取标签颜色
+	colors := a.tagStore.GetAllColors()
+
+	// 构建结果
+	result := make([]TagInfo, 0, len(tagCounts))
+	for name, count := range tagCounts {
+		result = append(result, TagInfo{
+			Name:  name,
+			Count: count,
+			Color: colors[name],
+		})
+	}
+
+	return result, nil
+}
+
+// GetTagColors 获取所有标签颜色
+func (a *App) GetTagColors() map[string]string {
+	return a.tagStore.GetAllColors()
+}
+
+// SetTagColor 设置标签颜色
+func (a *App) SetTagColor(tagName string, color string) error {
+	return a.tagStore.SetColor(tagName, color)
 }
 
 // ========== 外部文件编辑 ==========

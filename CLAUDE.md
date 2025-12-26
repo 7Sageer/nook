@@ -23,6 +23,9 @@ wails build
 # Frontend only (from frontend/ directory)
 cd frontend && npm run dev      # Vite dev server
 cd frontend && npm run build    # Build frontend
+
+# Build MCP server (for Claude Code integration)
+go build -o nook-mcp ./cmd/mcp-server
 ```
 
 Note: No test suite is currently configured.
@@ -49,6 +52,10 @@ Note: No test suite is currently configured.
   - `settings/` - User preferences persistence
   - `markdown/` - Import/export markdown files via native dialogs
   - `constant/` - Centralized strings for menus, dialogs, labels
+
+- `cmd/mcp-server/` - MCP (Model Context Protocol) server for Claude Code integration:
+  - Exposes document, folder, tag, and search tools via JSON-RPC over stdio
+  - Reuses `internal/` packages to access the same data store as the main app
 
 ### Frontend (React/TypeScript)
 
