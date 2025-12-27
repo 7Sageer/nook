@@ -1,5 +1,7 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus } from 'lucide-react';
+import { Button, ListBox, ListBoxItem } from 'react-aria-components';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import './TagInput.css';
 
@@ -21,10 +23,9 @@ export const TagInput = memo(function TagInput({
     const { allTags, tagColors } = useDocumentContext();
     const [isAdding, setIsAdding] = useState(false);
     const [inputValue, setInputValue] = useState('');
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
-    const suggestionsRef = useRef<HTMLDivElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // Filter suggestions based on input
     const suggestions = inputValue.trim()
@@ -36,10 +37,16 @@ export const TagInput = memo(function TagInput({
             .slice(0, 5)
         : [];
 
-    // Reset selected index when suggestions change
+    // Calculate dropdown position for portal
     useEffect(() => {
-        setSelectedIndex(0);
-    }, [suggestions.length]);
+        if (isAdding && suggestions.length > 0 && wrapperRef.current) {
+            const rect = wrapperRef.current.getBoundingClientRect();
+            setDropdownPosition({
+                top: rect.bottom + 4,
+                left: rect.left,
+            });
+        }
+    }, [isAdding, suggestions.length]);
 
     const handleAddClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -53,42 +60,30 @@ export const TagInput = memo(function TagInput({
         }
         setInputValue('');
         setIsAdding(false);
-        setShowSuggestions(false);
     }, [docId, onAddTag, tags]);
+
+    const handleRemove = useCallback((e: React.MouseEvent, tag: string) => {
+        e.stopPropagation();
+        onRemoveTag(docId, tag);
+    }, [docId, onRemoveTag]);
+
+    const handleTagClick = useCallback((e: React.MouseEvent, tag: string) => {
+        e.stopPropagation();
+        onTagClick?.(tag);
+    }, [onTagClick]);
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         e.stopPropagation();
-
-        if (showSuggestions && suggestions.length > 0) {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                setSelectedIndex(prev => Math.min(prev + 1, suggestions.length - 1));
-                return;
-            }
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                setSelectedIndex(prev => Math.max(prev - 1, 0));
-                return;
-            }
-            if (e.key === 'Tab' || (e.key === 'Enter' && suggestions.length > 0)) {
-                e.preventDefault();
-                addTag(suggestions[selectedIndex].name);
-                return;
-            }
-        }
-
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && inputValue.trim()) {
             addTag(inputValue);
         } else if (e.key === 'Escape') {
             setInputValue('');
             setIsAdding(false);
-            setShowSuggestions(false);
         }
-    }, [inputValue, showSuggestions, suggestions, selectedIndex, addTag]);
+    }, [inputValue, addTag]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value);
-        setShowSuggestions(true);
     }, []);
 
     const handleInputBlur = useCallback(() => {
@@ -100,64 +95,67 @@ export const TagInput = memo(function TagInput({
             }
             setInputValue('');
             setIsAdding(false);
-            setShowSuggestions(false);
         }, 150);
     }, [inputValue, docId, onAddTag, tags]);
-
-    const handleRemoveClick = useCallback((e: React.MouseEvent, tag: string) => {
-        e.stopPropagation();
-        onRemoveTag(docId, tag);
-    }, [docId, onRemoveTag]);
-
-    const handleTagClick = useCallback((e: React.MouseEvent, tag: string) => {
-        e.stopPropagation();
-        onTagClick?.(tag);
-    }, [onTagClick]);
-
-    const handleSuggestionClick = useCallback((e: React.MouseEvent, tagName: string) => {
-        e.stopPropagation();
-        e.preventDefault();
-        addTag(tagName);
-    }, [addTag]);
 
     const MAX_VISIBLE_TAGS = 2;
     const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS);
     const hiddenCount = tags.length - MAX_VISIBLE_TAGS;
 
+    // Focus input when adding mode is activated
+    useEffect(() => {
+        if (isAdding && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isAdding]);
+
     return (
-        <div className="tag-container" onClick={(e) => e.stopPropagation()}>
+        <div
+            className="tag-container"
+            onClick={(e) => e.stopPropagation()}
+            role="group"
+            aria-label="Document tags"
+        >
             {visibleTags.map((tag) => {
                 const color = tagColors[tag];
                 return (
                     <span
                         key={tag}
                         className="tag-badge"
-                        onClick={(e) => handleTagClick(e, tag)}
+                        role="listitem"
                         title={tag}
                         style={color ? { '--tag-badge-color': color } as React.CSSProperties : undefined}
                     >
-                        {color && <span className="tag-badge-dot" style={{ backgroundColor: color }} />}
-                        {tag}
-                        <button
+                        {color && <span className="tag-badge-dot" style={{ backgroundColor: color }} aria-hidden="true" />}
+                        <span
+                            className="tag-text"
+                            onClick={(e) => handleTagClick(e, tag)}
+                        >
+                            {tag}
+                        </span>
+                        <Button
                             className="tag-remove"
-                            onClick={(e) => handleRemoveClick(e, tag)}
+                            onPress={() => onRemoveTag(docId, tag)}
                             aria-label={`Remove tag ${tag}`}
                         >
-                            <X size={10} />
-                        </button>
+                            <X size={10} aria-hidden="true" />
+                        </Button>
                     </span>
                 );
             })}
+
             {hiddenCount > 0 && (
                 <span
                     className="tag-badge tag-more"
                     title={tags.slice(MAX_VISIBLE_TAGS).join(', ')}
+                    aria-label={`${hiddenCount} more tags`}
                 >
                     +{hiddenCount}
                 </span>
             )}
+
             {isAdding ? (
-                <div className="tag-input-wrapper">
+                <div className="tag-input-wrapper" ref={wrapperRef}>
                     <input
                         ref={inputRef}
                         type="text"
@@ -167,41 +165,58 @@ export const TagInput = memo(function TagInput({
                         onKeyDown={handleInputKeyDown}
                         onBlur={handleInputBlur}
                         onClick={(e) => e.stopPropagation()}
-                        onFocus={() => setShowSuggestions(true)}
                         placeholder="Tag"
-                        autoFocus
                         maxLength={20}
+                        aria-label="Enter tag name"
+                        aria-autocomplete="list"
+                        aria-controls={suggestions.length > 0 ? "tag-suggestions" : undefined}
                     />
-                    {showSuggestions && suggestions.length > 0 && (
-                        <div className="tag-suggestions" ref={suggestionsRef}>
-                            {suggestions.map((suggestion, index) => (
-                                <button
-                                    key={suggestion.name}
-                                    className={`tag-suggestion-item ${index === selectedIndex ? 'selected' : ''}`}
-                                    onMouseDown={(e) => handleSuggestionClick(e, suggestion.name)}
-                                    onMouseEnter={() => setSelectedIndex(index)}
+                    {suggestions.length > 0 && dropdownPosition && createPortal(
+                        <ListBox
+                            id="tag-suggestions"
+                            aria-label="Tag suggestions"
+                            className="tag-suggestions tag-suggestions-portal"
+                            items={suggestions}
+                            selectionMode="single"
+                            style={{
+                                position: 'fixed',
+                                top: dropdownPosition.top,
+                                left: dropdownPosition.left,
+                            }}
+                        >
+                            {(item) => (
+                                <ListBoxItem
+                                    key={item.name}
+                                    id={item.name}
+                                    textValue={item.name}
+                                    className="tag-suggestion-item"
+                                    onAction={() => addTag(item.name)}
                                 >
-                                    {suggestion.color && (
+                                    {item.color && (
                                         <span
                                             className="tag-suggestion-dot"
-                                            style={{ backgroundColor: suggestion.color }}
+                                            style={{ backgroundColor: item.color }}
+                                            aria-hidden="true"
                                         />
                                     )}
-                                    <span className="tag-suggestion-name">{suggestion.name}</span>
-                                    <span className="tag-suggestion-count">{suggestion.count}</span>
-                                </button>
-                            ))}
-                        </div>
+                                    <span className="tag-suggestion-name">{item.name}</span>
+                                    <span className="tag-suggestion-count" aria-label={`${item.count} documents`}>
+                                        {item.count}
+                                    </span>
+                                </ListBoxItem>
+                            )}
+                        </ListBox>,
+                        document.body
                     )}
                 </div>
             ) : (
-                <button
+                <Button
                     className="add-tag-btn"
-                    onClick={handleAddClick}
+                    onPress={() => setIsAdding(true)}
                     aria-label="Add tag"
                 >
-                    <Plus size={10} />
-                </button>
+                    <Plus size={10} aria-hidden="true" />
+                </Button>
             )}
         </div>
     );

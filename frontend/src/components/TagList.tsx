@@ -1,4 +1,4 @@
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
 import { Tag } from 'lucide-react';
 import type { TagInfo } from '../types/document';
 import { TagColorPicker } from './TagColorPicker';
@@ -37,6 +37,20 @@ export const TagList = memo(function TagList({
     const handleColorSelect = useCallback(async (tagName: string, color: string) => {
         await setTagColor(tagName, color);
     }, [setTagColor]);
+
+    // ESC 键取消选择标签
+    useEffect(() => {
+        if (!selectedTag) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onSelectTag(null);
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [selectedTag, onSelectTag]);
 
     if (tags.length === 0) {
         return null;

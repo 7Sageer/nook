@@ -34,10 +34,9 @@
     border-radius: var(--radius-md);
     margin-bottom: 2px;
     position: relative;
-    /* Constrain width and clip overflowing text */
+    /* Constrain width */
     max-width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
     transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
     transform-origin: left center;
     outline: none;

@@ -23,6 +23,19 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    border: 1px solid transparent;
+    outline: none;
+}
+
+.tag-badge[data-focus-visible] {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.tag-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .tag-badge:hover {
@@ -60,14 +73,23 @@
     cursor: pointer;
     padding: 0;
     opacity: 0.6;
+    outline: none;
 }
 
-.tag-badge:hover .tag-remove {
+.tag-badge:hover .tag-remove,
+.tag-badge:focus-within .tag-remove {
     display: flex;
 }
 
 .tag-remove:hover {
     opacity: 1;
+}
+
+.tag-remove:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+    border-radius: 50%;
 }
 
 /* Add tag button */
@@ -89,7 +111,8 @@
     flex-shrink: 0;
 }
 
-.document-item:hover .add-tag-btn {
+.document-item:hover .add-tag-btn,
+.add-tag-btn:focus-visible {
     opacity: 1;
 }
 
@@ -107,6 +130,13 @@
 .sidebar.dark .add-tag-btn:hover {
     border-color: var(--primary);
     color: var(--primary);
+}
+
+.add-tag-btn:focus-visible {
+    border-color: var(--primary);
+    color: var(--primary);
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
 }
 
 /* Tag input */
@@ -170,6 +200,12 @@
     overflow: hidden;
 }
 
+/* Portal-rendered dropdown uses fixed positioning (set via inline style) */
+.tag-suggestions.tag-suggestions-portal {
+    position: fixed;
+    z-index: 1000;
+}
+
 .sidebar.dark .tag-suggestions {
     background: #252525;
     border-color: #374151;
@@ -189,10 +225,13 @@
     cursor: pointer;
     text-align: left;
     transition: background-color var(--transition-fast);
+    outline: none;
 }
 
 .tag-suggestion-item:hover,
-.tag-suggestion-item.selected {
+.tag-suggestion-item.selected,
+.tag-suggestion-item[data-focused],
+.tag-suggestion-item[data-selected] {
     background-color: rgba(37, 99, 235, 0.08);
 }
 
@@ -201,7 +240,9 @@
 }
 
 .sidebar.dark .tag-suggestion-item:hover,
-.sidebar.dark .tag-suggestion-item.selected {
+.sidebar.dark .tag-suggestion-item.selected,
+.sidebar.dark .tag-suggestion-item[data-focused],
+.sidebar.dark .tag-suggestion-item[data-selected] {
     background-color: rgba(255, 255, 255, 0.08);
 }
 

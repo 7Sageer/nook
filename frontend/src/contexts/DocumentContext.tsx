@@ -263,24 +263,46 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const addTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await AddDocumentTag(docId, tag);
-    // 增量更新
+    // 增量更新文档标签
     setDocuments(prev =>
       prev.map(d => d.id === docId
         ? { ...d, tags: [...(d.tags || []), tag], updatedAt: Date.now() }
         : d
       )
     );
+    // 增量更新 allTags，确保新标签立即显示在侧边栏
+    setAllTags(prev => {
+      const existingTag = prev.find(t => t.name === tag);
+      if (existingTag) {
+        // 标签已存在，增加计数
+        return prev.map(t => t.name === tag ? { ...t, count: t.count + 1 } : t);
+      } else {
+        // 新标签，添加到列表
+        return [...prev, { name: tag, count: 1 }];
+      }
+    });
   }, []);
 
   const removeTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await RemoveDocumentTag(docId, tag);
-    // 增量更新
+    // 增量更新文档标签
     setDocuments(prev =>
       prev.map(d => d.id === docId
         ? { ...d, tags: (d.tags || []).filter(t => t !== tag), updatedAt: Date.now() }
         : d
       )
     );
+    // 增量更新 allTags，减少计数或移除标签
+    setAllTags(prev => {
+      const existingTag = prev.find(t => t.name === tag);
+      if (existingTag && existingTag.count > 1) {
+        // 减少计数
+        return prev.map(t => t.name === tag ? { ...t, count: t.count - 1 } : t);
+      } else {
+        // 计数为 1，移除标签
+        return prev.filter(t => t.name !== tag);
+      }
+    });
   }, []);
 
   // ========== 内容操作 ==========
