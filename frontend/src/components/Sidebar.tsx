@@ -288,6 +288,7 @@ export function Sidebar({
                           justDroppedId={justDroppedId}
                           onAddTag={addTag}
                           onRemoveTag={removeTag}
+                          onTagClick={setSelectedTag}
                         />
                       ))}
                     </AnimatePresence>
@@ -346,6 +347,7 @@ export function Sidebar({
                       justDroppedId={justDroppedId}
                       onAddTag={addTag}
                       onRemoveTag={removeTag}
+                      onTagClick={setSelectedTag}
                     />
                   </ul>
                 </motion.div>

@@ -5,6 +5,18 @@
     margin-left: 8px;
     align-items: center;
     flex-shrink: 0;
+    opacity: 0;
+    visibility: hidden;
+    max-width: 0;
+    overflow: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast), max-width var(--transition-fast);
+}
+
+.document-item:hover .tag-container,
+.document-item:focus-within .tag-container {
+    opacity: 1;
+    visibility: visible;
+    max-width: 200px;
 }
 
 .tag-badge {
