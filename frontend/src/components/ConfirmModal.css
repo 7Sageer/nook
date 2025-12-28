@@ -52,8 +52,8 @@
 }
 
 .modal-content.dark {
-  background-color: #1a1a1a;
-  border: 1px solid #2a2a2a;
+  background-color: #1a2030;
+  border: 1px solid #2a3545;
   color: #e5e7eb;
 }
 
@@ -80,7 +80,7 @@
 }
 
 .modal-content.dark .modal-close:hover {
-  background-color: #252525;
+  background-color: #252d3a;
   color: #e5e7eb;
 }
 
@@ -149,12 +149,12 @@
 }
 
 .modal-content.dark .modal-btn.cancel {
-  background-color: #252525;
+  background-color: #252d3a;
   color: #e5e7eb;
 }
 
 .modal-content.dark .modal-btn.cancel:hover {
-  background-color: #333;
+  background-color: #2a3545;
 }
 
 .modal-btn.confirm {

@@ -172,7 +172,7 @@
 }
 
 .app-container.dark .editor-tag-input {
-    background-color: #252525;
+    background-color: #252d3a;
     color: #e5e7eb;
 }
 
@@ -194,7 +194,7 @@
 }
 
 .app-container.dark .editor-tag-suggestions {
-    background: #252525;
+    background: #252d3a;
     border-color: #374151;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }

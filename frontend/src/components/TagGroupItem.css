@@ -39,7 +39,7 @@
 }
 
 .sidebar.dark .folder-header:hover {
-    background-color: #252525;
+    background-color: #252d3a;
 }
 
 /* 文件夹作为拖拽目标时的效果 */
@@ -117,7 +117,7 @@
 }
 
 .sidebar.dark .folder-count {
-    background-color: #333;
+    background-color: #2a3545;
     color: #9ca3af;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .sidebar.dark .folder-rename-input {
-    background-color: #252525;
+    background-color: #252d3a;
     color: #e5e7eb;
 }
 
@@ -169,6 +169,8 @@
     min-height: 0;
     position: relative;
     /* 用于 exit 动画的 absolute 定位 */
+    padding-right: 8px;
+    /* 防止 translateX 动画时右侧圆角被裁剪 */
 }
 
 .folder-documents-inner,

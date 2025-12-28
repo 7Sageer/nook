@@ -61,7 +61,7 @@
 }
 
 .sidebar.dark::after {
-    background-color: #333;
+    background-color: #2a3545;
 }
 
 /* 侧边栏内容容器（浮动岛屿效果） */
@@ -75,7 +75,7 @@
 .sidebar.dark .sidebar-header,
 .sidebar.dark .search-wrapper,
 .sidebar.dark .sidebar-content {
-    background-color: #1a1a1a;
+    background-color: #161b22;
 }
 
 .sidebar-header {
@@ -135,7 +135,7 @@
 }
 
 .sidebar.dark .icon-btn:hover {
-    background-color: #2a2a2a;
+    background-color: #252d3a;
     color: #e5e7eb;
 }
 
@@ -201,7 +201,7 @@
 }
 
 .sidebar.dark .sidebar-collapsed-content {
-    background-color: #1a1a1a;
+    background-color: #161b22;
 }
 
 .sidebar-collapsed .icon-btn {
@@ -269,7 +269,7 @@
 }
 
 .sidebar.dark .section-add-btn:hover {
-    background-color: #333;
+    background-color: #252d3a;
     color: var(--primary);
 }
 
@@ -310,7 +310,7 @@
 }
 
 .sidebar.dark .section-divider {
-    background-color: #333;
+    background-color: #2a3545;
 }
 
 /* ========== Empty Hint ========== */

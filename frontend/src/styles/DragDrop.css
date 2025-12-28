@@ -39,7 +39,7 @@
 }
 
 .sidebar.dark .folder-item.drag-overlay {
-    background-color: #2a2a2a;
+    background-color: #252d3a;
     box-shadow:
         0 12px 28px rgba(0, 0, 0, 0.5),
         0 6px 12px rgba(0, 0, 0, 0.4);

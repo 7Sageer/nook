@@ -12,6 +12,14 @@ body,
     width: 100%;
 }
 
+/* Dark mode background for window edges */
+html.dark,
+body.dark,
+.dark html,
+.dark body {
+    background-color: #161b22;
+}
+
 /* ========== 主容器 ========== */
 .app-container {
     display: flex;
@@ -24,7 +32,7 @@ body,
 }
 
 .app-container.dark {
-    background-color: #111111;
+    background-color: #1e2530;
     color: #e5e7eb;
 }
 

@@ -57,7 +57,7 @@
 }
 
 .sidebar.dark .document-item:hover {
-    background-color: #252525;
+    background-color: #252d3a;
 }
 
 .document-item.active {
@@ -162,7 +162,7 @@
 }
 
 .sidebar.dark .action-btn:hover {
-    background-color: #333;
+    background-color: #2a3545;
     color: #e5e7eb;
 }
 
@@ -183,7 +183,7 @@
 }
 
 .sidebar.dark .rename-input {
-    background-color: #252525;
+    background-color: #252d3a;
     color: #e5e7eb;
     border-color: var(--primary);
 }
@@ -323,7 +323,7 @@
 /* dragOverlayAppear 动画定义在 styles/animations.css */
 
 .sidebar.dark .document-item.drag-overlay {
-    background-color: #2a2a2a;
+    background-color: #252d3a;
     box-shadow:
         0 12px 28px rgba(0, 0, 0, 0.5),
         0 6px 12px rgba(0, 0, 0, 0.4);

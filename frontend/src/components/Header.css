@@ -10,7 +10,7 @@
 }
 
 .app-container.dark .main-content {
-    background-color: #111111;
+    background-color: #1e2530;
 }
 
 /* ========== Header ========== */
@@ -34,8 +34,8 @@
 }
 
 .app-container.dark .app-header {
-    background-color: #1a1a1a;
-    border-bottom-color: #2a2a2a;
+    background-color: #1a2030;
+    border-bottom-color: #2a3545;
 }
 
 .app-container.dark .app-header.header-transparent {
@@ -131,7 +131,7 @@
 }
 
 .app-container.dark .status {
-    background-color: #252525;
+    background-color: #252d3a;
     color: #9ca3af;
 }
 

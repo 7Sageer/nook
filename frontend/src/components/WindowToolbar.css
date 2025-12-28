@@ -72,7 +72,7 @@
 }
 
 .window-toolbar.dark .icon-btn:hover {
-    background-color: #2a2a2a;
+    background-color: #252d3a;
     color: #e5e7eb;
 }
 
@@ -95,9 +95,19 @@
 }
 
 @keyframes wiggle {
-    0%, 100% { transform: rotate(0); }
-    25% { transform: rotate(-10deg); }
-    75% { transform: rotate(10deg); }
+
+    0%,
+    100% {
+        transform: rotate(0);
+    }
+
+    25% {
+        transform: rotate(-10deg);
+    }
+
+    75% {
+        transform: rotate(10deg);
+    }
 }
 
 /* ========== Icon Buttons ========== */
@@ -249,17 +259,17 @@
 }
 
 .app-container.dark .expand-sidebar-btn {
-    background-color: #252525;
+    background-color: #252d3a;
 }
 
 .app-container.dark .expand-sidebar-btn:hover {
-    background-color: #333;
+    background-color: #2a3545;
 }
 
 /* Dark mode for create menu */
 .sidebar.dark .create-menu-dropdown {
-    background-color: #252525;
-    border-color: #333;
+    background-color: #252d3a;
+    border-color: #2a3545;
 }
 
 .sidebar.dark .create-menu-item {
@@ -267,7 +277,7 @@
 }
 
 .sidebar.dark .create-menu-item:hover {
-    background-color: #333;
+    background-color: #2a3545;
 }
 
 .sidebar.dark .create-menu-item svg {

@@ -29,3 +29,11 @@
     --editor-padding-x: 80px;
     --editor-padding-x-narrow: 40px;
 }
+
+/* Dark mode: softer blue accent colors */
+[data-theme="dark"],
+.dark,
+.app-container.dark {
+    --primary: #4a8fd9;
+    --primary-hover: #3d7fc6;
+}
