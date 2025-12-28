@@ -65,9 +65,6 @@ interface SortableFolderWrapperProps {
     dropIndicator?: DocDropIndicator | null;
     containerDropIndicator?: ContainerDropIndicator | null;
     justDroppedId?: string | null;
-    onAddTag?: (docId: string, tag: string) => void;
-    onRemoveTag?: (docId: string, tag: string) => void;
-    onTagClick?: (tag: string) => void;
 }
 
 export const SortableFolderWrapper = memo(forwardRef<HTMLDivElement, SortableFolderWrapperProps>(function SortableFolderWrapper({
@@ -86,9 +83,6 @@ export const SortableFolderWrapper = memo(forwardRef<HTMLDivElement, SortableFol
     dropIndicator,
     containerDropIndicator,
     justDroppedId,
-    onAddTag,
-    onRemoveTag,
-    onTagClick,
 }, ref) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: folderDndId(folder.id),
@@ -159,9 +153,6 @@ export const SortableFolderWrapper = memo(forwardRef<HTMLDivElement, SortableFol
                 dropIndicator={dropIndicator}
                 containerDropIndicator={containerDropIndicator}
                 justDroppedId={justDroppedId}
-                onAddTag={onAddTag}
-                onRemoveTag={onRemoveTag}
-                onTagClick={onTagClick}
             />
         </motion.div>
     );

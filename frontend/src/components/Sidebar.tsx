@@ -286,9 +286,6 @@ export function Sidebar({
                           dropIndicator={docDropIndicator}
                           containerDropIndicator={containerDropIndicator}
                           justDroppedId={justDroppedId}
-                          onAddTag={addTag}
-                          onRemoveTag={removeTag}
-                          onTagClick={setSelectedTag}
                         />
                       ))}
                     </AnimatePresence>
@@ -345,9 +342,6 @@ export function Sidebar({
                       containerId={UNCATEGORIZED_CONTAINER_ID}
                       dropIndicator={docDropIndicator}
                       justDroppedId={justDroppedId}
-                      onAddTag={addTag}
-                      onRemoveTag={removeTag}
-                      onTagClick={setSelectedTag}
                     />
                   </ul>
                 </motion.div>

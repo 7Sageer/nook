@@ -24,9 +24,6 @@ interface FolderItemProps {
     dropIndicator?: DocDropIndicator | null;
     containerDropIndicator?: ContainerDropIndicator | null;
     justDroppedId?: string | null;
-    onAddTag?: (docId: string, tag: string) => void;
-    onRemoveTag?: (docId: string, tag: string) => void;
-    onTagClick?: (tag: string) => void;
 }
 
 export const FolderItem = memo(function FolderItem({
@@ -44,9 +41,6 @@ export const FolderItem = memo(function FolderItem({
     dropIndicator,
     containerDropIndicator,
     justDroppedId,
-    onAddTag,
-    onRemoveTag,
-    onTagClick,
 }: FolderItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(folder.name);
@@ -198,9 +192,6 @@ export const FolderItem = memo(function FolderItem({
                                     onDelete={onDeleteDocument}
                                     inFolder
                                     hidden={folder.collapsed}
-                                    onAddTag={onAddTag}
-                                    onRemoveTag={onRemoveTag}
-                                    onTagClick={onTagClick}
                                 />
                             ))}
                         </AnimatePresence>
