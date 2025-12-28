@@ -12,7 +12,9 @@ export function useH1Visibility(editorKey: string | null, activeId: string | nul
   const observeH1 = useCallback(() => {
     // 查找编辑器容器内的第一个 H1
     const editorContainer = document.querySelector('.editor-container');
-    if (!editorContainer) return { cleanup: () => { } };
+    // 滚动容器现在是 main-content
+    const scrollContainer = document.querySelector('.main-content');
+    if (!editorContainer || !scrollContainer) return { cleanup: () => { } };
 
     const createIntersectionObserver = (h1Element: Element) => {
       // 使用 IntersectionObserver 监听 H1 可见性
@@ -24,7 +26,7 @@ export function useH1Visibility(editorKey: string | null, activeId: string | nul
           });
         },
         {
-          root: editorContainer,
+          root: scrollContainer,
           threshold: 0,
           rootMargin: '0px 0px 0px 0px',
         }

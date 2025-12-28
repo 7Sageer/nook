@@ -1,8 +1,15 @@
 /* ========== Editor Container ========== */
 .editor-container {
     flex: 1;
-    overflow-y: auto;
     padding: 32px var(--editor-padding-x);
+    /* Soft inset shadow on left side for smooth transition from sidebar */
+    box-shadow: inset 8px 0 16px -8px rgba(0, 0, 0, 0.06);
+    background-color: #ffffff;
+}
+
+.app-container.dark .editor-container {
+    box-shadow: inset 8px 0 16px -8px rgba(0, 0, 0, 0.25);
+    background-color: #1e2530;
 }
 
 /* Editor wrapper containing tags and BlockNote */

@@ -15,9 +15,11 @@
     gap: 4px;
     padding: 4px 10px;
     font-size: 12px;
+    font-family: inherit;
     color: #9ca3af;
     border: 1px dashed #d1d5db;
     border-radius: 16px;
+    background: transparent;
     cursor: pointer;
     transition: all var(--transition-fast);
 }
@@ -26,6 +28,11 @@
     border-color: var(--primary);
     color: var(--primary);
     background-color: rgba(37, 99, 235, 0.05);
+}
+
+.editor-tag-empty:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
 }
 
 .app-container.dark .editor-tag-empty {
@@ -80,10 +87,23 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    font-family: inherit;
+    font-weight: inherit;
+    color: inherit;
 }
 
 .editor-tag-text:hover {
     text-decoration: underline;
+}
+
+.editor-tag-text:focus-visible {
+    outline: 1px solid var(--primary);
+    outline-offset: 1px;
+    border-radius: 2px;
 }
 
 /* Remove button */
@@ -132,12 +152,19 @@
     color: #9ca3af;
     cursor: pointer;
     transition: all var(--transition-fast);
+    padding: 0;
+    font-family: inherit;
 }
 
 .editor-tag-add-btn:hover {
     border-color: var(--primary);
     color: var(--primary);
     background-color: rgba(37, 99, 235, 0.05);
+}
+
+.editor-tag-add-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
 }
 
 .app-container.dark .editor-tag-add-btn {

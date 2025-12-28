@@ -66,14 +66,16 @@
 
 /* 侧边栏内容容器（浮动岛屿效果） */
 .sidebar-header,
-.search-wrapper,
 .sidebar-content {
     background-color: #f9fafb;
     margin-right: 8px;
 }
 
+.search-wrapper {
+    margin: 12px 8px 8px 0;
+}
+
 .sidebar.dark .sidebar-header,
-.sidebar.dark .search-wrapper,
 .sidebar.dark .sidebar-content {
     background-color: #161b22;
 }
@@ -91,7 +93,7 @@
 }
 
 .sidebar-content {
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-radius: var(--radius-lg);
     margin-bottom: 8px;
     flex: 1;
     overflow-x: hidden;

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { DocumentMeta, TagInfo } from '../types/document';
 import { Block } from '@blocknote/core';
 import { getStrings } from '../constants/strings';
@@ -310,7 +310,22 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     await SaveDocumentContent(id, JSON.stringify(content));
   }, []);
 
-  const value: DocumentContextType = {
+  // 将 setTagColor 和 refreshTags 提取为 useCallback，以便 useMemo 正确追踪依赖
+  const setTagColorFn = useCallback(async (tagName: string, color: string) => {
+    await SetTagColor(tagName, color);
+    setTagColors(prev => ({ ...prev, [tagName]: color }));
+    setAllTags(prev => prev.map(t => t.name === tagName ? { ...t, color } : t));
+  }, []);
+
+  const refreshTags = useCallback(async () => {
+    const [tags, groups, colors] = await Promise.all([GetAllTags(), GetTagGroups(), GetTagColors()]);
+    setAllTags(tags || []);
+    setTagGroups(groups || []);
+    setTagColors(colors || {});
+  }, []);
+
+  // 使用 useMemo 缓存 context value，避免不必要的重新渲染
+  const value = useMemo<DocumentContextType>(() => ({
     // 状态
     documents,
     activeId,
@@ -338,17 +353,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     addTag,
     removeTag,
     setSelectedTag,
-    setTagColor: async (tagName: string, color: string) => {
-      await SetTagColor(tagName, color);
-      setTagColors(prev => ({ ...prev, [tagName]: color }));
-      setAllTags(prev => prev.map(t => t.name === tagName ? { ...t, color } : t));
-    },
-    refreshTags: async () => {
-      const [tags, groups, colors] = await Promise.all([GetAllTags(), GetTagGroups(), GetTagColors()]);
-      setAllTags(tags || []);
-      setTagGroups(groups || []);
-      setTagColors(colors || {});
-    },
+    setTagColor: setTagColorFn,
+    refreshTags,
 
     // 内容操作
     loadContent,
@@ -356,7 +362,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
     // 刷新操作
     refreshDocuments,
-  };
+  }), [
+    // 状态依赖
+    documents, activeId, isLoading, allTags, tagGroups, selectedTag, tagColors,
+    // 操作依赖
+    createDoc, deleteDoc, renameDoc, switchDoc, reorderDocuments,
+    createTagGroupFn, deleteTagGroupFn, renameTagGroupFn, toggleTagGroupCollapsed, reorderTagGroupsFn,
+    addTag, removeTag, setTagColorFn, refreshTags,
+    loadContent, saveContent, refreshDocuments,
+  ]);
 
   return (
     <DocumentContext.Provider value={value}>

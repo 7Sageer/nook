@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Editor } from "./components/Editor";
-import { Sidebar } from "./components/Sidebar";
-import { Header } from "./components/Header";
+import { EditorContainer } from "./components/EditorContainer";
+import { SidebarContainer } from "./components/SidebarContainer";
 import { WindowToolbar } from "./components/WindowToolbar";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
@@ -256,61 +256,49 @@ function AppContent() {
         onToggleTheme={toggleTheme}
         theme={theme}
       />
-      <div className={`sidebar-wrapper ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <Sidebar
-          externalFiles={externalFiles}
-          activeExternalPath={activeExternalPath}
-          onSelectExternal={handleSwitchToExternal}
-          onCloseExternal={closeExternal}
-          collapsed={sidebarCollapsed}
-          onSelectInternal={handleSwitchToInternal}
-        />
-      </div>
-      <div className="main-content">
-        <Header
-          title={currentTitle}
-          status={status}
-          showTitle={!isH1Visible && !editorAnimating && !contentLoading}
-        />
-        <main className="editor-container">
-          {isLoading || contentLoading ? (
-            <div className="loading">{STRINGS.STATUS.LOADING}</div>
-          ) : editorKey ? (
-            <div className={editorAnimating ? "editor-fade-exit" : "editor-fade-enter"}>
-              <Editor
-                key={editorKey}
-                initialContent={content}
-                onChange={handleChange}
-                editorRef={editorRef}
-                tags={activeDoc?.tags}
-                docId={activeId || undefined}
-                onAddTag={addTag}
-                onRemoveTag={removeTag}
-                onTagClick={setSelectedTag}
-                isExternalMode={isExternalMode}
-              />
-            </div>
-          ) : (
-            <div className="empty-state">
-              <p>{STRINGS.LABELS.EMPTY_APP}</p>
-              <button onClick={() => createDoc()}>{STRINGS.BUTTONS.CREATE_DOC}</button>
-            </div>
-          )}
-        </main>
-      </div>
+      <SidebarContainer
+        externalFiles={externalFiles}
+        activeExternalPath={activeExternalPath}
+        collapsed={sidebarCollapsed}
+        onSelectInternal={handleSwitchToInternal}
+        onSelectExternal={handleSwitchToExternal}
+        onCloseExternal={closeExternal}
+      />
+      <EditorContainer
+        content={content}
+        editorKey={editorKey}
+        editorRef={editorRef}
+        editorAnimating={editorAnimating}
+        contentLoading={contentLoading}
+        isLoading={isLoading}
+        documents={documents}
+        activeId={activeId}
+        activeDoc={activeDoc}
+        isExternalMode={isExternalMode}
+        activeExternalFile={activeExternalFile}
+        isH1Visible={isH1Visible}
+        status={status}
+        onChange={handleChange}
+        onAddTag={addTag}
+        onRemoveTag={removeTag}
+        onTagClick={setSelectedTag}
+        onCreateDoc={createDoc}
+      />
     </div>
   );
 }
 
 function App() {
   return (
-    <SettingsProvider>
-      <DocumentProvider>
-        <ExternalFileProvider>
-          <AppContent />
-        </ExternalFileProvider>
-      </DocumentProvider>
-    </SettingsProvider>
+    <ErrorBoundary>
+      <SettingsProvider>
+        <DocumentProvider>
+          <ExternalFileProvider>
+            <AppContent />
+          </ExternalFileProvider>
+        </DocumentProvider>
+      </SettingsProvider>
+    </ErrorBoundary>
   );
 }
 

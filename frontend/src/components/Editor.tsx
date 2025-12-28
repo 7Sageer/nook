@@ -6,7 +6,7 @@ import {
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
-import { BlockNoteSchema, defaultBlockSpecs, createExtension } from "@blocknote/core";
+import { BlockNoteSchema, defaultBlockSpecs, createExtension, Block, BlockNoteEditor } from "@blocknote/core";
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { useEffect, useRef, useMemo } from "react";
@@ -28,11 +28,15 @@ let isComposing = false;
 
 const chineseIMEPluginKey = new PluginKey("chineseIMEFix");
 
+// 编辑器类型（BlockNote 内部 API 使用 any 以避免复杂的类型问题）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type InternalEditor = any;
+
 /**
  * ProseMirror plugin to fix Chinese IME breaking slash menu.
  * Tracks composition state and closes the suggestion menu if triggered during composition.
  */
-function createChineseIMEPlugin(editor: any) {
+function createChineseIMEPlugin(editor: InternalEditor) {
   return new Plugin({
     key: chineseIMEPluginKey,
     props: {
@@ -94,9 +98,11 @@ const bookmarkAtomExtension = createExtension({
 });
 
 interface EditorProps {
-  initialContent?: any[];
+  initialContent?: Block[];
+  // onChange 使用 any[] 因为自定义 schema 的 Block 类型与默认 Block 不兼容
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onChange?: (content: any[]) => void;
-  editorRef?: React.MutableRefObject<any>;
+  editorRef?: React.MutableRefObject<InternalEditor | null>;
   // Tag props for internal documents
   tags?: string[];
   docId?: string;
@@ -109,7 +115,7 @@ interface EditorProps {
 // Mirrors BlockNote's default slash-menu behavior: if the current block is empty
 // (or only contains the trigger "/"), update it in-place; otherwise insert
 // below and move the selection to the next editable block.
-function setSelectionToNextContentEditableBlock(editor: any) {
+function setSelectionToNextContentEditableBlock(editor: InternalEditor) {
   let block = editor.getTextCursorPosition().block;
   let contentType = editor.schema.blockSchema[block.type].content;
 
@@ -121,7 +127,7 @@ function setSelectionToNextContentEditableBlock(editor: any) {
   }
 }
 
-function insertOrUpdateBookmarkForSlashMenu(editor: any) {
+function insertOrUpdateBookmarkForSlashMenu(editor: InternalEditor) {
   const currentBlock = editor.getTextCursorPosition().block;
   const currentContent = currentBlock.content;
 
@@ -142,8 +148,11 @@ function insertOrUpdateBookmarkForSlashMenu(editor: any) {
   return newBlock;
 }
 
+// 国际化字符串类型
+type StringsType = ReturnType<typeof getStrings>;
+
 // Custom slash menu item for bookmark
-const insertBookmark = (editor: any, STRINGS: any) => ({
+const insertBookmark = (editor: InternalEditor, STRINGS: StringsType) => ({
   title: STRINGS.LABELS.BOOKMARK,
   onItemClick: () => {
     insertOrUpdateBookmarkForSlashMenu(editor);

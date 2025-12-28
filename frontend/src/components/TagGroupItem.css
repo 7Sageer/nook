@@ -169,8 +169,6 @@
     min-height: 0;
     position: relative;
     /* 用于 exit 动画的 absolute 定位 */
-    padding-right: 8px;
-    /* 防止 translateX 动画时右侧圆角被裁剪 */
 }
 
 .folder-documents-inner,

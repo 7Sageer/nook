@@ -113,10 +113,15 @@ export const EditorTagInput = memo(function EditorTagInput({
         >
             {/* Show tag icon when there are no tags */}
             {tags.length === 0 && !isAdding && (
-                <span className="editor-tag-empty" onClick={handleAddClick}>
+                <button
+                    type="button"
+                    className="editor-tag-empty"
+                    onClick={handleAddClick}
+                    aria-label="Add tag"
+                >
                     <Tag size={12} aria-hidden="true" />
                     <span>Add tag</span>
-                </span>
+                </button>
             )}
 
             {/* Display all tags */}
@@ -131,12 +136,13 @@ export const EditorTagInput = memo(function EditorTagInput({
                         style={color ? { '--tag-badge-color': color } as React.CSSProperties : undefined}
                     >
                         {color && <span className="editor-tag-dot" style={{ backgroundColor: color }} aria-hidden="true" />}
-                        <span
+                        <button
+                            type="button"
                             className="editor-tag-text"
                             onClick={(e) => handleTagClick(e, tag)}
                         >
                             {tag}
-                        </span>
+                        </button>
                         <Button
                             className="editor-tag-remove"
                             onPress={() => onRemoveTag(docId, tag)}
@@ -204,15 +210,14 @@ export const EditorTagInput = memo(function EditorTagInput({
                     )}
                 </div>
             ) : tags.length > 0 && (
-                <span
+                <button
+                    type="button"
                     className="editor-tag-add-btn"
                     onClick={handleAddClick}
-                    role="button"
-                    tabIndex={0}
                     aria-label="Add tag"
                 >
                     <Plus size={12} aria-hidden="true" />
-                </span>
+                </button>
             )}
         </div>
     );
