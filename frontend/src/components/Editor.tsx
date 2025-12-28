@@ -18,6 +18,7 @@ import "../plugins/smoothCaret.css";
 import { SaveImage } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
+import { EditorTagInput } from "./EditorTagInput";
 
 /**
  * Module-level state to track Chinese IME composition.
@@ -96,6 +97,13 @@ interface EditorProps {
   initialContent?: any[];
   onChange?: (content: any[]) => void;
   editorRef?: React.MutableRefObject<any>;
+  // Tag props for internal documents
+  tags?: string[];
+  docId?: string;
+  onAddTag?: (docId: string, tag: string) => void;
+  onRemoveTag?: (docId: string, tag: string) => void;
+  onTagClick?: (tag: string) => void;
+  isExternalMode?: boolean;
 }
 
 // Mirrors BlockNote's default slash-menu behavior: if the current block is empty
@@ -151,10 +159,23 @@ const insertBookmark = (editor: any, STRINGS: any) => ({
   subtext: STRINGS.TOOLTIPS.OPEN_FILE,
 });
 
-export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
+export function Editor({
+  initialContent,
+  onChange,
+  editorRef,
+  tags,
+  docId,
+  onAddTag,
+  onRemoveTag,
+  onTagClick,
+  isExternalMode = false,
+}: EditorProps) {
   const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
   const pluginInjectedRef = useRef(false);
+
+  // Determine if tags should be shown
+  const showTags = !isExternalMode && docId && onAddTag && onRemoveTag;
 
   // Fix for drag preview in Wails WebView
   useDragPreviewFix();
@@ -253,27 +274,40 @@ export function Editor({ initialContent, onChange, editorRef }: EditorProps) {
   }, [editor, editorRef]);
 
   return (
-    <BlockNoteView
-      editor={editor}
-      theme={theme}
-      slashMenu={false}
-      onChange={() => {
-        onChange?.(editor.document);
-      }}
-    >
-      <SuggestionMenuController
-        triggerCharacter="/"
-        getItems={async (query) => {
-          const allItems = [...getDefaultReactSlashMenuItems(editor), insertBookmark(editor, STRINGS)];
-          if (!query) return allItems;
-          const lowerQuery = query.toLowerCase();
-          return allItems.filter(
-            (item) =>
-              item.title.toLowerCase().includes(lowerQuery) ||
-              item.aliases?.some((alias: string) => alias.toLowerCase().includes(lowerQuery))
-          );
+    <div className="editor-wrapper">
+      {showTags && (
+        <div className="editor-tags-area">
+          <EditorTagInput
+            tags={tags || []}
+            docId={docId}
+            onAddTag={onAddTag}
+            onRemoveTag={onRemoveTag}
+            onTagClick={onTagClick}
+          />
+        </div>
+      )}
+      <BlockNoteView
+        editor={editor}
+        theme={theme}
+        slashMenu={false}
+        onChange={() => {
+          onChange?.(editor.document);
         }}
-      />
-    </BlockNoteView>
+      >
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={async (query) => {
+            const allItems = [...getDefaultReactSlashMenuItems(editor), insertBookmark(editor, STRINGS)];
+            if (!query) return allItems;
+            const lowerQuery = query.toLowerCase();
+            return allItems.filter(
+              (item) =>
+                item.title.toLowerCase().includes(lowerQuery) ||
+                item.aliases?.some((alias: string) => alias.toLowerCase().includes(lowerQuery))
+            );
+          }}
+        />
+      </BlockNoteView>
+    </div>
   );
 }

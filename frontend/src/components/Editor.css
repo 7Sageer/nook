@@ -5,6 +5,23 @@
     padding: 32px var(--editor-padding-x);
 }
 
+/* Editor wrapper containing tags and BlockNote */
+.editor-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Tags area at top of editor */
+.editor-tags-area {
+    padding: 0 54px 12px 54px;
+    flex-shrink: 0;
+}
+
+.editor-tags-area .editor-tag-container {
+    justify-content: flex-start;
+}
+
 /* ========== BlockNote 编辑器样式覆盖 ========== */
 .bn-editor {
     width: 100%;

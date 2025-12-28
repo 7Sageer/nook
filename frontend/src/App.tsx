@@ -24,7 +24,6 @@ function AppContent() {
   const { theme, themeSetting, toggleTheme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
 
-  // 从 Context 获取文档和文件夹状态
   const {
     documents,
     activeId,
@@ -38,6 +37,9 @@ function AppContent() {
     saveContent,
     createFolder,
     refreshDocuments,
+    addTag,
+    removeTag,
+    setSelectedTag,
   } = useDocumentContext();
 
   const [status, setStatus] = useState<string>("");
@@ -280,6 +282,12 @@ function AppContent() {
                 initialContent={content}
                 onChange={handleChange}
                 editorRef={editorRef}
+                tags={activeDoc?.tags}
+                docId={activeId || undefined}
+                onAddTag={addTag}
+                onRemoveTag={removeTag}
+                onTagClick={setSelectedTag}
+                isExternalMode={isExternalMode}
               />
             </div>
           ) : (

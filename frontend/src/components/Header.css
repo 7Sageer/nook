@@ -46,8 +46,9 @@
 /* Header 三栏布局 */
 .header-left,
 .header-right {
-    flex: 0 0 100px;
-    width: 100px;
+    flex: 1;
+    /* 两边均匀扩展，保持标题居中 */
+    min-width: 100px;
     display: flex;
     align-items: center;
     -webkit-app-region: no-drag;
@@ -59,6 +60,19 @@
 
 .header-right {
     justify-content: flex-end;
+    gap: 12px;
+    /* Tag 和 Status 之间的间距 */
+}
+
+/* Header center - contains title and tags */
+.header-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    -webkit-app-region: no-drag;
 }
 
 .header-title {

@@ -1,0 +1,255 @@
+/* Editor Tag Container */
+.editor-tag-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-end;
+    /* 默认靠右，适合 Header Right */
+}
+
+/* Empty state - add tag prompt */
+.editor-tag-empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #9ca3af;
+    border: 1px dashed #d1d5db;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.editor-tag-empty:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.app-container.dark .editor-tag-empty {
+    color: #6b7280;
+    border-color: #4b5563;
+}
+
+.app-container.dark .editor-tag-empty:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Tag badge */
+.editor-tag-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 16px;
+    background-color: rgba(37, 99, 235, 0.1);
+    color: var(--primary);
+    cursor: default;
+    transition: all var(--transition-fast);
+    max-width: 150px;
+}
+
+.editor-tag-badge:hover {
+    background-color: rgba(37, 99, 235, 0.15);
+}
+
+.app-container.dark .editor-tag-badge {
+    background-color: rgba(37, 99, 235, 0.2);
+}
+
+.app-container.dark .editor-tag-badge:hover {
+    background-color: rgba(37, 99, 235, 0.3);
+}
+
+/* Tag color dot */
+.editor-tag-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Tag text */
+.editor-tag-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.editor-tag-text:hover {
+    text-decoration: underline;
+}
+
+/* Remove button */
+.editor-tag-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.6;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+    outline: none;
+}
+
+.editor-tag-remove:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.app-container.dark .editor-tag-remove:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.editor-tag-remove:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+}
+
+/* Add button */
+.editor-tag-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: 1px dashed #d1d5db;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.editor-tag-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: rgba(37, 99, 235, 0.05);
+}
+
+.app-container.dark .editor-tag-add-btn {
+    border-color: #4b5563;
+    color: #6b7280;
+}
+
+.app-container.dark .editor-tag-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* Input wrapper */
+.editor-tag-input-wrapper {
+    position: relative;
+}
+
+/* Tag input */
+.editor-tag-input {
+    padding: 4px 10px;
+    font-size: 12px;
+    border: 1px solid var(--primary);
+    border-radius: 16px;
+    outline: none;
+    background-color: #fff;
+    color: #374151;
+    width: 100px;
+}
+
+.editor-tag-input::placeholder {
+    color: #9ca3af;
+}
+
+.app-container.dark .editor-tag-input {
+    background-color: #252525;
+    color: #e5e7eb;
+}
+
+.app-container.dark .editor-tag-input::placeholder {
+    color: #6b7280;
+}
+
+/* Suggestions dropdown */
+.editor-tag-suggestions {
+    position: fixed;
+    z-index: 1000;
+    min-width: 160px;
+    max-width: 220px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.app-container.dark .editor-tag-suggestions {
+    background: #252525;
+    border-color: #374151;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.editor-tag-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color var(--transition-fast);
+    outline: none;
+}
+
+.editor-tag-suggestion-item:hover,
+.editor-tag-suggestion-item.selected,
+.editor-tag-suggestion-item[data-focused],
+.editor-tag-suggestion-item[data-selected] {
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
+.app-container.dark .editor-tag-suggestion-item {
+    color: #e5e7eb;
+}
+
+.app-container.dark .editor-tag-suggestion-item:hover,
+.app-container.dark .editor-tag-suggestion-item.selected,
+.app-container.dark .editor-tag-suggestion-item[data-focused],
+.app-container.dark .editor-tag-suggestion-item[data-selected] {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.editor-tag-suggestion-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.editor-tag-suggestion-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.editor-tag-suggestion-count {
+    font-size: 10px;
+    color: #9ca3af;
+    flex-shrink: 0;
+}

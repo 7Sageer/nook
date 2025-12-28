@@ -1,11 +1,11 @@
 import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Tag, Plus } from 'lucide-react';
-import { ListBox, ListBoxItem } from 'react-aria-components';
+import { X, Plus, Tag } from 'lucide-react';
+import { Button, ListBox, ListBoxItem } from 'react-aria-components';
 import { useDocumentContext } from '../contexts/DocumentContext';
-import './TagInput.css';
+import './EditorTagInput.css';
 
-interface TagInputProps {
+interface EditorTagInputProps {
     tags: string[];
     docId: string;
     onAddTag: (docId: string, tag: string) => void;
@@ -13,14 +13,14 @@ interface TagInputProps {
     onTagClick?: (tag: string) => void;
 }
 
-export const TagInput = memo(function TagInput({
+export const EditorTagInput = memo(function EditorTagInput({
     tags,
     docId,
     onAddTag,
     onRemoveTag,
     onTagClick,
-}: TagInputProps) {
-    const { allTags } = useDocumentContext();
+}: EditorTagInputProps) {
+    const { allTags, tagColors } = useDocumentContext();
     const [isAdding, setIsAdding] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -62,7 +62,15 @@ export const TagInput = memo(function TagInput({
         setIsAdding(false);
     }, [docId, onAddTag, tags]);
 
+    const handleRemove = useCallback((e: React.MouseEvent, tag: string) => {
+        e.stopPropagation();
+        onRemoveTag(docId, tag);
+    }, [docId, onRemoveTag]);
 
+    const handleTagClick = useCallback((e: React.MouseEvent, tag: string) => {
+        e.stopPropagation();
+        onTagClick?.(tag);
+    }, [onTagClick]);
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         e.stopPropagation();
@@ -90,7 +98,6 @@ export const TagInput = memo(function TagInput({
         }, 150);
     }, [inputValue, docId, onAddTag, tags]);
 
-
     // Focus input when adding mode is activated
     useEffect(() => {
         if (isAdding && inputRef.current) {
@@ -100,46 +107,69 @@ export const TagInput = memo(function TagInput({
 
     return (
         <div
-            className="tag-container"
-            onClick={(e) => e.stopPropagation()}
+            className="editor-tag-container"
             role="group"
             aria-label="Document tags"
         >
-            {/* Show tag count badge when not in adding mode */}
-            {!isAdding && tags.length > 0 && (
-                <span
-                    className="tag-badge tag-collapsed"
-                    onClick={handleAddClick}
-                    title={tags.join(', ')}
-                    aria-label={`${tags.length} tags: ${tags.join(', ')}. Click to manage.`}
-                >
-                    <Tag size={10} aria-hidden="true" />
-                    <span className="tag-count">{tags.length}</span>
+            {/* Show tag icon when there are no tags */}
+            {tags.length === 0 && !isAdding && (
+                <span className="editor-tag-empty" onClick={handleAddClick}>
+                    <Tag size={12} aria-hidden="true" />
+                    <span>Add tag</span>
                 </span>
             )}
 
+            {/* Display all tags */}
+            {tags.map((tag) => {
+                const color = tagColors[tag];
+                return (
+                    <span
+                        key={tag}
+                        className="editor-tag-badge"
+                        role="listitem"
+                        title={tag}
+                        style={color ? { '--tag-badge-color': color } as React.CSSProperties : undefined}
+                    >
+                        {color && <span className="editor-tag-dot" style={{ backgroundColor: color }} aria-hidden="true" />}
+                        <span
+                            className="editor-tag-text"
+                            onClick={(e) => handleTagClick(e, tag)}
+                        >
+                            {tag}
+                        </span>
+                        <Button
+                            className="editor-tag-remove"
+                            onPress={() => onRemoveTag(docId, tag)}
+                            aria-label={`Remove tag ${tag}`}
+                        >
+                            <X size={10} aria-hidden="true" />
+                        </Button>
+                    </span>
+                );
+            })}
+
+            {/* Add tag input or button */}
             {isAdding ? (
-                <div className="tag-input-wrapper" ref={wrapperRef}>
+                <div className="editor-tag-input-wrapper" ref={wrapperRef}>
                     <input
                         ref={inputRef}
                         type="text"
-                        className="tag-input"
+                        className="editor-tag-input"
                         value={inputValue}
                         onChange={handleInputChange}
                         onKeyDown={handleInputKeyDown}
                         onBlur={handleInputBlur}
-                        onClick={(e) => e.stopPropagation()}
-                        placeholder="Tag"
+                        placeholder="Tag name"
                         maxLength={20}
                         aria-label="Enter tag name"
                         aria-autocomplete="list"
-                        aria-controls={suggestions.length > 0 ? "tag-suggestions" : undefined}
+                        aria-controls={suggestions.length > 0 ? "editor-tag-suggestions" : undefined}
                     />
                     {suggestions.length > 0 && dropdownPosition && createPortal(
                         <ListBox
-                            id="tag-suggestions"
+                            id="editor-tag-suggestions"
                             aria-label="Tag suggestions"
-                            className="tag-suggestions tag-suggestions-portal"
+                            className="editor-tag-suggestions"
                             items={suggestions}
                             selectionMode="single"
                             style={{
@@ -153,18 +183,18 @@ export const TagInput = memo(function TagInput({
                                     key={item.name}
                                     id={item.name}
                                     textValue={item.name}
-                                    className="tag-suggestion-item"
+                                    className="editor-tag-suggestion-item"
                                     onAction={() => addTag(item.name)}
                                 >
                                     {item.color && (
                                         <span
-                                            className="tag-suggestion-dot"
+                                            className="editor-tag-suggestion-dot"
                                             style={{ backgroundColor: item.color }}
                                             aria-hidden="true"
                                         />
                                     )}
-                                    <span className="tag-suggestion-name">{item.name}</span>
-                                    <span className="tag-suggestion-count" aria-label={`${item.count} documents`}>
+                                    <span className="editor-tag-suggestion-name">{item.name}</span>
+                                    <span className="editor-tag-suggestion-count" aria-label={`${item.count} documents`}>
                                         {item.count}
                                     </span>
                                 </ListBoxItem>
@@ -173,16 +203,15 @@ export const TagInput = memo(function TagInput({
                         document.body
                     )}
                 </div>
-            ) : (
+            ) : tags.length > 0 && (
                 <span
-                    className="tag-badge tag-collapsed tag-add-btn"
+                    className="editor-tag-add-btn"
                     onClick={handleAddClick}
-                    title="Add tag"
                     role="button"
                     tabIndex={0}
                     aria-label="Add tag"
                 >
-                    <Plus size={10} aria-hidden="true" />
+                    <Plus size={12} aria-hidden="true" />
                 </span>
             )}
         </div>

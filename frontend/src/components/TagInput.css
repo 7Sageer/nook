@@ -9,7 +9,9 @@
     visibility: hidden;
     max-width: 0;
     overflow: hidden;
+    /* Immediate hide when mouse leaves */
     transition: opacity var(--transition-fast), visibility var(--transition-fast), max-width var(--transition-fast);
+    transition-delay: 0ms;
 }
 
 .document-item:hover .tag-container,
@@ -17,6 +19,8 @@
     opacity: 1;
     visibility: visible;
     max-width: 200px;
+    /* Delay showing tags to prevent accidental clicks during quick mouse movements */
+    transition-delay: 300ms;
 }
 
 .tag-badge {
@@ -52,6 +56,26 @@
 
 .tag-badge:hover {
     background-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Collapsed tag badge - shows tag icon + count */
+.tag-badge.tag-collapsed {
+    gap: 3px;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+
+.tag-badge.tag-collapsed .tag-count {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Expanded container shows immediately without hover delay */
+.tag-container.expanded {
+    opacity: 1;
+    visibility: visible;
+    max-width: 300px;
+    transition-delay: 0ms;
 }
 
 .tag-badge.tag-more {
