@@ -1,0 +1,12 @@
+diff --git a/node_modules/@blocknote/core/dist/defaultBlocks-B63ufZ5N.js b/node_modules/@blocknote/core/dist/defaultBlocks-B63ufZ5N.js
+index 2caa118..0c86576 100644
+--- a/node_modules/@blocknote/core/dist/defaultBlocks-B63ufZ5N.js
++++ b/node_modules/@blocknote/core/dist/defaultBlocks-B63ufZ5N.js
+@@ -2752,6 +2752,7 @@ const B = new Ze("SuggestionMenuPlugin"), _n = k(({ editor: e }) => {
+         },
+         props: {
+           handleTextInput(r, a, s, i) {
++            if (r.composing) return !1;
+             if (a === s) {
+               const c = r.state.doc;
+               for (const l of t) {
