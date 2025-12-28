@@ -28,14 +28,14 @@ function AppContent() {
     documents,
     activeId,
     isLoading,
-    folders,
+    tagGroups,
     createDoc,
     deleteDoc,
     renameDoc,
     switchDoc,
     loadContent,
     saveContent,
-    createFolder,
+    createTagGroup,
     refreshDocuments,
     addTag,
     removeTag,
@@ -205,7 +205,7 @@ function AppContent() {
   // 监听菜单事件
   useMenuEvents({
     onNewDocument: handleCreateInternalDocument,
-    onNewFolder: createFolder,
+    onNewFolder: createTagGroup,
     onImport: handleImport,
     onExport: handleExportMarkdown,
     onCopyImage: handleCopyImage,
@@ -251,7 +251,7 @@ function AppContent() {
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
         onCreateDocument={handleCreateInternalDocument}
-        onCreateFolder={() => createFolder()}
+        onCreateFolder={() => createTagGroup()}
         themeSetting={themeSetting}
         onToggleTheme={toggleTheme}
         theme={theme}

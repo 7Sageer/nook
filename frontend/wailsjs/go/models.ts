@@ -136,6 +136,9 @@ export namespace main {
 	    name: string;
 	    count: number;
 	    color?: string;
+	    isGroup?: boolean;
+	    collapsed?: boolean;
+	    order?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new TagInfo(source);
@@ -146,6 +149,9 @@ export namespace main {
 	        this.name = source["name"];
 	        this.count = source["count"];
 	        this.color = source["color"];
+	        this.isGroup = source["isGroup"];
+	        this.collapsed = source["collapsed"];
+	        this.order = source["order"];
 	    }
 	}
 

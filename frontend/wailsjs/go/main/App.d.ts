@@ -16,9 +16,13 @@ export function CreateDocument(arg1:string):Promise<document.Meta>;
 
 export function CreateFolder(arg1:string):Promise<folder.Folder>;
 
+export function CreateTagGroup(arg1:string):Promise<void>;
+
 export function DeleteDocument(arg1:string):Promise<void>;
 
 export function DeleteFolder(arg1:string):Promise<void>;
+
+export function DeleteTagGroup(arg1:string):Promise<void>;
 
 export function ExportHTMLFile(arg1:string,arg2:string):Promise<void>;
 
@@ -35,6 +39,8 @@ export function GetFolders():Promise<Array<folder.Folder>>;
 export function GetSettings():Promise<main.Settings>;
 
 export function GetTagColors():Promise<Record<string, string>>;
+
+export function GetTagGroups():Promise<Array<main.TagInfo>>;
 
 export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
@@ -54,9 +60,13 @@ export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 
 export function RenameFolder(arg1:string,arg2:string):Promise<void>;
 
+export function RenameTagGroup(arg1:string,arg2:string):Promise<void>;
+
 export function ReorderDocuments(arg1:Array<string>):Promise<void>;
 
 export function ReorderFolders(arg1:Array<string>):Promise<void>;
+
+export function ReorderTagGroups(arg1:Array<string>):Promise<void>;
 
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
@@ -75,3 +85,5 @@ export function SetActiveDocument(arg1:string):Promise<void>;
 export function SetFolderCollapsed(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetTagColor(arg1:string,arg2:string):Promise<void>;
+
+export function SetTagGroupCollapsed(arg1:string,arg2:boolean):Promise<void>;

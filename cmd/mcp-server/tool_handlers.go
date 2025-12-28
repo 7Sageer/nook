@@ -28,16 +28,24 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolRenameDocument(params.Arguments)
 	case "search_documents":
 		result = s.toolSearchDocuments(params.Arguments)
-	case "list_folders":
-		result = s.toolListFolders()
-	case "move_document":
-		result = s.toolMoveDocument(params.Arguments)
 	case "get_blocknote_schema":
 		result = s.toolGetBlockNoteSchema()
+	// Tag tools
 	case "add_tag":
 		result = s.toolAddTag(params.Arguments)
 	case "remove_tag":
 		result = s.toolRemoveTag(params.Arguments)
+	// Tag Group tools
+	case "list_tag_groups":
+		result = s.toolListTagGroups()
+	case "create_tag_group":
+		result = s.toolCreateTagGroup(params.Arguments)
+	case "rename_tag_group":
+		result = s.toolRenameTagGroup(params.Arguments)
+	case "delete_tag_group":
+		result = s.toolDeleteTagGroup(params.Arguments)
+	case "set_tag_group_collapsed":
+		result = s.toolSetTagGroupCollapsed(params.Arguments)
 	default:
 		result = ToolCallResult{
 			Content: []ContentBlock{{Type: "text", Text: "Unknown tool: " + params.Name}},

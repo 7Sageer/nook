@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 
 	"notion-lite/internal/document"
-	"notion-lite/internal/folder"
 	"notion-lite/internal/search"
+	"notion-lite/internal/tag"
 )
 
 // JSON-RPC 2.0 structures
@@ -37,7 +37,7 @@ type RPCError struct {
 type MCPServer struct {
 	docRepo       *document.Repository
 	docStorage    *document.Storage
-	folderRepo    *folder.Repository
+	tagStore      *tag.Store
 	searchService *search.Service
 	dataPath      string
 }
@@ -50,12 +50,12 @@ func NewMCPServer() *MCPServer {
 
 	docRepo := document.NewRepository(dataPath)
 	docStorage := document.NewStorage(dataPath)
-	folderRepo := folder.NewRepository(dataPath)
+	tagStore := tag.NewStore(dataPath)
 
 	return &MCPServer{
 		docRepo:       docRepo,
 		docStorage:    docStorage,
-		folderRepo:    folderRepo,
+		tagStore:      tagStore,
 		searchService: search.NewService(docRepo, docStorage),
 		dataPath:      dataPath,
 	}

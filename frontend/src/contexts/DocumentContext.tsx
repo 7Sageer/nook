@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { DocumentMeta, Folder, TagInfo } from '../types/document';
+import { DocumentMeta, TagInfo } from '../types/document';
 import { Block } from '@blocknote/core';
 import { getStrings } from '../constants/strings';
 import { useSettings } from './SettingsContext';
@@ -12,18 +12,17 @@ import {
   LoadDocumentContent,
   SaveDocumentContent,
   ReorderDocuments,
-  GetFolders,
-  CreateFolder,
-  DeleteFolder,
-  RenameFolder,
-  SetFolderCollapsed,
-  MoveDocumentToFolder,
-  ReorderFolders,
   AddDocumentTag,
   RemoveDocumentTag,
   GetAllTags,
   GetTagColors,
   SetTagColor,
+  CreateTagGroup,
+  SetTagGroupCollapsed,
+  GetTagGroups,
+  ReorderTagGroups,
+  RenameTagGroup,
+  DeleteTagGroup,
 } from '../../wailsjs/go/main/App';
 
 interface DocumentContextType {
@@ -32,28 +31,25 @@ interface DocumentContextType {
   activeId: string | null;
   isLoading: boolean;
 
-  // 文件夹状态
-  folders: Folder[];
-
   // 标签状态
   allTags: TagInfo[];
+  tagGroups: TagInfo[];
   selectedTag: string | null;
   tagColors: Record<string, string>;
 
   // 文档操作
-  createDoc: (title?: string, folderId?: string) => Promise<DocumentMeta>;
+  createDoc: (title?: string, groupName?: string) => Promise<DocumentMeta>;
   deleteDoc: (id: string) => Promise<void>;
   renameDoc: (id: string, title: string) => Promise<void>;
   switchDoc: (id: string) => Promise<void>;
   reorderDocuments: (ids: string[]) => Promise<void>;
 
-  // 文件夹操作
-  createFolder: (name?: string) => Promise<Folder | null>;
-  deleteFolder: (id: string) => Promise<void>;
-  renameFolder: (id: string, name: string) => Promise<void>;
-  toggleFolderCollapsed: (id: string) => Promise<void>;
-  moveDocumentToFolder: (docId: string, folderId: string) => Promise<void>;
-  reorderFolders: (ids: string[]) => Promise<void>;
+  // 标签组操作（替代原文件夹操作）
+  createTagGroup: (name?: string) => Promise<void>;
+  deleteTagGroup: (name: string) => Promise<void>;
+  renameTagGroup: (oldName: string, newName: string) => Promise<void>;
+  toggleTagGroupCollapsed: (name: string) => Promise<void>;
+  reorderTagGroups: (names: string[]) => Promise<void>;
 
   // 标签操作
   addTag: (docId: string, tag: string) => Promise<void>;
@@ -81,11 +77,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 文件夹状态
-  const [folders, setFolders] = useState<Folder[]>([]);
-
   // 标签状态
   const [allTags, setAllTags] = useState<TagInfo[]>([]);
+  const [tagGroups, setTagGroups] = useState<TagInfo[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [tagColors, setTagColors] = useState<Record<string, string>>({});
 
@@ -93,16 +87,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const [index, folderList, tags, colors] = await Promise.all([
+        const [index, tags, groups, colors] = await Promise.all([
           GetDocumentList(),
-          GetFolders(),
           GetAllTags(),
+          GetTagGroups(),
           GetTagColors(),
         ]);
         setDocuments(index.documents || []);
         setActiveId(index.activeId || null);
-        setFolders(folderList || []);
         setAllTags(tags || []);
+        setTagGroups(groups || []);
         setTagColors(colors || {});
       } catch (e) {
         console.error('初始化加载失败:', e);
@@ -113,20 +107,19 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  // 刷新文档列表和文件夹
+  // 刷新文档列表和标签组
   const refreshDocuments = useCallback(async (): Promise<void> => {
     try {
-      const [index, folderList] = await Promise.all([
+      const [index, groups] = await Promise.all([
         GetDocumentList(),
-        GetFolders(),
+        GetTagGroups(),
       ]);
       setDocuments(index.documents || []);
       setActiveId(prev => {
-        // 如果当前活动文档仍存在，保持不变
         const exists = (index.documents || []).some(d => d.id === prev);
         return exists ? prev : (index.activeId || null);
       });
-      setFolders(folderList || []);
+      setTagGroups(groups || []);
     } catch (e) {
       console.error('刷新文档列表失败:', e);
     }
@@ -134,26 +127,22 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   // ========== 文档操作 ==========
 
-  const createDoc = useCallback(async (title: string = STRINGS.DEFAULTS.UNTITLED, folderId?: string): Promise<DocumentMeta> => {
+  const createDoc = useCallback(async (title: string = STRINGS.DEFAULTS.UNTITLED, groupName?: string): Promise<DocumentMeta> => {
     const doc = await CreateDocument(title);
-    // 如果指定了文件夹，移动到该文件夹
-    if (folderId) {
-      await MoveDocumentToFolder(doc.id, folderId);
-      doc.folderId = folderId;
+    // 如果指定了标签组，添加该标签
+    if (groupName) {
+      await AddDocumentTag(doc.id, groupName);
+      doc.tags = [groupName];
     }
-    // 增量更新
     setDocuments(prev => [doc, ...prev]);
     setActiveId(doc.id);
     return doc;
-  }, []);
+  }, [STRINGS.DEFAULTS.UNTITLED]);
 
   const deleteDoc = useCallback(async (id: string): Promise<void> => {
     await DeleteDocument(id);
-    // 使用函数式更新，同时处理文档列表和活动 ID
-    // 将 setActiveId 嵌套在 setDocuments 回调中，确保使用最新数据
     setDocuments(prev => {
       const remaining = prev.filter(d => d.id !== id);
-      // 同步更新 activeId（使用 remaining 而非外部 documents）
       setActiveId(currentActiveId => {
         if (currentActiveId === id) {
           return remaining.length > 0 ? remaining[0].id : null;
@@ -162,11 +151,10 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       });
       return remaining;
     });
-  }, []);  // 移除对 documents 的依赖，避免闭包陷阱
+  }, []);
 
   const renameDoc = useCallback(async (id: string, newTitle: string): Promise<void> => {
     await RenameDocument(id, newTitle);
-    // 增量更新
     setDocuments(prev =>
       prev.map(d => d.id === id ? { ...d, title: newTitle, updatedAt: Date.now() } : d)
     );
@@ -179,7 +167,6 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const reorderDocuments = useCallback(async (ids: string[]): Promise<void> => {
     await ReorderDocuments(ids);
-    // 更新本地状态的顺序
     setDocuments(prev => {
       const orderMap = new Map(ids.map((id, index) => [id, index]));
       return [...prev].map(d => ({
@@ -189,73 +176,76 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // ========== 文件夹操作 ==========
+  // ========== 标签组操作（替代文件夹操作） ==========
 
-  const createFolderFn = useCallback(async (name?: string): Promise<Folder | null> => {
-    try {
-      const folder = await CreateFolder(name || '');
-      // 增量更新
-      setFolders(prev => [folder, ...prev]);
-      return folder;
-    } catch (e) {
-      console.error('创建文件夹失败:', e);
-      return null;
-    }
-  }, []);
-
-  const deleteFolderFn = useCallback(async (id: string): Promise<void> => {
-    await DeleteFolder(id);
-    // 增量更新：删除文件夹
-    setFolders(prev => prev.filter(f => f.id !== id));
-    // 将该文件夹内的文档移到未分类
-    setDocuments(prev =>
-      prev.map(d => d.folderId === id ? { ...d, folderId: undefined } : d)
-    );
-  }, []);
-
-  const renameFolderFn = useCallback(async (id: string, newName: string): Promise<void> => {
-    await RenameFolder(id, newName);
+  const createTagGroupFn = useCallback(async (name?: string): Promise<void> => {
+    const groupName = name || STRINGS.DEFAULTS.NEW_GROUP;
+    await CreateTagGroup(groupName);
     // 增量更新
-    setFolders(prev =>
-      prev.map(f => f.id === id ? { ...f, name: newName } : f)
+    setTagGroups(prev => [...prev, {
+      name: groupName,
+      count: 0,
+      isGroup: true,
+      collapsed: false,
+      order: prev.length,
+    }]);
+  }, [STRINGS.DEFAULTS.NEW_GROUP]);
+
+  const deleteTagGroupFn = useCallback(async (name: string): Promise<void> => {
+    await DeleteTagGroup(name);
+    // 增量更新：删除标签组
+    setTagGroups(prev => prev.filter(g => g.name !== name));
+    // 从文档中移除该标签
+    setDocuments(prev =>
+      prev.map(d => ({
+        ...d,
+        tags: (d.tags || []).filter(t => t !== name),
+      }))
+    );
+    // 同时更新 allTags
+    setAllTags(prev => prev.filter(t => t.name !== name));
+  }, []);
+
+  const renameTagGroupFn = useCallback(async (oldName: string, newName: string): Promise<void> => {
+    await RenameTagGroup(oldName, newName);
+    // 增量更新标签组
+    setTagGroups(prev =>
+      prev.map(g => g.name === oldName ? { ...g, name: newName } : g)
+    );
+    // 更新文档中的标签
+    setDocuments(prev =>
+      prev.map(d => ({
+        ...d,
+        tags: (d.tags || []).map(t => t === oldName ? newName : t),
+      }))
+    );
+    // 更新 allTags
+    setAllTags(prev =>
+      prev.map(t => t.name === oldName ? { ...t, name: newName } : t)
     );
   }, []);
 
-  const toggleFolderCollapsed = useCallback(async (id: string): Promise<void> => {
-    // 使用函数式更新，避免闭包陷阱
+  const toggleTagGroupCollapsed = useCallback(async (name: string): Promise<void> => {
     let newCollapsed: boolean | null = null;
-
-    setFolders(prev => {
-      const folder = prev.find(f => f.id === id);
-      if (!folder) return prev;
-      newCollapsed = !folder.collapsed;
-      // 使用 newCollapsed! 断言，因为此处必定为 boolean
-      return prev.map(f => f.id === id ? { ...f, collapsed: newCollapsed! } : f);
+    setTagGroups(prev => {
+      const group = prev.find(g => g.name === name);
+      if (!group) return prev;
+      newCollapsed = !group.collapsed;
+      return prev.map(g => g.name === name ? { ...g, collapsed: newCollapsed! } : g);
     });
-
-    // 只有找到文件夹时才调用后端
     if (newCollapsed !== null) {
-      await SetFolderCollapsed(id, newCollapsed);
+      await SetTagGroupCollapsed(name, newCollapsed);
     }
-  }, []);  // 移除 folders 依赖
-
-  const moveDocumentToFolderFn = useCallback(async (docId: string, folderId: string): Promise<void> => {
-    await MoveDocumentToFolder(docId, folderId);
-    // 增量更新
-    setDocuments(prev =>
-      prev.map(d => d.id === docId ? { ...d, folderId: folderId || undefined } : d)
-    );
   }, []);
 
-  const reorderFoldersFn = useCallback(async (ids: string[]): Promise<void> => {
-    await ReorderFolders(ids);
-    // 更新本地状态的顺序
-    setFolders(prev => {
-      const orderMap = new Map(ids.map((id, index) => [id, index]));
-      return [...prev].map(f => ({
-        ...f,
-        order: orderMap.get(f.id) ?? f.order,
-      })).sort((a, b) => a.order - b.order);
+  const reorderTagGroupsFn = useCallback(async (names: string[]): Promise<void> => {
+    await ReorderTagGroups(names);
+    setTagGroups(prev => {
+      const orderMap = new Map(names.map((name, index) => [name, index]));
+      return [...prev].map(g => ({
+        ...g,
+        order: orderMap.get(g.name) ?? g.order,
+      })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     });
   }, []);
 
@@ -263,21 +253,17 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const addTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await AddDocumentTag(docId, tag);
-    // 增量更新文档标签
     setDocuments(prev =>
       prev.map(d => d.id === docId
         ? { ...d, tags: [...(d.tags || []), tag], updatedAt: Date.now() }
         : d
       )
     );
-    // 增量更新 allTags，确保新标签立即显示在侧边栏
     setAllTags(prev => {
       const existingTag = prev.find(t => t.name === tag);
       if (existingTag) {
-        // 标签已存在，增加计数
         return prev.map(t => t.name === tag ? { ...t, count: t.count + 1 } : t);
       } else {
-        // 新标签，添加到列表
         return [...prev, { name: tag, count: 1 }];
       }
     });
@@ -285,21 +271,22 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const removeTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await RemoveDocumentTag(docId, tag);
-    // 增量更新文档标签
     setDocuments(prev =>
       prev.map(d => d.id === docId
         ? { ...d, tags: (d.tags || []).filter(t => t !== tag), updatedAt: Date.now() }
         : d
       )
     );
-    // 增量更新 allTags，减少计数或移除标签
+    // 更新 allTags
     setAllTags(prev => {
       const existingTag = prev.find(t => t.name === tag);
+      // 不要移除 isGroup 的标签，即使 count 为 0
+      if (existingTag?.isGroup) {
+        return prev.map(t => t.name === tag ? { ...t, count: Math.max(0, t.count - 1) } : t);
+      }
       if (existingTag && existingTag.count > 1) {
-        // 减少计数
         return prev.map(t => t.name === tag ? { ...t, count: t.count - 1 } : t);
       } else {
-        // 计数为 1，移除标签
         return prev.filter(t => t.name !== tag);
       }
     });
@@ -328,8 +315,8 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     documents,
     activeId,
     isLoading,
-    folders,
     allTags,
+    tagGroups,
     selectedTag,
     tagColors,
 
@@ -340,13 +327,12 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     switchDoc,
     reorderDocuments,
 
-    // 文件夹操作
-    createFolder: createFolderFn,
-    deleteFolder: deleteFolderFn,
-    renameFolder: renameFolderFn,
-    toggleFolderCollapsed,
-    moveDocumentToFolder: moveDocumentToFolderFn,
-    reorderFolders: reorderFoldersFn,
+    // 标签组操作
+    createTagGroup: createTagGroupFn,
+    deleteTagGroup: deleteTagGroupFn,
+    renameTagGroup: renameTagGroupFn,
+    toggleTagGroupCollapsed,
+    reorderTagGroups: reorderTagGroupsFn,
 
     // 标签操作
     addTag,
@@ -358,8 +344,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       setAllTags(prev => prev.map(t => t.name === tagName ? { ...t, color } : t));
     },
     refreshTags: async () => {
-      const [tags, colors] = await Promise.all([GetAllTags(), GetTagColors()]);
+      const [tags, groups, colors] = await Promise.all([GetAllTags(), GetTagGroups(), GetTagColors()]);
       setAllTags(tags || []);
+      setTagGroups(groups || []);
       setTagColors(colors || {});
     },
 

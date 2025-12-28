@@ -94,6 +94,9 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
 
+	// 一次性迁移：将文件夹转换为标签组
+	a.migrateFoldersToTagGroups()
+
 	// 启动文件监听服务
 	if a.watcherService != nil {
 		if err := a.watcherService.Start(ctx); err != nil {
@@ -107,6 +110,63 @@ func (a *App) startup(ctx context.Context) {
 		a.pendingExternalOpensMu.Unlock()
 		a.flushPendingExternalFileOpens()
 	})
+}
+
+// migrateFoldersToTagGroups 将文件夹迁移为标签组（一次性）
+func (a *App) migrateFoldersToTagGroups() {
+	foldersPath := filepath.Join(a.dataPath, "folders.json")
+
+	// 检查 folders.json 是否存在
+	if _, err := os.Stat(foldersPath); os.IsNotExist(err) {
+		return // 没有文件夹数据，无需迁移
+	}
+
+	// 获取所有文件夹
+	folders, err := a.folderRepo.GetAll()
+	if err != nil || len(folders) == 0 {
+		return
+	}
+
+	// 获取文档列表
+	index, err := a.docRepo.GetAll()
+	if err != nil {
+		return
+	}
+
+	// 创建 folder ID -> folder name 的映射
+	folderNameByID := make(map[string]string)
+	for _, f := range folders {
+		folderNameByID[f.ID] = f.Name
+		// 创建对应的标签组
+		a.tagStore.CreateGroup(f.Name)
+		// 设置折叠状态
+		if f.Collapsed {
+			a.tagStore.SetGroupCollapsed(f.Name, true)
+		}
+	}
+
+	// 更新所有文档：将 folderId 转换为 tag
+	for _, doc := range index.Documents {
+		if doc.FolderId != "" {
+			if folderName, ok := folderNameByID[doc.FolderId]; ok {
+				// 添加标签组到文档的 tags 中
+				a.docRepo.AddTag(doc.ID, folderName)
+				// 清除 folderId
+				a.docRepo.MoveToFolder(doc.ID, "")
+			}
+		}
+	}
+
+	// 重新排序标签组
+	groupNames := make([]string, len(folders))
+	for i, f := range folders {
+		groupNames[i] = f.Name
+	}
+	a.tagStore.ReorderGroups(groupNames)
+
+	// 备份并删除 folders.json
+	backupPath := foldersPath + ".bak"
+	os.Rename(foldersPath, backupPath)
 }
 
 // ========== 文档列表管理 ==========
@@ -332,9 +392,12 @@ func (a *App) RemoveDocumentTag(docId string, tag string) error {
 
 // TagInfo 标签信息（包含使用次数和颜色）
 type TagInfo struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-	Color string `json:"color,omitempty"`
+	Name      string `json:"name"`
+	Count     int    `json:"count"`
+	Color     string `json:"color,omitempty"`
+	IsGroup   bool   `json:"isGroup,omitempty"`
+	Collapsed bool   `json:"collapsed,omitempty"`
+	Order     int    `json:"order,omitempty"`
 }
 
 // GetAllTags 获取所有标签及其使用次数
@@ -352,16 +415,17 @@ func (a *App) GetAllTags() ([]TagInfo, error) {
 		}
 	}
 
-	// 获取标签颜色
-	colors := a.tagStore.GetAllColors()
-
-	// 构建结果
+	// 构建结果，包含元数据
 	result := make([]TagInfo, 0, len(tagCounts))
 	for name, count := range tagCounts {
+		meta, _ := a.tagStore.GetMeta(name)
 		result = append(result, TagInfo{
-			Name:  name,
-			Count: count,
-			Color: colors[name],
+			Name:      name,
+			Count:     count,
+			Color:     meta.Color,
+			IsGroup:   meta.IsGroup,
+			Collapsed: meta.Collapsed,
+			Order:     meta.Order,
 		})
 	}
 
@@ -376,6 +440,72 @@ func (a *App) GetTagColors() map[string]string {
 // SetTagColor 设置标签颜色
 func (a *App) SetTagColor(tagName string, color string) error {
 	return a.tagStore.SetColor(tagName, color)
+}
+
+// ========== 标签组管理 ==========
+
+// CreateTagGroup 创建新标签组
+func (a *App) CreateTagGroup(name string) error {
+	return a.tagStore.CreateGroup(name)
+}
+
+// SetTagGroupCollapsed 设置标签组折叠状态
+func (a *App) SetTagGroupCollapsed(name string, collapsed bool) error {
+	return a.tagStore.SetGroupCollapsed(name, collapsed)
+}
+
+// GetTagGroups 获取所有标签组
+func (a *App) GetTagGroups() []TagInfo {
+	groups := a.tagStore.GetAllGroups()
+	// Convert from tag.TagInfo to main.TagInfo
+	result := make([]TagInfo, len(groups))
+	for i, g := range groups {
+		result[i] = TagInfo{
+			Name:      g.Name,
+			Count:     g.Count,
+			Color:     g.Color,
+			IsGroup:   g.IsGroup,
+			Collapsed: g.Collapsed,
+			Order:     g.Order,
+		}
+	}
+	return result
+}
+
+// ReorderTagGroups 重新排序标签组
+func (a *App) ReorderTagGroups(names []string) error {
+	return a.tagStore.ReorderGroups(names)
+}
+
+// RenameTagGroup 重命名标签组
+func (a *App) RenameTagGroup(oldName, newName string) error {
+	// 同时更新所有文档中的标签名
+	index, _ := a.docRepo.GetAll()
+	for _, doc := range index.Documents {
+		for _, t := range doc.Tags {
+			if t == oldName {
+				a.docRepo.RemoveTag(doc.ID, oldName)
+				a.docRepo.AddTag(doc.ID, newName)
+				break
+			}
+		}
+	}
+	return a.tagStore.RenameGroup(oldName, newName)
+}
+
+// DeleteTagGroup 删除标签组
+func (a *App) DeleteTagGroup(name string) error {
+	// 从所有文档中移除该标签
+	index, _ := a.docRepo.GetAll()
+	for _, doc := range index.Documents {
+		for _, t := range doc.Tags {
+			if t == name {
+				a.docRepo.RemoveTag(doc.ID, name)
+				break
+			}
+		}
+	}
+	return a.tagStore.DeleteGroup(name)
 }
 
 // ========== 外部文件编辑 ==========

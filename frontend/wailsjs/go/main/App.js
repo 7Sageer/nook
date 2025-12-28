@@ -22,12 +22,20 @@ export function CreateFolder(arg1) {
   return window['go']['main']['App']['CreateFolder'](arg1);
 }
 
+export function CreateTagGroup(arg1) {
+  return window['go']['main']['App']['CreateTagGroup'](arg1);
+}
+
 export function DeleteDocument(arg1) {
   return window['go']['main']['App']['DeleteDocument'](arg1);
 }
 
 export function DeleteFolder(arg1) {
   return window['go']['main']['App']['DeleteFolder'](arg1);
+}
+
+export function DeleteTagGroup(arg1) {
+  return window['go']['main']['App']['DeleteTagGroup'](arg1);
 }
 
 export function ExportHTMLFile(arg1, arg2) {
@@ -60,6 +68,10 @@ export function GetSettings() {
 
 export function GetTagColors() {
   return window['go']['main']['App']['GetTagColors']();
+}
+
+export function GetTagGroups() {
+  return window['go']['main']['App']['GetTagGroups']();
 }
 
 export function ImportMarkdownFile() {
@@ -98,12 +110,20 @@ export function RenameFolder(arg1, arg2) {
   return window['go']['main']['App']['RenameFolder'](arg1, arg2);
 }
 
+export function RenameTagGroup(arg1, arg2) {
+  return window['go']['main']['App']['RenameTagGroup'](arg1, arg2);
+}
+
 export function ReorderDocuments(arg1) {
   return window['go']['main']['App']['ReorderDocuments'](arg1);
 }
 
 export function ReorderFolders(arg1) {
   return window['go']['main']['App']['ReorderFolders'](arg1);
+}
+
+export function ReorderTagGroups(arg1) {
+  return window['go']['main']['App']['ReorderTagGroups'](arg1);
 }
 
 export function SaveDocumentContent(arg1, arg2) {
@@ -140,4 +160,8 @@ export function SetFolderCollapsed(arg1, arg2) {
 
 export function SetTagColor(arg1, arg2) {
   return window['go']['main']['App']['SetTagColor'](arg1, arg2);
+}
+
+export function SetTagGroupCollapsed(arg1, arg2) {
+  return window['go']['main']['App']['SetTagGroupCollapsed'](arg1, arg2);
 }

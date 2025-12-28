@@ -4,7 +4,7 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 	tools := []Tool{
 		{
 			Name:        "list_documents",
-			Description: "List all documents in Nook with their metadata (id, title, folder, timestamps)",
+			Description: "List all documents in Nook with their metadata (id, title, tags, timestamps)",
 			InputSchema: InputSchema{Type: "object"},
 		},
 		{
@@ -66,7 +66,7 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		},
 		{
 			Name:        "search_documents",
-			Description: "Search documents by keyword in title and content",
+			Description: "Search documents by keyword in title, content, and tags",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
@@ -76,30 +76,14 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			},
 		},
 		{
-			Name:        "list_folders",
-			Description: "List all folders",
-			InputSchema: InputSchema{Type: "object"},
-		},
-		{
-			Name:        "move_document",
-			Description: "Move a document to a folder",
-			InputSchema: InputSchema{
-				Type: "object",
-				Properties: map[string]Property{
-					"doc_id":    {Type: "string", Description: "Document ID"},
-					"folder_id": {Type: "string", Description: "Target folder ID (empty for uncategorized)"},
-				},
-				Required: []string{"doc_id"},
-			},
-		},
-		{
 			Name:        "get_blocknote_schema",
 			Description: "Get the BlockNote JSON schema documentation. Call this before creating or updating document content to understand the correct format.",
 			InputSchema: InputSchema{Type: "object"},
 		},
+		// Tag tools
 		{
 			Name:        "add_tag",
-			Description: "Add a tag to a document. Tags help categorize and filter documents.",
+			Description: "Add a tag to a document. Tags help categorize and filter documents. Use tag groups to organize documents hierarchically.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
@@ -119,6 +103,58 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 					"tag":    {Type: "string", Description: "Tag name to remove"},
 				},
 				Required: []string{"doc_id", "tag"},
+			},
+		},
+		// Tag Group tools
+		{
+			Name:        "list_tag_groups",
+			Description: "List all tag groups. Tag groups are special tags used to organize documents hierarchically (like folders).",
+			InputSchema: InputSchema{Type: "object"},
+		},
+		{
+			Name:        "create_tag_group",
+			Description: "Create a new tag group. Documents can be organized by adding the group name as a tag to them.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"name": {Type: "string", Description: "Tag group name"},
+				},
+				Required: []string{"name"},
+			},
+		},
+		{
+			Name:        "rename_tag_group",
+			Description: "Rename a tag group. This also updates the tag in all documents that have it.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"old_name": {Type: "string", Description: "Current tag group name"},
+					"new_name": {Type: "string", Description: "New tag group name"},
+				},
+				Required: []string{"old_name", "new_name"},
+			},
+		},
+		{
+			Name:        "delete_tag_group",
+			Description: "Delete a tag group. This also removes the tag from all documents that have it.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"name": {Type: "string", Description: "Tag group name to delete"},
+				},
+				Required: []string{"name"},
+			},
+		},
+		{
+			Name:        "set_tag_group_collapsed",
+			Description: "Set the collapsed state of a tag group in the sidebar",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"name":      {Type: "string", Description: "Tag group name"},
+					"collapsed": {Type: "boolean", Description: "Whether the group should be collapsed"},
+				},
+				Required: []string{"name", "collapsed"},
 			},
 		},
 	}

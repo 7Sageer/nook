@@ -111,7 +111,7 @@ export function WindowToolbar({
                                 </button>
                                 <button className="create-menu-item" onClick={handleCreateFolder} role="menuitem">
                                     <FolderPlus size={16} aria-hidden="true" />
-                                    <span>{STRINGS.MENU.NEW_FOLDER}</span>
+                                    <span>{STRINGS.MENU.NEW_GROUP}</span>
                                 </button>
                             </div>
                         )}
