@@ -191,7 +191,7 @@
 
 /* ========== Drag Styles ========== */
 .document-item.sortable {
-    cursor: grab;
+    cursor: pointer;
     user-select: none;
     touch-action: none;
     /* 平滑过渡用于让位动画 */
@@ -201,8 +201,50 @@
         transform 200ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.document-item.sortable:active {
+/* ========== Drag Handle ========== */
+.drag-handle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) translateX(-6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    cursor: grab;
+    opacity: 0;
+    color: #9ca3af;
+    border-radius: var(--radius-sm);
+    transition: opacity var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.document-item:hover .drag-handle {
+    opacity: 1;
+    transform: translateY(-50%) translateX(2px);
+}
+
+.drag-handle:hover {
+    color: #6b7280;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.drag-handle:active {
     cursor: grabbing;
+}
+
+.sidebar.dark .document-item:hover .drag-handle {
+    color: #6b7280;
+}
+
+.sidebar.dark .drag-handle:hover {
+    color: #9ca3af;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.document-item.sortable:active {
+    cursor: pointer;
 }
 
 /* 拖拽中的元素 - 占位符状态（实际预览由 DragOverlay 显示） */
@@ -246,9 +288,15 @@
     left: 24px;
 }
 
-/* 拖拽时隐藏操作按钮 */
-.document-item.is-dragging .doc-actions {
+/* 拖拽时隐藏操作按钮和拖拽手柄 */
+.document-item.is-dragging .doc-actions,
+.document-item.is-dragging .drag-handle {
     opacity: 0 !important;
+}
+
+/* DragOverlay 中的拖拽手柄始终可见 */
+.drag-handle.visible {
+    color: #6b7280;
 }
 
 /* 放下落地动画 */

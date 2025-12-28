@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, forwardRef } from 'react';
 import { DocumentMeta, SearchResult } from '../types/document';
 import type { DocDropIndicator } from '../types/dnd';
-import { FileText, Trash2 } from 'lucide-react';
+import { FileText, Trash2, GripVertical } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
@@ -110,12 +110,18 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
             className={className}
             onClick={() => onSelect(item.id)}
             {...attributes}
-            {...listeners}
             role="option"
             aria-selected={isActive}
             tabIndex={hidden ? -1 : 0}
             onKeyDown={handleKeyDown}
         >
+            <div
+                className="drag-handle"
+                {...listeners}
+                aria-label="Drag to reorder"
+            >
+                <GripVertical size={14} aria-hidden="true" />
+            </div>
             <FileText size={16} className="doc-icon" aria-hidden="true" />
             {hasSnippet ? (
                 <div className="doc-content">

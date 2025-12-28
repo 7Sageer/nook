@@ -10,7 +10,7 @@ import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch } from './SidebarSearch';
 import { TagGroupItem } from './TagGroupItem';
 import { TagList } from './TagList';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, GripVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
 import {
@@ -438,6 +438,9 @@ export function Sidebar({
               if (!doc) return null;
               return (
                 <div className="document-item drag-overlay">
+                  <div className="drag-handle visible">
+                    <GripVertical size={14} aria-hidden="true" />
+                  </div>
                   <FileText size={16} className="doc-icon" />
                   <div className="doc-content">
                     <span className="doc-title">{doc.title}</span>
