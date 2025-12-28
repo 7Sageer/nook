@@ -144,7 +144,7 @@ function insertOrUpdateBookmarkForSlashMenu(editor: any) {
 
 // Custom slash menu item for bookmark
 const insertBookmark = (editor: any, STRINGS: any) => ({
-  title: STRINGS.LABELS.EXTERNAL_FILE,
+  title: STRINGS.LABELS.BOOKMARK,
   onItemClick: () => {
     insertOrUpdateBookmarkForSlashMenu(editor);
   },
@@ -297,7 +297,16 @@ export function Editor({
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) => {
-            const allItems = [...getDefaultReactSlashMenuItems(editor), insertBookmark(editor, STRINGS)];
+            const defaultItems = getDefaultReactSlashMenuItems(editor);
+            const customBookmark = insertBookmark(editor, STRINGS);
+
+            // Insert custom bookmark item right after other Media group items
+            // This prevents duplicate "Media" section headers when filtering
+            const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");
+            const allItems = lastMediaIndex >= 0
+              ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, ...defaultItems.slice(lastMediaIndex + 1)]
+              : [...defaultItems, customBookmark];
+
             if (!query) return allItems;
             const lowerQuery = query.toLowerCase();
             return allItems.filter(

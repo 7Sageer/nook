@@ -46,6 +46,7 @@ export const EN = {
     LABELS: {
         SIDEBAR: "Sidebar Navigation",
         EXTERNAL_FILE: "External File",
+        BOOKMARK: "Bookmark",
         DOCUMENTS: "Documents",
         GROUPS: "Groups",
         UNCATEGORIZED: "Uncategorized",
