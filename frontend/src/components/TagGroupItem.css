@@ -1,6 +1,17 @@
 /* ========== 文件夹样式 ========== */
 .folder-item {
     margin: 0 8px 2px;
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast);
+}
+
+/* Drop target highlight for entire group */
+.folder-item.drop-target {
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
+.sidebar.dark .folder-item.drop-target {
+    background-color: rgba(37, 99, 235, 0.15);
 }
 
 .folder-header {

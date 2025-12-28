@@ -10,11 +10,12 @@ import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch } from './SidebarSearch';
 import { TagGroupItem } from './TagGroupItem';
 import { TagList } from './TagList';
-import { Plus } from 'lucide-react';
+import { Plus, FileText } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
+  DragOverlay,
   useDroppable,
   closestCenter,
   PointerSensor,
@@ -69,6 +70,8 @@ export function Sidebar({
 
   const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeDragDocId, setActiveDragDocId] = useState<string | null>(null);
+  const [sourceGroupName, setSourceGroupName] = useState<string | null>(null);
 
   // Sort tag groups by order
   const sortedGroups = useMemo(() => {
@@ -189,37 +192,113 @@ export function Sidebar({
     );
   };
 
-  // Handle moving doc to group (add tag)
-  const handleMoveDocToGroup = useCallback(async (docId: string, groupName: string) => {
-    // Remove from any existing groups first
-    const doc = documents.find(d => d.id === docId);
-    if (doc?.tags) {
-      for (const tag of doc.tags) {
-        if (groupNameSet.has(tag)) {
-          await removeTag(docId, tag);
+  // Handle DnD start - track which doc is being dragged and from which group
+  const handleDragStart = useCallback((event: any) => {
+    setIsDragging(true);
+    const activeData = event.active.data.current;
+    if (activeData?.type === 'document') {
+      setActiveDragDocId(activeData.docId);
+      // Find the source group (containerId tells us which group it came from)
+      const containerId = activeData.containerId;
+      if (containerId !== UNCATEGORIZED_CONTAINER_ID && groupNameSet.has(containerId)) {
+        setSourceGroupName(containerId);
+      } else {
+        setSourceGroupName(null);
+      }
+    }
+  }, [groupNameSet]);
+
+  // Handle DnD end - move by default (remove source, add target), Alt+drag to copy
+  const handleDragEnd = useCallback(async (event: any) => {
+    const { active, over } = event;
+    setIsDragging(false);
+    setActiveDragDocId(null);
+    const currentSourceGroup = sourceGroupName;
+    setSourceGroupName(null);
+
+    if (!over) return;
+
+    const activeData = active.data.current;
+    if (activeData?.type !== 'document') return;
+
+    const docId = activeData.docId;
+    const overId = over.id as string;
+    const overData = over.data.current;
+
+    // Check if Alt/Option key is held (copy mode)
+    const isCopyMode = event.activatorEvent?.altKey ?? false;
+
+    // Case 1: Dropping on a group container (move/copy between groups)
+    if (overId.startsWith('doc-container:')) {
+      const targetGroup = overId.replace('doc-container:', '');
+
+      // Skip if dropping on the same group
+      if (targetGroup === currentSourceGroup) return;
+
+      if (targetGroup === UNCATEGORIZED_CONTAINER_ID) {
+        // Dropped to uncategorized: remove source group tag
+        if (currentSourceGroup) {
+          await removeTag(docId, currentSourceGroup);
+        }
+      } else {
+        // Dropped to a group
+        // Move: remove source tag first (if exists and different), then add target
+        if (!isCopyMode && currentSourceGroup && currentSourceGroup !== targetGroup) {
+          await removeTag(docId, currentSourceGroup);
+        }
+        await addTag(docId, targetGroup);
+      }
+      return;
+    }
+
+    // Case 2: Dropping on another document
+    if (overData?.type === 'document') {
+      const sourceContainerId = activeData.containerId;
+      const targetContainerId = overData.containerId;
+
+      // Same container: reorder
+      if (sourceContainerId === targetContainerId) {
+        // Get documents in this container
+        let containerDocs: DocumentMeta[];
+        if (sourceContainerId === UNCATEGORIZED_CONTAINER_ID) {
+          containerDocs = ungroupedDocs;
+        } else {
+          containerDocs = filteredDocsByGroup.get(sourceContainerId) || [];
+        }
+
+        // Find indices
+        const sortedDocs = [...containerDocs].sort((a, b) => a.order - b.order);
+        const activeIndex = sortedDocs.findIndex(d => d.id === docId);
+        const overIndex = sortedDocs.findIndex(d => d.id === overData.docId);
+
+        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+          // Create new order
+          const newOrder = [...sortedDocs];
+          const [removed] = newOrder.splice(activeIndex, 1);
+          newOrder.splice(overIndex, 0, removed);
+
+          // Call reorder with new IDs order
+          await reorderDocuments(newOrder.map(d => d.id));
+        }
+      } else {
+        // Different container: move between groups
+        const isCopyMode = event.activatorEvent?.altKey ?? false;
+
+        if (targetContainerId === UNCATEGORIZED_CONTAINER_ID) {
+          // Moving to uncategorized: remove source group tag
+          if (currentSourceGroup) {
+            await removeTag(docId, currentSourceGroup);
+          }
+        } else {
+          // Moving to a different group
+          if (!isCopyMode && currentSourceGroup && currentSourceGroup !== targetContainerId) {
+            await removeTag(docId, currentSourceGroup);
+          }
+          await addTag(docId, targetContainerId);
         }
       }
     }
-    // Add to new group
-    if (groupName !== UNCATEGORIZED_CONTAINER_ID) {
-      await addTag(docId, groupName);
-    }
-  }, [documents, groupNameSet, addTag, removeTag]);
-
-  // Handle DnD end
-  const handleDragEnd = useCallback(async (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-
-    const activeId = active.id as string;
-    const overId = over.id as string;
-
-    // Check if dropping on a group container
-    if (overId.startsWith('doc-container:')) {
-      const groupName = overId.replace('doc-container:', '');
-      handleMoveDocToGroup(activeId, groupName);
-    }
-  }, [handleMoveDocToGroup]);
+  }, [sourceGroupName, addTag, removeTag, ungroupedDocs, filteredDocsByGroup, reorderDocuments]);
 
   return (
     <>
@@ -249,12 +328,13 @@ export function Sidebar({
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={(e) => {
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => {
             setIsDragging(false);
-            handleDragEnd(e);
+            setActiveDragDocId(null);
+            setSourceGroupName(null);
           }}
-          onDragCancel={() => setIsDragging(false)}
         >
           <LayoutGroup>
             <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
@@ -350,6 +430,22 @@ export function Sidebar({
               )}
             </div>
           </LayoutGroup>
+
+          {/* Drag Overlay - shows the document being dragged */}
+          <DragOverlay dropAnimation={null}>
+            {activeDragDocId && (() => {
+              const doc = documents.find(d => d.id === activeDragDocId);
+              if (!doc) return null;
+              return (
+                <div className="document-item drag-overlay">
+                  <FileText size={16} className="doc-icon" />
+                  <div className="doc-content">
+                    <span className="doc-title">{doc.title}</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </DragOverlay>
         </DndContext>
       </aside>
 

@@ -5,6 +5,9 @@ import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { docDndId } from '../utils/dnd';
+import { SortableDocItem } from './SortableDocItem';
 import './TagGroupItem.css';
 
 interface TagGroupItemProps {
@@ -45,8 +48,10 @@ export const TagGroupItem = memo(function TagGroupItem({
         return [...documents].sort((a, b) => a.order - b.order);
     }, [documents]);
 
+    // Droppable wraps entire group for larger drop target
     const {
-        setNodeRef: setHeaderDroppableRef,
+        setNodeRef: setGroupDroppableRef,
+        isOver,
     } = useDroppable({
         id: `doc-container:${group.name}`,
         data: { type: 'doc-container', containerId: group.name },
@@ -70,14 +75,14 @@ export const TagGroupItem = memo(function TagGroupItem({
 
     return (
         <motion.div
-            className="folder-item"
+            ref={setGroupDroppableRef}
+            className={`folder-item ${isOver ? 'drop-target' : ''}`}
             layout
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
         >
             <div
-                ref={setHeaderDroppableRef}
                 className="folder-header"
                 onClick={() => onToggle(group.name)}
                 role="treeitem"
@@ -174,42 +179,23 @@ export const TagGroupItem = memo(function TagGroupItem({
                 aria-label={`${group.name} 中的文档`}
             >
                 <div className="folder-documents-inner">
-                    <AnimatePresence mode="popLayout">
-                        {sortedDocs.map((doc) => (
-                            <motion.div
-                                key={doc.id}
-                                className={`document-item in-folder ${doc.id === activeDocId ? 'active' : ''}`}
-                                layout
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                onClick={() => onSelectDocument(doc.id)}
-                                role="treeitem"
-                                tabIndex={isCollapsed ? -1 : 0}
-                                aria-selected={doc.id === activeDocId}
-                                aria-label={doc.title}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        onSelectDocument(doc.id);
-                                    }
-                                }}
-                            >
-                                <span className="doc-title">{doc.title}</span>
-                                <button
-                                    className="doc-delete-btn"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteDocument(doc.id);
-                                    }}
-                                    title={STRINGS.TOOLTIPS.DELETE}
-                                    aria-label={`${STRINGS.TOOLTIPS.DELETE} ${doc.title}`}
-                                >
-                                    <Trash2 size={12} aria-hidden="true" />
-                                </button>
-                            </motion.div>
-                        ))}
-                    </AnimatePresence>
+                    <SortableContext items={sortedDocs.map(d => docDndId(d.id))} strategy={verticalListSortingStrategy}>
+                        <AnimatePresence mode="popLayout">
+                            {sortedDocs.map((doc, index) => (
+                                <SortableDocItem
+                                    key={doc.id}
+                                    item={doc}
+                                    index={index}
+                                    containerId={group.name}
+                                    activeId={activeDocId}
+                                    onSelect={onSelectDocument}
+                                    onDelete={onDeleteDocument}
+                                    inFolder
+                                    hidden={isCollapsed}
+                                />
+                            ))}
+                        </AnimatePresence>
+                    </SortableContext>
                 </div>
             </div>
         </motion.div>
