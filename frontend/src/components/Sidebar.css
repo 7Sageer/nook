@@ -38,7 +38,7 @@
         background-color var(--transition-normal),
         border-color var(--transition-normal);
     position: relative;
-    padding: 8px;
+    padding: var(--space-2);
     padding-right: 0;
     padding-top: 46px;
     /* 为 WindowToolbar 留出空间 */
@@ -48,36 +48,23 @@
 .sidebar::after {
     content: '';
     position: absolute;
-    top: 8px;
+    top: var(--space-2);
     right: 0;
     width: 1px;
-    height: calc(100% - 16px);
-    background-color: #e5e7eb;
+    height: calc(100% - var(--space-4));
+    background-color: var(--border-primary);
     pointer-events: none;
-}
-
-.sidebar.dark {
-    background-color: transparent;
-}
-
-.sidebar.dark::after {
-    background-color: #2a3545;
 }
 
 /* 侧边栏内容容器（浮动岛屿效果） */
 .sidebar-header,
 .sidebar-content {
-    background-color: #f9fafb;
-    margin-right: 8px;
+    background-color: var(--bg-secondary);
+    margin-right: var(--space-2);
 }
 
 .search-wrapper {
-    margin: 12px 8px 8px 0;
-}
-
-.sidebar.dark .sidebar-header,
-.sidebar.dark .sidebar-content {
-    background-color: #161b22;
+    margin: var(--space-3) var(--space-2) var(--space-2) 0;
 }
 
 .sidebar-header {
@@ -94,7 +81,7 @@
 
 .sidebar-content {
     border-radius: var(--radius-lg);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
     flex: 1;
     overflow-x: hidden;
     overflow-y: auto;
@@ -113,8 +100,8 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    height: 38px;
-    padding: 0 8px;
+    height: var(--header-height);
+    padding: 0 var(--space-2);
     --wails-draggable: drag;
 }
 
@@ -122,7 +109,7 @@
 .sidebar-toolbar {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     --wails-draggable: no-drag;
 }
 
@@ -131,22 +118,22 @@
     --wails-draggable: no-drag;
 }
 
-/* 侧边栏 icon-btn 暗色 */
-.sidebar.dark .icon-btn {
-    color: #9ca3af;
+/* 侧边栏 icon-btn */
+.sidebar .icon-btn {
+    color: var(--text-muted);
 }
 
-.sidebar.dark .icon-btn:hover {
-    background-color: #252d3a;
-    color: #e5e7eb;
+.sidebar .icon-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
 }
 
-.sidebar.dark .icon-btn.primary {
+.sidebar .icon-btn.primary {
     background-color: var(--primary);
     color: white;
 }
 
-.sidebar.dark .icon-btn.primary:hover {
+.sidebar .icon-btn.primary:hover {
     background-color: var(--primary-hover);
 }
 
@@ -187,7 +174,7 @@
 .sidebar-collapsed {
     width: 56px;
     min-width: 56px;
-    padding: 8px;
+    padding: var(--space-2);
     padding-right: 0;
 }
 
@@ -195,15 +182,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 38px;
-    background-color: #f9fafb;
+    height: var(--header-height);
+    background-color: var(--bg-secondary);
     border-radius: var(--radius-lg);
-    margin-right: 8px;
-    margin-bottom: 8px;
-}
-
-.sidebar.dark .sidebar-collapsed-content {
-    background-color: #161b22;
+    margin-right: var(--space-2);
+    margin-bottom: var(--space-2);
 }
 
 .sidebar-collapsed .icon-btn {
@@ -216,22 +199,22 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 16px 4px;
-    margin-top: 4px;
+    padding: var(--space-2) var(--space-4) var(--space-1);
+    margin-top: var(--space-1);
 }
 
 .section-label {
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #9ca3af;
+    color: var(--text-muted);
 }
 
 /* When section-label is used standalone (not in row) */
 .section-label:not(.section-label-row .section-label) {
-    padding: 8px 16px 4px;
-    margin-top: 4px;
+    padding: var(--space-2) var(--space-4) var(--space-1);
+    margin-top: var(--space-1);
 }
 
 .section-add-btn {
@@ -243,7 +226,7 @@
     border: none;
     border-radius: var(--radius-sm);
     background-color: transparent;
-    color: #9ca3af;
+    color: var(--text-muted);
     cursor: pointer;
     opacity: 0;
     transition: all var(--transition-fast);
@@ -254,7 +237,7 @@
 }
 
 .section-add-btn:hover {
-    background-color: #e5e7eb;
+    background-color: var(--bg-hover);
     color: var(--primary);
 }
 
@@ -262,22 +245,9 @@
     transform: scale(0.9);
 }
 
-.sidebar.dark .section-label {
-    color: #6b7280;
-}
-
-.sidebar.dark .section-add-btn {
-    color: #6b7280;
-}
-
-.sidebar.dark .section-add-btn:hover {
-    background-color: #252d3a;
-    color: var(--primary);
-}
-
 /* ========== Folders Section ========== */
 .folders-section {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
     overflow: visible;
     flex-shrink: 0;
 }
@@ -287,7 +257,7 @@
     transition: background-color var(--transition-fast);
     background-color: inherit;
     border-radius: var(--radius-md);
-    margin: 0 8px;
+    margin: 0 var(--space-2);
     overflow: hidden;
     flex-shrink: 0;
     will-change: transform;
@@ -296,23 +266,19 @@
 /* ========== Documents Section Divider ========== */
 .docs-section-header {
     justify-content: flex-end;
-    padding: 4px 16px;
+    padding: var(--space-1) var(--space-4);
     position: relative;
 }
 
 .section-divider {
     position: absolute;
-    left: 16px;
+    left: var(--space-4);
     right: 48px;
     top: 50%;
     border: none;
     height: 1px;
-    background-color: #e5e7eb;
+    background-color: var(--border-primary);
     margin: 0;
-}
-
-.sidebar.dark .section-divider {
-    background-color: #2a3545;
 }
 
 /* ========== Empty Hint ========== */
@@ -321,9 +287,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 40px 16px;
-    color: #9ca3af;
-    font-size: 14px;
+    gap: var(--space-3);
+    padding: var(--space-10) var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--text-base);
     text-align: center;
 }

@@ -15,8 +15,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 32px;
-    padding-top: 16px;
+    padding: var(--space-3) var(--space-8);
+    padding-top: var(--space-4);
     /* 为拖拽预留一点空间，但不需要与侧边栏对齐 */
     --wails-draggable: drag;
     box-sizing: border-box;
@@ -26,7 +26,7 @@
     top: 0;
     z-index: 10;
     /* Soft shadow instead of hard border for smoother visual transition */
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px -2px var(--black-alpha-8);
     /* Frosted glass effect */
     background-color: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(16px);
@@ -69,7 +69,7 @@
 
 .header-right {
     justify-content: flex-end;
-    gap: 12px;
+    gap: var(--space-3);
     /* Tag 和 Status 之间的间距 */
 }
 
@@ -86,12 +86,12 @@
 
 .header-title {
     flex: 1;
-    font-size: 18px;
+    font-size: var(--text-xl);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #111827;
+    color: var(--text-primary);
     text-align: center;
     margin: 0;
     opacity: 1;
@@ -105,22 +105,14 @@
     pointer-events: none;
 }
 
-.app-container.dark .header-title {
-    color: #f3f4f6;
-}
-
 /* 兼容旧的 h1 样式（向后兼容） */
 .app-header h1:not(.header-title) {
-    font-size: 18px;
+    font-size: var(--text-xl);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #111827;
-}
-
-.app-container.dark .app-header h1:not(.header-title) {
-    color: #f3f4f6;
+    color: var(--text-primary);
 }
 
 /* ========== Status ========== */
@@ -128,20 +120,15 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    color: #9ca3af;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
     flex-shrink: 0;
-    margin-left: 16px;
-    padding: 4px 10px;
-    background-color: #f3f4f6;
-    border-radius: 9999px;
+    margin-left: var(--space-4);
+    padding: var(--space-1) 10px;
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-full);
     transition: all var(--transition-smooth);
     animation: statusFadeIn var(--transition-normal);
-}
-
-.app-container.dark .status {
-    background-color: #252d3a;
-    color: #9ca3af;
 }
 
 .status-icon {
@@ -155,29 +142,25 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    gap: 16px;
-    color: #9ca3af;
+    gap: var(--space-4);
+    color: var(--text-muted);
 }
 
 .empty-state p {
-    font-size: 16px;
-    color: #6b7280;
-}
-
-.app-container.dark .empty-state p {
-    color: #9ca3af;
+    font-size: var(--text-lg);
+    color: var(--text-tertiary);
 }
 
 .empty-state button {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-6);
     border: none;
     border-radius: var(--radius-md);
     background-color: var(--primary);
     color: white;
-    font-size: 14px;
+    font-size: var(--text-base);
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-fast);
@@ -200,6 +183,6 @@
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #9ca3af;
-    font-size: 14px;
+    color: var(--text-muted);
+    font-size: var(--text-base);
 }

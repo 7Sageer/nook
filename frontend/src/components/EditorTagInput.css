@@ -12,12 +12,12 @@
 .editor-tag-empty {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    font-size: 12px;
+    gap: var(--space-1);
+    padding: var(--space-1) 10px;
+    font-size: var(--text-sm);
     font-family: inherit;
-    color: #9ca3af;
-    border: 1px dashed #d1d5db;
+    color: var(--text-muted);
+    border: 1px dashed var(--border-secondary);
     border-radius: 16px;
     background: transparent;
     cursor: pointer;
@@ -27,7 +27,7 @@
 .editor-tag-empty:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: var(--primary-alpha-5);
 }
 
 .editor-tag-empty:focus-visible {
@@ -35,26 +35,16 @@
     outline-offset: 1px;
 }
 
-.app-container.dark .editor-tag-empty {
-    color: #6b7280;
-    border-color: #4b5563;
-}
-
-.app-container.dark .editor-tag-empty:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
 /* Tag badge */
 .editor-tag-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    font-size: 12px;
+    gap: var(--space-1);
+    padding: var(--space-1) 10px;
+    font-size: var(--text-sm);
     font-weight: 500;
     border-radius: 16px;
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: var(--primary-alpha-10);
     color: var(--primary);
     cursor: default;
     transition: all var(--transition-fast);
@@ -62,15 +52,7 @@
 }
 
 .editor-tag-badge:hover {
-    background-color: rgba(37, 99, 235, 0.15);
-}
-
-.app-container.dark .editor-tag-badge {
-    background-color: rgba(37, 99, 235, 0.2);
-}
-
-.app-container.dark .editor-tag-badge:hover {
-    background-color: rgba(37, 99, 235, 0.3);
+    background-color: var(--primary-alpha-15);
 }
 
 /* Tag color dot */
@@ -126,11 +108,7 @@
 
 .editor-tag-remove:hover {
     opacity: 1;
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.app-container.dark .editor-tag-remove:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--black-alpha-10);
 }
 
 .editor-tag-remove:focus-visible {
@@ -148,8 +126,8 @@
     height: 24px;
     border-radius: 50%;
     background-color: transparent;
-    border: 1px dashed #d1d5db;
-    color: #9ca3af;
+    border: 1px dashed var(--border-secondary);
+    color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
     padding: 0;
@@ -159,22 +137,12 @@
 .editor-tag-add-btn:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background-color: rgba(37, 99, 235, 0.05);
+    background-color: var(--primary-alpha-5);
 }
 
 .editor-tag-add-btn:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 1px;
-}
-
-.app-container.dark .editor-tag-add-btn {
-    border-color: #4b5563;
-    color: #6b7280;
-}
-
-.app-container.dark .editor-tag-add-btn:hover {
-    border-color: var(--primary);
-    color: var(--primary);
 }
 
 /* Input wrapper */
@@ -184,27 +152,18 @@
 
 /* Tag input */
 .editor-tag-input {
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: var(--space-1) 10px;
+    font-size: var(--text-sm);
     border: 1px solid var(--primary);
     border-radius: 16px;
     outline: none;
-    background-color: #fff;
-    color: #374151;
+    background-color: var(--bg-input);
+    color: var(--text-secondary);
     width: 100px;
 }
 
 .editor-tag-input::placeholder {
-    color: #9ca3af;
-}
-
-.app-container.dark .editor-tag-input {
-    background-color: #252d3a;
-    color: #e5e7eb;
-}
-
-.app-container.dark .editor-tag-input::placeholder {
-    color: #6b7280;
+    color: var(--text-muted);
 }
 
 /* Suggestions dropdown */
@@ -213,17 +172,11 @@
     z-index: 1000;
     min-width: 160px;
     max-width: 220px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px var(--black-alpha-10);
     overflow: hidden;
-}
-
-.app-container.dark .editor-tag-suggestions {
-    background: #252d3a;
-    border-color: #374151;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .editor-tag-suggestion-item {
@@ -231,11 +184,11 @@
     align-items: center;
     gap: 6px;
     width: 100%;
-    padding: 8px 12px;
-    font-size: 12px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
     border: none;
     background: transparent;
-    color: #374151;
+    color: var(--text-secondary);
     cursor: pointer;
     text-align: left;
     transition: background-color var(--transition-fast);
@@ -246,25 +199,14 @@
 .editor-tag-suggestion-item.selected,
 .editor-tag-suggestion-item[data-focused],
 .editor-tag-suggestion-item[data-selected] {
-    background-color: rgba(37, 99, 235, 0.08);
-}
-
-.app-container.dark .editor-tag-suggestion-item {
-    color: #e5e7eb;
-}
-
-.app-container.dark .editor-tag-suggestion-item:hover,
-.app-container.dark .editor-tag-suggestion-item.selected,
-.app-container.dark .editor-tag-suggestion-item[data-focused],
-.app-container.dark .editor-tag-suggestion-item[data-selected] {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--primary-alpha-8);
 }
 
 .editor-tag-suggestion-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background-color: #9ca3af;
+    background-color: var(--text-muted);
     flex-shrink: 0;
 }
 
@@ -277,6 +219,6 @@
 
 .editor-tag-suggestion-count {
     font-size: 10px;
-    color: #9ca3af;
+    color: var(--text-muted);
     flex-shrink: 0;
 }

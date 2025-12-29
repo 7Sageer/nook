@@ -17,23 +17,18 @@ html.dark,
 body.dark,
 .dark html,
 .dark body {
-    background-color: #161b22;
+    background-color: var(--bg-secondary);
 }
 
 /* ========== 主容器 ========== */
 .app-container {
     display: flex;
     height: 100vh;
-    background-color: #ffffff;
-    color: #374151;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
     transition: background-color var(--transition-normal), color var(--transition-normal);
     position: relative;
     overflow: hidden;
-}
-
-.app-container.dark {
-    background-color: #1e2530;
-    color: #e5e7eb;
 }
 
 /* ========== 响应式断点 ========== */

@@ -4,7 +4,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 38px;
+    height: var(--header-height);
     z-index: 100;
     pointer-events: none;
 }
@@ -15,7 +15,7 @@
     align-items: flex-start;
     justify-content: flex-end;
     height: 100%;
-    padding: 14px 8px 0 8px;
+    padding: 14px var(--space-2) 0 var(--space-2);
     width: var(--sidebar-width);
     --wails-draggable: drag;
     pointer-events: auto;
@@ -39,7 +39,7 @@
     align-items: flex-start;
     justify-content: flex-start;
     height: 100%;
-    padding: 14px 8px 0 100px;
+    padding: 14px var(--space-2) 0 100px;
     /* 100px = 红黄绿按钮宽度(~68px) + 适当间距(32px) */
     --wails-draggable: drag;
     pointer-events: auto;
@@ -57,7 +57,7 @@
 .window-toolbar .toolbar-buttons {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
     --wails-draggable: no-drag;
 }
 
@@ -66,22 +66,22 @@
     --wails-draggable: no-drag;
 }
 
-/* WindowToolbar 暗色模式 */
-.window-toolbar.dark .icon-btn {
-    color: #9ca3af;
+/* WindowToolbar icon-btn */
+.window-toolbar .icon-btn {
+    color: var(--text-muted);
 }
 
-.window-toolbar.dark .icon-btn:hover {
-    background-color: #252d3a;
-    color: #e5e7eb;
+.window-toolbar .icon-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
 }
 
-.window-toolbar.dark .icon-btn.primary {
+.window-toolbar .icon-btn.primary {
     background-color: var(--primary);
     color: white;
 }
 
-.window-toolbar.dark .icon-btn.primary:hover {
+.window-toolbar .icon-btn.primary:hover {
     background-color: var(--primary-hover);
 }
 
@@ -121,7 +121,7 @@
     border-radius: var(--radius-md);
     cursor: pointer;
     background-color: transparent;
-    color: #6b7280;
+    color: var(--text-tertiary);
     transition: all var(--transition-smooth);
 }
 
@@ -133,8 +133,8 @@
 }
 
 .icon-btn:hover {
-    background-color: #e5e7eb;
-    color: #374151;
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
     transform: scale(1.05);
 }
 
@@ -182,11 +182,11 @@
     top: calc(100% + 6px);
     left: 0;
     min-width: 180px;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
-    padding: 4px;
+    padding: var(--space-1);
     z-index: 100;
     animation: dropdownFadeIn 0.15s ease-out;
 }
@@ -196,19 +196,19 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px var(--space-3);
     border: none;
     border-radius: var(--radius-sm);
     background-color: transparent;
-    color: #374151;
-    font-size: 14px;
+    color: var(--text-secondary);
+    font-size: var(--text-base);
     cursor: pointer;
     transition: all var(--transition-fast);
     text-align: left;
 }
 
 .create-menu-item:hover {
-    background-color: #f3f4f6;
+    background-color: var(--bg-tertiary);
 }
 
 .create-menu-item:active {
@@ -216,7 +216,7 @@
 }
 
 .create-menu-item svg {
-    color: #6b7280;
+    color: var(--text-tertiary);
     flex-shrink: 0;
 }
 
@@ -239,7 +239,7 @@
 
 /* 展开按钮样式 */
 .expand-sidebar-btn {
-    background-color: #f3f4f6;
+    background-color: var(--bg-tertiary);
     border-radius: var(--radius-md);
     transition:
         transform var(--transition-smooth),
@@ -251,39 +251,9 @@
 }
 
 .expand-sidebar-btn:hover {
-    background-color: #e5e7eb;
+    background-color: var(--bg-hover);
 }
 
 .expand-sidebar-btn:hover svg {
     transform: translateX(2px);
-}
-
-.app-container.dark .expand-sidebar-btn {
-    background-color: #252d3a;
-}
-
-.app-container.dark .expand-sidebar-btn:hover {
-    background-color: #2a3545;
-}
-
-/* Dark mode for create menu */
-.sidebar.dark .create-menu-dropdown {
-    background-color: #252d3a;
-    border-color: #2a3545;
-}
-
-.sidebar.dark .create-menu-item {
-    color: #e5e7eb;
-}
-
-.sidebar.dark .create-menu-item:hover {
-    background-color: #2a3545;
-}
-
-.sidebar.dark .create-menu-item svg {
-    color: #9ca3af;
-}
-
-.sidebar.dark .create-menu-item:hover svg {
-    color: var(--primary);
 }

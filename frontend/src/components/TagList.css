@@ -1,28 +1,24 @@
 .tag-list-section {
-    padding: 0 8px;
-    margin-bottom: 8px;
+    padding: 0 var(--space-2);
+    margin-bottom: var(--space-2);
 }
 
 .tag-list-section .section-label-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 8px 4px;
+    padding: var(--space-2) var(--space-2) var(--space-1);
     margin-bottom: 2px;
 }
 
 .tag-list-section .section-label {
     display: flex;
     align-items: center;
-    font-size: 11px;
+    font-size: var(--text-xs);
     font-weight: 600;
-    color: #6b7280;
+    color: var(--text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-}
-
-.sidebar.dark .tag-list-section .section-label {
-    color: #9ca3af;
 }
 
 .tag-clear-btn {
@@ -31,66 +27,47 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    font-size: 14px;
+    font-size: var(--text-base);
     border: none;
     background: transparent;
-    color: #9ca3af;
+    color: var(--text-muted);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: var(--space-1);
     transition: all var(--transition-fast);
 }
 
 .tag-clear-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: #374151;
-}
-
-.sidebar.dark .tag-clear-btn:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #e5e7eb;
+    background-color: var(--black-alpha-5);
+    color: var(--text-secondary);
 }
 
 .tag-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
-    padding: 0 8px;
+    gap: var(--space-1);
+    padding: 0 var(--space-2);
 }
 
 .tag-list-item {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    font-size: 11px;
+    gap: var(--space-1);
+    padding: 3px var(--space-2);
+    font-size: var(--text-xs);
     font-weight: 500;
     border: none;
     border-radius: 12px;
-    background-color: rgba(0, 0, 0, 0.04);
-    color: #374151;
+    background-color: var(--black-alpha-4);
+    color: var(--text-secondary);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .tag-list-item:hover {
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: var(--black-alpha-8);
 }
 
 .tag-list-item.active {
-    background-color: var(--tag-color, var(--primary));
-    color: #fff;
-}
-
-.sidebar.dark .tag-list-item {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: #e5e7eb;
-}
-
-.sidebar.dark .tag-list-item:hover {
-    background-color: rgba(255, 255, 255, 0.12);
-}
-
-.sidebar.dark .tag-list-item.active {
     background-color: var(--tag-color, var(--primary));
     color: #fff;
 }
@@ -99,7 +76,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: #9ca3af;
+    background-color: var(--text-muted);
     flex-shrink: 0;
 }
 
@@ -116,7 +93,7 @@
 
 .tag-count {
     font-size: 10px;
-    color: #9ca3af;
+    color: var(--text-muted);
     font-weight: 400;
 }
 

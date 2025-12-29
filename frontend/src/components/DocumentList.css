@@ -4,7 +4,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     list-style: none;
-    padding: 8px;
+    padding: var(--space-2);
     position: relative;
     /* 用于 exit 动画的 absolute 定位 */
 }
@@ -21,15 +21,15 @@
     height: 2px;
     background-color: var(--primary);
     border-radius: 2px;
-    top: 8px;
+    top: var(--space-2);
     pointer-events: none;
 }
 
 .document-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: var(--space-3);
+    padding: 10px var(--space-3);
     cursor: pointer;
     border-radius: var(--radius-md);
     margin-bottom: 2px;
@@ -48,7 +48,7 @@
 }
 
 .document-item:hover {
-    background-color: #f3f4f6;
+    background-color: var(--bg-tertiary);
     transform: translateX(4px);
 }
 
@@ -56,12 +56,8 @@
     transform: translateX(4px) scale(0.98);
 }
 
-.sidebar.dark .document-item:hover {
-    background-color: #252d3a;
-}
-
 .document-item.active {
-    background-color: rgba(37, 99, 235, 0.1);
+    background-color: var(--primary-alpha-10);
     transform: translateX(4px);
     box-shadow: inset 3px 0 0 0 var(--primary);
 }
@@ -70,13 +66,9 @@
     color: var(--primary);
 }
 
-.sidebar.dark .document-item.active {
-    background-color: rgba(37, 99, 235, 0.2);
-}
-
 .doc-icon {
     flex-shrink: 0;
-    color: #9ca3af;
+    color: var(--text-muted);
     transition: color var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -85,37 +77,29 @@
     color: var(--primary);
 }
 
-.sidebar.dark .doc-icon {
-    color: #6b7280;
-}
-
 .doc-content {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-1);
 }
 
 .doc-title {
     flex: 1;
     min-width: 0;
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--text-base);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    color: #374151;
-}
-
-.sidebar.dark .doc-title {
-    color: #e5e7eb;
+    color: var(--text-secondary);
 }
 
 .doc-snippet {
-    font-size: 12px;
-    color: #9ca3af;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -123,7 +107,7 @@
 
 .doc-actions {
     display: flex;
-    gap: 4px;
+    gap: var(--space-1);
     opacity: 0;
     transition: opacity var(--transition-fast);
 }
@@ -143,49 +127,30 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     background-color: transparent;
-    color: #6b7280;
+    color: var(--text-tertiary);
     transition: all var(--transition-fast);
 }
 
 .action-btn:hover {
-    background-color: #e5e7eb;
-    color: #374151;
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
 }
 
 .action-btn.danger:hover {
-    background-color: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-}
-
-.sidebar.dark .action-btn {
-    color: #9ca3af;
-}
-
-.sidebar.dark .action-btn:hover {
-    background-color: #2a3545;
-    color: #e5e7eb;
-}
-
-.sidebar.dark .action-btn.danger:hover {
-    background-color: rgba(239, 68, 68, 0.2);
+    background-color: var(--danger-alpha-10);
     color: var(--danger);
 }
 
 /* ========== Rename Input ========== */
 .rename-input {
     width: 100%;
-    padding: 8px 12px;
+    padding: var(--space-2) var(--space-3);
     border: 2px solid var(--primary);
     border-radius: var(--radius-md);
-    font-size: 14px;
+    font-size: var(--text-base);
     outline: none;
-    background-color: #ffffff;
-}
-
-.sidebar.dark .rename-input {
-    background-color: #252d3a;
-    color: #e5e7eb;
-    border-color: var(--primary);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
 }
 
 
@@ -215,7 +180,7 @@
     height: 18px;
     cursor: grab;
     opacity: 0;
-    color: #9ca3af;
+    color: var(--text-muted);
     border-radius: var(--radius-sm);
     transition: opacity var(--transition-fast), transform var(--transition-fast), background-color var(--transition-fast);
 }
@@ -226,21 +191,12 @@
 }
 
 .drag-handle:hover {
-    color: #6b7280;
-    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-tertiary);
+    background-color: var(--black-alpha-5);
 }
 
 .drag-handle:active {
     cursor: grabbing;
-}
-
-.sidebar.dark .document-item:hover .drag-handle {
-    color: #6b7280;
-}
-
-.sidebar.dark .drag-handle:hover {
-    color: #9ca3af;
-    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .document-item.sortable:active {
@@ -250,14 +206,9 @@
 /* 拖拽中的元素 - 占位符状态（实际预览由 DragOverlay 显示） */
 .document-item.is-dragging {
     opacity: 0.4;
-    background-color: rgba(37, 99, 235, 0.08);
-    border: 1px dashed rgba(37, 99, 235, 0.3);
+    background-color: var(--primary-alpha-8);
+    border: 1px dashed var(--primary-alpha-30);
     border-radius: var(--radius-md);
-}
-
-.sidebar.dark .document-item.is-dragging {
-    background-color: rgba(37, 99, 235, 0.12);
-    border-color: rgba(37, 99, 235, 0.4);
 }
 
 /* Drop indicator 动画 */
@@ -265,8 +216,8 @@
 .document-item.drop-after::before {
     content: '';
     position: absolute;
-    left: 12px;
-    right: 12px;
+    left: var(--space-3);
+    right: var(--space-3);
     height: 2px;
     background: linear-gradient(90deg, var(--primary), var(--primary-hover));
     border-radius: 2px;
@@ -296,7 +247,7 @@
 
 /* DragOverlay 中的拖拽手柄始终可见 */
 .drag-handle.visible {
-    color: #6b7280;
+    color: var(--text-tertiary);
 }
 
 /* 放下落地动画 */
@@ -308,12 +259,10 @@
 
 /* ========== Drag Overlay ========== */
 .document-item.drag-overlay {
-    background-color: #ffffff;
+    background-color: var(--bg-primary);
     border-radius: var(--radius-md);
-    padding: 10px 12px;
-    box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.2),
-        0 6px 12px rgba(0, 0, 0, 0.12);
+    padding: 10px var(--space-3);
+    box-shadow: var(--shadow-drag);
     transform: scale(1.02) rotate(1deg);
     opacity: 0.95;
     cursor: grabbing;
@@ -321,10 +270,3 @@
 }
 
 /* dragOverlayAppear 动画定义在 styles/animations.css */
-
-.sidebar.dark .document-item.drag-overlay {
-    background-color: #252d3a;
-    box-shadow:
-        0 12px 28px rgba(0, 0, 0, 0.5),
-        0 6px 12px rgba(0, 0, 0, 0.4);
-}

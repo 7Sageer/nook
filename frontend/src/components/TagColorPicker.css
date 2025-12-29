@@ -1,32 +1,22 @@
 .tag-color-picker {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-2);
+    box-shadow: 0 4px 12px var(--black-alpha-10);
     z-index: 1000;
     min-width: 160px;
 }
 
-.sidebar.dark .tag-color-picker {
-    background: #252525;
-    border-color: #374151;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
 .tag-color-picker-header {
-    font-size: 11px;
-    color: #6b7280;
-    margin-bottom: 8px;
-    padding: 0 4px;
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-2);
+    padding: 0 var(--space-1);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 150px;
-}
-
-.sidebar.dark .tag-color-picker-header {
-    color: #9ca3af;
 }
 
 .tag-color-picker-grid {
@@ -38,15 +28,15 @@
 .tag-color-option {
     width: 24px;
     height: 24px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: 2px solid transparent;
     cursor: pointer;
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    color: #9ca3af;
+    font-size: var(--text-base);
+    color: var(--text-muted);
 }
 
 .tag-color-option:hover {
@@ -54,21 +44,16 @@
 }
 
 .tag-color-option.active {
-    border-color: #374151;
-    box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.2);
+    border-color: var(--text-secondary);
+    box-shadow: 0 0 0 2px var(--black-alpha-10);
 }
 
-.sidebar.dark .tag-color-option.active {
+.app-container.dark .tag-color-option.active {
     border-color: #fff;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 2px var(--white-alpha-10);
 }
 
 .tag-color-none {
-    background: #f3f4f6;
+    background: var(--bg-tertiary);
     font-weight: 500;
-}
-
-.sidebar.dark .tag-color-none {
-    background: #374151;
-    color: #6b7280;
 }

@@ -1,15 +1,10 @@
 /* ========== Editor Container ========== */
 .editor-container {
     flex: 1;
-    padding: 32px var(--editor-padding-x);
+    padding: var(--space-8) var(--editor-padding-x);
     /* Soft inset shadow on left side for smooth transition from sidebar */
-    box-shadow: inset 8px 0 16px -8px rgba(0, 0, 0, 0.06);
-    background-color: #ffffff;
-}
-
-.app-container.dark .editor-container {
-    box-shadow: inset 8px 0 16px -8px rgba(0, 0, 0, 0.25);
-    background-color: #1e2530;
+    box-shadow: inset 8px 0 16px -8px var(--black-alpha-6);
+    background-color: var(--bg-primary);
 }
 
 /* Editor wrapper containing tags and BlockNote */
@@ -21,7 +16,7 @@
 
 /* Tags area at top of editor */
 .editor-tags-area {
-    padding: 0 54px 12px 54px;
+    padding: 0 54px var(--space-3) 54px;
     flex-shrink: 0;
 }
 
@@ -56,12 +51,8 @@
 
 /* 选区高亮平滑过渡 */
 .ProseMirror ::selection {
-    background-color: rgba(37, 99, 235, 0.25);
+    background-color: var(--primary-alpha-25);
     transition: background-color var(--transition-fast);
-}
-
-.app-container.dark .ProseMirror ::selection {
-    background-color: rgba(96, 165, 250, 0.35);
 }
 
 /* 块级元素选中效果 */

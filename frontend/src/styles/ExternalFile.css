@@ -1,45 +1,31 @@
 /* ========== External File Tab Styles ========== */
 
 .external-file-section {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 }
 
 .external-file-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 12px;
-    margin: 0 8px;
+    padding: 10px var(--space-3);
+    margin: 0 var(--space-2);
     border-radius: var(--radius-md);
     cursor: pointer;
     background-color: transparent;
     border: 1px solid transparent;
-    color: #374151;
+    color: var(--text-secondary);
     transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .external-file-item:hover {
-    background-color: #f3f4f6;
+    background-color: var(--bg-tertiary);
 }
 
 .external-file-item.active {
-    background-color: rgba(37, 99, 235, 0.1);
-    border-color: rgba(37, 99, 235, 0.3);
+    background-color: var(--primary-alpha-10);
+    border-color: var(--primary-alpha-30);
     box-shadow: inset 3px 0 0 0 var(--primary);
-}
-
-/* Dark theme */
-.sidebar.dark .external-file-item {
-    color: #e5e7eb;
-}
-
-.sidebar.dark .external-file-item:hover {
-    background-color: #252525;
-}
-
-.sidebar.dark .external-file-item.active {
-    background-color: rgba(37, 99, 235, 0.15);
-    border-color: rgba(37, 99, 235, 0.4);
 }
 
 .external-file-item svg:first-child {
@@ -49,7 +35,7 @@
 
 .external-file-name {
     flex: 1;
-    font-size: 14px;
+    font-size: var(--text-base);
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -65,16 +51,12 @@
     border: none;
     border-radius: var(--radius-sm);
     background-color: transparent;
-    color: #9ca3af;
+    color: var(--text-muted);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
 .close-external-btn:hover {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: var(--danger-alpha-10);
     color: var(--danger);
-}
-
-.sidebar.dark .close-external-btn:hover {
-    background-color: rgba(239, 68, 68, 0.2);
 }
