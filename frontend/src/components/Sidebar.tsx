@@ -21,6 +21,8 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DragStartEvent,
+  type DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 
@@ -193,7 +195,7 @@ export function Sidebar({
   };
 
   // Handle DnD start - track which doc is being dragged and from which group
-  const handleDragStart = useCallback((event: any) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     setIsDragging(true);
     const activeData = event.active.data.current;
     if (activeData?.type === 'document') {
@@ -209,7 +211,7 @@ export function Sidebar({
   }, [groupNameSet]);
 
   // Handle DnD end - move by default (remove source, add target), Alt+drag to copy
-  const handleDragEnd = useCallback(async (event: any) => {
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setIsDragging(false);
     setActiveDragDocId(null);
@@ -226,7 +228,7 @@ export function Sidebar({
     const overData = over.data.current;
 
     // Check if Alt/Option key is held (copy mode)
-    const isCopyMode = event.activatorEvent?.altKey ?? false;
+    const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
 
     // Case 1: Dropping on a group container (move/copy between groups)
     if (overId.startsWith('doc-container:')) {
@@ -282,7 +284,7 @@ export function Sidebar({
         }
       } else {
         // Different container: move between groups
-        const isCopyMode = event.activatorEvent?.altKey ?? false;
+        const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
 
         if (targetContainerId === UNCATEGORIZED_CONTAINER_ID) {
           // Moving to uncategorized: remove source group tag

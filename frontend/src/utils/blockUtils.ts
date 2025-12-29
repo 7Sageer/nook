@@ -1,6 +1,28 @@
 import { Block } from "@blocknote/core";
 
 /**
+ * BlockNote inline content item type
+ */
+interface InlineContentItem {
+    type: string;
+    text?: string;
+}
+
+/**
+ * Heading block props with level
+ */
+interface HeadingBlockProps {
+    level: 1 | 2 | 3;
+}
+
+/**
+ * Type guard for heading blocks
+ */
+function isHeadingWithLevel(block: Block): block is Block & { props: HeadingBlockProps } {
+    return block.type === "heading" && typeof (block.props as HeadingBlockProps)?.level === "number";
+}
+
+/**
  * 从 BlockNote 区块中提取纯文本内容
  */
 export function extractTextFromBlock(block: Block): string {
@@ -8,7 +30,7 @@ export function extractTextFromBlock(block: Block): string {
 
     if (Array.isArray(block.content)) {
         return block.content
-            .map((item: any) => {
+            .map((item: InlineContentItem) => {
                 if (typeof item === "string") return item;
                 if (item.type === "text" && item.text) return item.text;
                 return "";
@@ -29,10 +51,7 @@ export function extractFirstH1Title(blocks: Block[]): string | null {
     const firstBlock = blocks[0];
 
     // 检查是否为 heading 类型且 level 为 1
-    if (
-        firstBlock.type === "heading" &&
-        (firstBlock.props as any)?.level === 1
-    ) {
+    if (isHeadingWithLevel(firstBlock) && firstBlock.props.level === 1) {
         const text = extractTextFromBlock(firstBlock);
         return text.trim() || null;
     }
@@ -49,7 +68,7 @@ export function extractDocumentTitle(blocks: Block[]): string | null {
 
     // 优先找第一个 H1
     const firstH1 = blocks.find(
-        b => b.type === "heading" && (b.props as any)?.level === 1
+        b => isHeadingWithLevel(b) && b.props.level === 1
     );
     if (firstH1) {
         const text = extractTextFromBlock(firstH1);

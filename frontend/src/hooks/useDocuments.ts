@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { DocumentMeta } from '../types/document';
+import { Block } from '@blocknote/core';
 import {
   GetDocumentList,
   CreateDocument,
@@ -74,7 +75,7 @@ export function useDocuments() {
     return undefined;
   }, []);
 
-  const saveContent = useCallback(async (id: string, content: any) => {
+  const saveContent = useCallback(async (id: string, content: Block[]) => {
     await SaveDocumentContent(id, JSON.stringify(content));
   }, []);
 
