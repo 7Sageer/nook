@@ -8,6 +8,7 @@ import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { SettingsModal } from "./components/SettingsModal";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
@@ -21,7 +22,7 @@ import "./App.css";
 import "./styles/print.css";
 
 function AppContent() {
-  const { theme, themeSetting, toggleTheme, language } = useSettings();
+  const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
 
   const {
@@ -44,6 +45,7 @@ function AppContent() {
 
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // 外部文件管理
   const {
@@ -182,6 +184,10 @@ function AppContent() {
     alert(STRINGS.ABOUT_INFO);
   }, []);
 
+  const handleSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
   // 打开外部文件
   const handleOpenExternal = useCallback(async () => {
     const file = await openExternal();
@@ -213,9 +219,9 @@ function AppContent() {
     onExportHTML: handleExportHTML,
     onPrint: handlePrint,
     onToggleSidebar: handleToggleSidebar,
-    onToggleTheme: toggleTheme,
     onAbout: handleAbout,
     onOpenExternal: handleOpenExternal,
+    onSettings: handleSettings,
   });
 
   // 切换回内部文档
@@ -252,8 +258,7 @@ function AppContent() {
         onToggleSidebar={handleToggleSidebar}
         onCreateDocument={handleCreateInternalDocument}
         onCreateFolder={() => createTagGroup()}
-        themeSetting={themeSetting}
-        onToggleTheme={toggleTheme}
+        onSettings={handleSettings}
         theme={theme}
       />
       <SidebarContainer
@@ -283,6 +288,10 @@ function AppContent() {
         onRemoveTag={removeTag}
         onTagClick={setSelectedTag}
         onCreateDoc={createDoc}
+      />
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );

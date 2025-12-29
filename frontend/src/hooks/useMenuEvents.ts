@@ -11,9 +11,10 @@ interface MenuEventsOptions {
     onExportHTML?: () => void;
     onPrint?: () => void;
     onToggleSidebar: () => void;
-    onToggleTheme: () => void;
+    onToggleTheme?: () => void;
     onAbout: () => void;
     onOpenExternal?: () => void;
+    onSettings?: () => void;
 }
 
 export function useMenuEvents({
@@ -29,6 +30,7 @@ export function useMenuEvents({
     onToggleTheme,
     onAbout,
     onOpenExternal,
+    onSettings,
 }: MenuEventsOptions) {
     useEffect(() => {
         const unsubscribers = [
@@ -36,7 +38,6 @@ export function useMenuEvents({
             EventsOn('menu:import', onImport),
             EventsOn('menu:export', onExport),
             EventsOn('menu:toggle-sidebar', onToggleSidebar),
-            EventsOn('menu:toggle-theme', onToggleTheme),
             EventsOn('menu:about', onAbout),
         ];
 
@@ -64,8 +65,16 @@ export function useMenuEvents({
             unsubscribers.push(EventsOn('menu:print', onPrint));
         }
 
+        if (onSettings) {
+            unsubscribers.push(EventsOn('menu:settings', onSettings));
+        }
+
+        if (onToggleTheme) {
+            unsubscribers.push(EventsOn('menu:toggle-theme', onToggleTheme));
+        }
+
         return () => {
             unsubscribers.forEach((unsubscribe) => unsubscribe());
         };
-    }, [onNewDocument, onNewFolder, onImport, onExport, onCopyImage, onSaveImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal]);
+    }, [onNewDocument, onNewFolder, onImport, onExport, onCopyImage, onSaveImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal, onSettings]);
 }

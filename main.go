@@ -140,11 +140,17 @@ func main() {
 		runtime.EventsEmit(app.ctx, "menu:about")
 	})
 
+	// Add Settings menu item (macOS standard: in app menu, but we add to View for cross-platform)
+	ViewMenu.AddSeparator()
+	ViewMenu.AddText(constant.MenuSettings, keys.CmdOrCtrl(","), func(_ *menu.CallbackData) {
+		runtime.EventsEmit(app.ctx, "menu:settings")
+	})
+
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  constant.AppTitle,
-		Width:  1024,
-		Height: 768,
+		Width:  1200,
+		Height: 800,
 		Menu:   AppMenu,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,

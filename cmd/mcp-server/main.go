@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
 	"notion-lite/internal/tag"
 )
@@ -39,6 +40,7 @@ type MCPServer struct {
 	docStorage    *document.Storage
 	tagStore      *tag.Store
 	searchService *search.Service
+	ragService    *rag.Service
 	dataPath      string
 }
 
@@ -57,6 +59,7 @@ func NewMCPServer() *MCPServer {
 		docStorage:    docStorage,
 		tagStore:      tagStore,
 		searchService: search.NewService(docRepo, docStorage),
+		ragService:    rag.NewService(dataPath, docRepo, docStorage),
 		dataPath:      dataPath,
 	}
 }

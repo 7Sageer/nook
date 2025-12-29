@@ -62,6 +62,14 @@ export function GetFolders() {
   return window['go']['main']['App']['GetFolders']();
 }
 
+export function GetRAGConfig() {
+  return window['go']['main']['App']['GetRAGConfig']();
+}
+
+export function GetRAGStatus() {
+  return window['go']['main']['App']['GetRAGStatus']();
+}
+
 export function GetSettings() {
   return window['go']['main']['App']['GetSettings']();
 }
@@ -96,6 +104,10 @@ export function OpenExternalFile() {
 
 export function PrintHTML(arg1, arg2) {
   return window['go']['main']['App']['PrintHTML'](arg1, arg2);
+}
+
+export function RebuildIndex() {
+  return window['go']['main']['App']['RebuildIndex']();
 }
 
 export function RemoveDocumentTag(arg1, arg2) {
@@ -140,6 +152,10 @@ export function SaveImage(arg1, arg2) {
 
 export function SaveImageFile(arg1, arg2) {
   return window['go']['main']['App']['SaveImageFile'](arg1, arg2);
+}
+
+export function SaveRAGConfig(arg1) {
+  return window['go']['main']['App']['SaveRAGConfig'](arg1);
 }
 
 export function SaveSettings(arg1) {

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Plus, Moon, Sun, Monitor, PanelLeftClose, PanelLeft, FileText, FolderPlus } from 'lucide-react';
+import { Plus, PanelLeftClose, PanelLeft, FileText, FolderPlus, Cog } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -8,8 +8,7 @@ interface WindowToolbarProps {
     onToggleSidebar: () => void;
     onCreateDocument: () => void;
     onCreateFolder: () => void;
-    themeSetting: 'light' | 'dark' | 'system';
-    onToggleTheme: () => void;
+    onSettings: () => void;
     theme: 'light' | 'dark';
 }
 
@@ -18,8 +17,7 @@ export function WindowToolbar({
     onToggleSidebar,
     onCreateDocument,
     onCreateFolder,
-    themeSetting,
-    onToggleTheme,
+    onSettings,
     theme,
 }: WindowToolbarProps) {
     const { language } = useSettings();
@@ -63,29 +61,6 @@ export function WindowToolbar({
         setIsCreateMenuOpen(false);
     };
 
-    // Get theme icon based on current setting
-    const getThemeIcon = () => {
-        switch (themeSetting) {
-            case 'light':
-                return <Sun size={14} />;
-            case 'dark':
-                return <Moon size={14} />;
-            case 'system':
-                return <Monitor size={14} />;
-        }
-    };
-
-    const getThemeTooltip = () => {
-        switch (themeSetting) {
-            case 'light':
-                return STRINGS.TOOLTIPS.THEME_LIGHT;
-            case 'dark':
-                return STRINGS.TOOLTIPS.THEME_DARK;
-            case 'system':
-                return STRINGS.TOOLTIPS.THEME_SYSTEM;
-        }
-    };
-
     // 同时渲染两种状态，用 CSS 控制过渡动画
     return (
         <div className={`window-toolbar ${theme} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
@@ -117,12 +92,12 @@ export function WindowToolbar({
                         )}
                     </div>
                     <button
-                        className="icon-btn icon-btn-sm theme-btn"
-                        onClick={onToggleTheme}
-                        title={getThemeTooltip()}
-                        aria-label={getThemeTooltip()}
+                        className="icon-btn icon-btn-sm toolbar-settings-btn"
+                        onClick={onSettings}
+                        title={STRINGS.SETTINGS.TITLE}
+                        aria-label={STRINGS.SETTINGS.TITLE}
                     >
-                        {getThemeIcon()}
+                        <Cog size={14} aria-hidden="true" />
                     </button>
                     <button
                         className="icon-btn icon-btn-sm collapse-btn"

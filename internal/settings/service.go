@@ -8,8 +8,9 @@ import (
 
 // Settings 用户设置
 type Settings struct {
-	Theme    string `json:"theme"`
-	Language string `json:"language"`
+	Theme        string `json:"theme"`
+	Language     string `json:"language"`
+	SidebarWidth int    `json:"sidebarWidth"` // 侧边栏宽度, 0 表示默认值
 }
 
 // Service 设置服务
@@ -22,27 +23,29 @@ func NewService(dataPath string) *Service {
 	return &Service{dataPath: dataPath}
 }
 
-// Get 获取用户设置
-func (s *Service) Get() (Settings, error) {
-	settingsPath := filepath.Join(s.dataPath, "settings.json")
-	data, err := os.ReadFile(settingsPath)
+// Get 获取设置
+func (s *Service) Get() (*Settings, error) {
+	path := filepath.Join(s.dataPath, "settings.json")
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return Settings{Theme: "light", Language: "zh"}, nil
+		if os.IsNotExist(err) {
+			return &Settings{Theme: "light", Language: "zh"}, nil
+		}
+		return nil, err
 	}
 	var settings Settings
-	json.Unmarshal(data, &settings)
-	if settings.Theme == "" {
-		settings.Theme = "light"
+	if err := json.Unmarshal(data, &settings); err != nil {
+		return nil, err
 	}
-	if settings.Language == "" {
-		settings.Language = "zh"
-	}
-	return settings, nil
+	return &settings, nil
 }
 
-// Save 保存用户设置
+// Save 保存设置
 func (s *Service) Save(settings Settings) error {
-	settingsPath := filepath.Join(s.dataPath, "settings.json")
-	data, _ := json.Marshal(settings)
-	return os.WriteFile(settingsPath, data, 0644)
+	path := filepath.Join(s.dataPath, "settings.json")
+	data, err := json.MarshalIndent(settings, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, data, 0644)
 }

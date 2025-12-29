@@ -44,4 +44,7 @@ const (
 	// Menu - Help
 	MenuHelp      = "Help"
 	MenuHelpAbout = "About Nook"
+
+	// Menu - Settings
+	MenuSettings = "Settings..."
 )

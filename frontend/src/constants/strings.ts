@@ -15,6 +15,7 @@ export const EN = {
         CONFIRM: "Confirm",
         CANCEL: "Cancel",
         CREATE_DOC: "Create New Document",
+        SAVE: "Save",
     },
 
     DEFAULTS: {
@@ -67,6 +68,31 @@ export const EN = {
     MENU: {
         NEW_DOC: "New Document",
         NEW_GROUP: "New Group",
+    },
+
+    SETTINGS: {
+        TITLE: "Settings",
+        KNOWLEDGE_BASE: "Knowledge Base",
+        EMBEDDING_MODEL: "Embedding Model",
+        INDEX_STATUS: "Index Status",
+        DOCUMENTS: "documents",
+        LAST_UPDATE: "Last Update",
+        REBUILD_INDEX: "Rebuild Index",
+        REBUILDING: "Rebuilding...",
+        SAVING: "Saving...",
+        PROVIDER: "Provider",
+        BASE_URL: "Base URL",
+        MODEL: "Model",
+        API_KEY: "API Key",
+        API_KEY_PLACEHOLDER: "Required for OpenAI",
+        MODEL_CHANGED: "Model changed. Please rebuild the index for semantic search to work correctly.",
+        // Appearance settings
+        APPEARANCE: "Appearance",
+        THEME_SETTING: "Theme",
+        THEME_LIGHT: "Light",
+        THEME_DARK: "Dark",
+        THEME_SYSTEM: "Follow System",
+        SIDEBAR_WIDTH: "Sidebar Width",
     }
 };
 

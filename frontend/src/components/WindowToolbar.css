@@ -85,30 +85,6 @@
     background-color: var(--primary-hover);
 }
 
-/* Theme toggle button animation */
-.theme-btn svg {
-    transition: transform var(--transition-fast);
-}
-
-.theme-btn:hover svg {
-    animation: wiggle 0.4s ease;
-}
-
-@keyframes wiggle {
-
-    0%,
-    100% {
-        transform: rotate(0);
-    }
-
-    25% {
-        transform: rotate(-10deg);
-    }
-
-    75% {
-        transform: rotate(10deg);
-    }
-}
 
 /* ========== Icon Buttons ========== */
 .icon-btn {
@@ -222,6 +198,15 @@
 
 .create-menu-item:hover svg {
     color: var(--primary);
+}
+
+/* Settings button animation */
+.toolbar-settings-btn svg {
+    transition: transform var(--transition-fast);
+}
+
+.toolbar-settings-btn:hover svg {
+    transform: rotate(90deg);
 }
 
 /* 折叠按钮 */

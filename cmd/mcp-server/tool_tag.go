@@ -114,19 +114,41 @@ func (s *MCPServer) toolDeleteTagGroup(args json.RawMessage) ToolCallResult {
 	return textResult("Tag group deleted successfully")
 }
 
-func (s *MCPServer) toolSetTagGroupCollapsed(args json.RawMessage) ToolCallResult {
+func (s *MCPServer) toolListDocumentsByTag(args json.RawMessage) ToolCallResult {
 	var params struct {
-		Name      string `json:"name"`
-		Collapsed bool   `json:"collapsed"`
+		Tag string `json:"tag"`
 	}
 	if err := json.Unmarshal(args, &params); err != nil {
 		return errorResult("Invalid arguments: " + err.Error())
 	}
-	if params.Name == "" {
-		return errorResult("name is required")
+	if params.Tag == "" {
+		return errorResult("tag is required")
 	}
-	if err := s.tagStore.SetGroupCollapsed(params.Name, params.Collapsed); err != nil {
-		return errorResult("Failed to set collapsed state: " + err.Error())
+
+	index, err := s.docRepo.GetAll()
+	if err != nil {
+		return errorResult("Failed to get documents: " + err.Error())
 	}
-	return textResult("Tag group collapsed state updated")
+
+	type docInfo struct {
+		ID    string   `json:"id"`
+		Title string   `json:"title"`
+		Tags  []string `json:"tags"`
+	}
+	var docs []docInfo
+	for _, doc := range index.Documents {
+		for _, t := range doc.Tags {
+			if t == params.Tag {
+				docs = append(docs, docInfo{
+					ID:    doc.ID,
+					Title: doc.Title,
+					Tags:  doc.Tags,
+				})
+				break
+			}
+		}
+	}
+
+	data, _ := json.MarshalIndent(docs, "", "  ")
+	return textResult(string(data))
 }

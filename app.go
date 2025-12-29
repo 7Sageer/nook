@@ -16,6 +16,7 @@ import (
 	"notion-lite/internal/folder"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/opengraph"
+	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
 	"notion-lite/internal/tag"
@@ -36,8 +37,25 @@ type SearchResult struct {
 
 // Settings 用户设置
 type Settings struct {
-	Theme    string `json:"theme"`
-	Language string `json:"language"`
+	Theme        string `json:"theme"`
+	Language     string `json:"language"`
+	SidebarWidth int    `json:"sidebarWidth"` // 侧边栏宽度, 0 表示默认值
+}
+
+// EmbeddingConfig 嵌入模型配置（前端用）
+type EmbeddingConfig struct {
+	Provider string `json:"provider"`
+	BaseURL  string `json:"baseUrl"`
+	Model    string `json:"model"`
+	APIKey   string `json:"apiKey"`
+}
+
+// RAGStatus RAG 索引状态
+type RAGStatus struct {
+	Enabled       bool   `json:"enabled"`
+	IndexedDocs   int    `json:"indexedDocs"`
+	TotalDocs     int    `json:"totalDocs"`
+	LastIndexTime string `json:"lastIndexTime"`
 }
 
 // App struct
@@ -52,10 +70,15 @@ type App struct {
 	markdownService *markdown.Service
 	watcherService  *watcher.Service
 	tagStore        *tag.Store
+	ragService      *rag.Service
 
 	pendingExternalOpensMu sync.Mutex
 	pendingExternalOpens   []string
 	frontendReady          bool
+
+	// RAG 索引 debounce
+	indexDebounceMu sync.Mutex
+	indexDebounce   map[string]*time.Timer // docID -> debounce timer
 }
 
 // NewApp creates a new App application struct
@@ -86,6 +109,8 @@ func NewApp() *App {
 		markdownService: markdown.NewService(),
 		watcherService:  watcherService,
 		tagStore:        tag.NewStore(dataPath),
+		ragService:      rag.NewService(dataPath, docRepo, docStorage),
+		indexDebounce:   make(map[string]*time.Timer),
 	}
 }
 
@@ -273,7 +298,35 @@ func (a *App) SaveDocumentContent(id string, content string) error {
 		a.watcherService.MarkWrite(indexPath)
 	}
 	a.docRepo.UpdateTimestamp(id)
-	return a.docStorage.Save(id, content)
+	err := a.docStorage.Save(id, content)
+	if err == nil {
+		// 触发 debounced 异步索引
+		a.scheduleIndex(id)
+	}
+	return err
+}
+
+// scheduleIndex 调度 debounced 异步索引
+func (a *App) scheduleIndex(docID string) {
+	a.indexDebounceMu.Lock()
+	defer a.indexDebounceMu.Unlock()
+
+	// 取消之前的定时器
+	if timer, exists := a.indexDebounce[docID]; exists {
+		timer.Stop()
+	}
+
+	// 2 秒后触发索引
+	a.indexDebounce[docID] = time.AfterFunc(2*time.Second, func() {
+		a.indexDebounceMu.Lock()
+		delete(a.indexDebounce, docID)
+		a.indexDebounceMu.Unlock()
+
+		// 异步执行索引
+		if a.ragService != nil {
+			a.ragService.IndexDocument(docID)
+		}
+	})
 }
 
 // ========== Markdown 导入/导出 ==========
@@ -319,14 +372,65 @@ func (a *App) SearchDocuments(query string) ([]SearchResult, error) {
 func (a *App) GetSettings() (Settings, error) {
 	s, err := a.settingsService.Get()
 	if err != nil {
-		return Settings{Theme: "light", Language: "zh"}, nil
+		return Settings{Theme: "light", Language: "zh", SidebarWidth: 0}, nil
 	}
-	return Settings{Theme: s.Theme, Language: s.Language}, nil
+	return Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth}, nil
 }
 
 // SaveSettings 保存用户设置
 func (a *App) SaveSettings(s Settings) error {
-	return a.settingsService.Save(settings.Settings{Theme: s.Theme, Language: s.Language})
+	return a.settingsService.Save(settings.Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth})
+}
+
+// ========== RAG 配置 ==========
+
+// GetRAGConfig 获取 RAG 配置
+func (a *App) GetRAGConfig() (EmbeddingConfig, error) {
+	config, err := rag.LoadConfig(a.dataPath)
+	if err != nil {
+		return EmbeddingConfig{}, err
+	}
+	return EmbeddingConfig{
+		Provider: config.Provider,
+		BaseURL:  config.BaseURL,
+		Model:    config.Model,
+		APIKey:   config.APIKey,
+	}, nil
+}
+
+// SaveRAGConfig 保存 RAG 配置
+func (a *App) SaveRAGConfig(config EmbeddingConfig) error {
+	ragConfig := &rag.EmbeddingConfig{
+		Provider: config.Provider,
+		BaseURL:  config.BaseURL,
+		Model:    config.Model,
+		APIKey:   config.APIKey,
+	}
+	if err := rag.SaveConfig(a.dataPath, ragConfig); err != nil {
+		return err
+	}
+	// 重新初始化 RAG 服务
+	return a.ragService.Reinitialize()
+}
+
+// GetRAGStatus 获取 RAG 索引状态
+func (a *App) GetRAGStatus() RAGStatus {
+	index, _ := a.docRepo.GetAll()
+	totalDocs := len(index.Documents)
+
+	indexedDocs, _ := a.ragService.GetIndexedCount()
+
+	return RAGStatus{
+		Enabled:       true,
+		IndexedDocs:   indexedDocs,
+		TotalDocs:     totalDocs,
+		LastIndexTime: "",
+	}
+}
+
+// RebuildIndex 重建 RAG 索引
+func (a *App) RebuildIndex() (int, error) {
+	return a.ragService.ReindexAll()
 }
 
 // ========== 文件夹管理 ==========

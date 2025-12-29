@@ -146,15 +146,27 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			},
 		},
 		{
-			Name:        "set_tag_group_collapsed",
-			Description: "Set the collapsed state of a tag group in the sidebar",
+			Name:        "list_documents_by_tag",
+			Description: "List all documents that have a specific tag",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"name":      {Type: "string", Description: "Tag group name"},
-					"collapsed": {Type: "boolean", Description: "Whether the group should be collapsed"},
+					"tag": {Type: "string", Description: "Tag name to filter by"},
 				},
-				Required: []string{"name", "collapsed"},
+				Required: []string{"tag"},
+			},
+		},
+		// RAG tools
+		{
+			Name:        "semantic_search",
+			Description: "Search documents by semantic similarity using natural language. Returns relevant text blocks with context and similarity scores.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"query": {Type: "string", Description: "Natural language search query"},
+					"limit": {Type: "number", Description: "Maximum results to return (default: 5, max: 20)"},
+				},
+				Required: []string{"query"},
 			},
 		},
 	}

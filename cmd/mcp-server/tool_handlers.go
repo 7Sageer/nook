@@ -44,8 +44,12 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolRenameTagGroup(params.Arguments)
 	case "delete_tag_group":
 		result = s.toolDeleteTagGroup(params.Arguments)
-	case "set_tag_group_collapsed":
-		result = s.toolSetTagGroupCollapsed(params.Arguments)
+	case "list_documents_by_tag":
+		result = s.toolListDocumentsByTag(params.Arguments)
+	// RAG tools
+	case "semantic_search":
+		result = s.toolSemanticSearch(params.Arguments)
+
 	default:
 		result = ToolCallResult{
 			Content: []ContentBlock{{Type: "text", Text: "Unknown tool: " + params.Name}},

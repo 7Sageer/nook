@@ -86,6 +86,24 @@ export namespace folder {
 
 export namespace main {
 	
+	export class EmbeddingConfig {
+	    provider: string;
+	    baseUrl: string;
+	    model: string;
+	    apiKey: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new EmbeddingConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.provider = source["provider"];
+	        this.baseUrl = source["baseUrl"];
+	        this.model = source["model"];
+	        this.apiKey = source["apiKey"];
+	    }
+	}
 	export class ExternalFile {
 	    path: string;
 	    name: string;
@@ -100,6 +118,24 @@ export namespace main {
 	        this.path = source["path"];
 	        this.name = source["name"];
 	        this.content = source["content"];
+	    }
+	}
+	export class RAGStatus {
+	    enabled: boolean;
+	    indexedDocs: number;
+	    totalDocs: number;
+	    lastIndexTime: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RAGStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	        this.indexedDocs = source["indexedDocs"];
+	        this.totalDocs = source["totalDocs"];
+	        this.lastIndexTime = source["lastIndexTime"];
 	    }
 	}
 	export class SearchResult {
@@ -121,6 +157,7 @@ export namespace main {
 	export class Settings {
 	    theme: string;
 	    language: string;
+	    sidebarWidth: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -130,6 +167,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.theme = source["theme"];
 	        this.language = source["language"];
+	        this.sidebarWidth = source["sidebarWidth"];
 	    }
 	}
 	export class TagInfo {

@@ -36,6 +36,10 @@ export function GetDocumentList():Promise<document.Index>;
 
 export function GetFolders():Promise<Array<folder.Folder>>;
 
+export function GetRAGConfig():Promise<main.EmbeddingConfig>;
+
+export function GetRAGStatus():Promise<main.RAGStatus>;
+
 export function GetSettings():Promise<main.Settings>;
 
 export function GetTagColors():Promise<Record<string, string>>;
@@ -53,6 +57,8 @@ export function MoveDocumentToFolder(arg1:string,arg2:string):Promise<void>;
 export function OpenExternalFile():Promise<main.ExternalFile>;
 
 export function PrintHTML(arg1:string,arg2:string):Promise<void>;
+
+export function RebuildIndex():Promise<number>;
 
 export function RemoveDocumentTag(arg1:string,arg2:string):Promise<void>;
 
@@ -75,6 +81,8 @@ export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;
 export function SaveImage(arg1:string,arg2:string):Promise<string>;
 
 export function SaveImageFile(arg1:string,arg2:string):Promise<void>;
+
+export function SaveRAGConfig(arg1:main.EmbeddingConfig):Promise<void>;
 
 export function SaveSettings(arg1:main.Settings):Promise<void>;
 
