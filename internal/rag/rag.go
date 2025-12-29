@@ -69,12 +69,20 @@ func (s *Service) IndexDocument(docID string) error {
 	return s.indexer.IndexDocument(docID)
 }
 
-// Search 语义搜索
+// Search 语义搜索（Chunk 级别）
 func (s *Service) Search(query string, limit int) ([]SemanticSearchResult, error) {
 	if err := s.init(); err != nil {
 		return nil, err
 	}
 	return s.searcher.Search(query, limit)
+}
+
+// SearchDocuments 文档级语义搜索（聚合 chunks）
+func (s *Service) SearchDocuments(query string, limit int) ([]DocumentSearchResult, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+	return s.searcher.SearchDocuments(query, limit)
 }
 
 // ReindexAll 重建所有文档索引

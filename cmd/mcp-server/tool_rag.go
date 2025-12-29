@@ -6,8 +6,9 @@ import (
 
 func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 	var params struct {
-		Query string `json:"query"`
-		Limit int    `json:"limit"`
+		Query       string `json:"query"`
+		Limit       int    `json:"limit"`
+		Granularity string `json:"granularity"`
 	}
 	if err := json.Unmarshal(args, &params); err != nil {
 		return errorResult("Invalid arguments: " + err.Error())
@@ -20,11 +21,25 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 		params.Limit = 20
 	}
 
-	results, err := s.ragService.Search(params.Query, params.Limit)
+	// Default to document-level search
+	if params.Granularity == "" {
+		params.Granularity = "documents"
+	}
+
+	if params.Granularity == "chunks" {
+		results, err := s.ragService.Search(params.Query, params.Limit)
+		if err != nil {
+			return errorResult("Semantic search failed: " + err.Error())
+		}
+		data, _ := json.MarshalIndent(results, "", "  ")
+		return textResult(string(data))
+	}
+
+	// Default: document-level search
+	results, err := s.ragService.SearchDocuments(params.Query, params.Limit)
 	if err != nil {
 		return errorResult("Semantic search failed: " + err.Error())
 	}
-
 	data, _ := json.MarshalIndent(results, "", "  ")
 	return textResult(string(data))
 }

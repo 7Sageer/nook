@@ -27,6 +27,21 @@ export interface SemanticSearchResult {
   score: number;
 }
 
+export interface ChunkMatch {
+  blockId: string;
+  content: string;
+  blockType: string;
+  headingContext: string;
+  score: number;
+}
+
+export interface DocumentSearchResult {
+  docId: string;
+  docTitle: string;
+  maxScore: number;
+  matchedChunks: ChunkMatch[];
+}
+
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
 }

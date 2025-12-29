@@ -1,11 +1,11 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { SearchResult, SemanticSearchResult } from '../types/document';
-import { SearchDocuments, SemanticSearch } from '../../wailsjs/go/main/App';
+import { SearchResult, DocumentSearchResult } from '../types/document';
+import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 
 interface UseSearchReturn {
     query: string;
     results: SearchResult[];
-    semanticResults: SemanticSearchResult[];
+    semanticResults: DocumentSearchResult[];
     isSearching: boolean;
     isLoadingSemantic: boolean;
     setQuery: (query: string) => void;
@@ -15,7 +15,7 @@ interface UseSearchReturn {
 export function useSearch(): UseSearchReturn {
     const [query, setQueryState] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
-    const [semanticResults, setSemanticResults] = useState<SemanticSearchResult[]>([]);
+    const [semanticResults, setSemanticResults] = useState<DocumentSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isLoadingSemantic, setIsLoadingSemantic] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,10 +53,10 @@ export function useSearch(): UseSearchReturn {
                     })
                     .finally(() => setIsSearching(false));
 
-                // 2. Debounced Semantic Search
+                // 2. Debounced Semantic Search (Document-level)
                 debounceRef.current = setTimeout(async () => {
                     try {
-                        const semResults = await SemanticSearch(newQuery, 5); // Limit to 5
+                        const semResults = await SemanticSearchDocuments(newQuery, 5);
                         setSemanticResults(semResults || []);
                     } catch (error) {
                         console.error('Semantic search failed:', error);
@@ -100,3 +100,4 @@ export function useSearch(): UseSearchReturn {
         clearSearch,
     };
 }
+

@@ -90,6 +90,8 @@ export function SearchDocuments(arg1:string):Promise<Array<main.SearchResult>>;
 
 export function SemanticSearch(arg1:string,arg2:number):Promise<Array<main.SemanticSearchResult>>;
 
+export function SemanticSearchDocuments(arg1:string,arg2:number):Promise<Array<main.DocumentSearchResult>>;
+
 export function SetActiveDocument(arg1:string):Promise<void>;
 
 export function SetFolderCollapsed(arg1:string,arg2:boolean):Promise<void>;

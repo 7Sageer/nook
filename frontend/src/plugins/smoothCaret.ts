@@ -296,7 +296,7 @@ export function createSmoothCaretPlugin(options?: {
         // Only skip animation for truly large jumps (e.g., clicking to a completely different position)
         // NOT for normal multi-line selection expansion
         const isLargeJump = !directionChanged && rects.length > 0 && state.lastSelectionRects.length > 0 &&
-            Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 200;
+            Math.abs(rects[0].top - state.lastSelectionRects[0].top) > 400;
 
         // Ensure we have enough selection elements
         while (state.selectionElements.length < rects.length) {
@@ -400,8 +400,8 @@ export function createSmoothCaretPlugin(options?: {
         if (posChanged) {
             // If this is a large jump (e.g., clicking to a new position), disable transition temporarily
             const isLargeJump = state.lastPos && (
-                Math.abs(state.lastPos.top - top) > 100 ||
-                Math.abs(state.lastPos.left - left) > 200
+                Math.abs(state.lastPos.top - top) > 300 ||
+                Math.abs(state.lastPos.left - left) > 400
             );
 
             if (isLargeJump) {

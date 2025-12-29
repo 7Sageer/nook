@@ -412,13 +412,20 @@ export function Sidebar({
                       <ul className="document-list semantic-list">
                         {semanticResults.map((res) => (
                           <li
-                            key={res.blockId}
+                            key={res.docId}
                             className="document-item semantic-item"
-                            onClick={() => handleSelectSemantic(res.docId, res.blockId)}
+                            onClick={() => handleSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
                           >
                             <div className="doc-content">
                               <span className="semantic-doc-title">{res.docTitle}</span>
-                              <span className="semantic-snippet">{res.content}</span>
+                              <span className="semantic-snippet">
+                                {res.matchedChunks[0]?.content || ''}
+                              </span>
+                              {res.matchedChunks.length > 1 && (
+                                <span className="semantic-more">
+                                  +{res.matchedChunks.length - 1} more matches
+                                </span>
+                              )}
                             </div>
                           </li>
                         ))}
@@ -535,7 +542,7 @@ export function Sidebar({
             })()}
           </DragOverlay>
         </DndContext>
-      </aside>
+      </aside >
 
       <ConfirmModalComponent />
     </>

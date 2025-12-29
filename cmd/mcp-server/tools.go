@@ -159,12 +159,13 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		// RAG tools
 		{
 			Name:        "semantic_search",
-			Description: "Search documents by semantic similarity using natural language. Returns relevant text blocks with context and similarity scores.",
+			Description: "Search by semantic similarity using natural language. Use granularity='documents' to find relevant documents, or 'chunks' to find specific text blocks within documents.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"query": {Type: "string", Description: "Natural language search query"},
-					"limit": {Type: "number", Description: "Maximum results to return (default: 5, max: 20)"},
+					"query":       {Type: "string", Description: "Natural language search query"},
+					"limit":       {Type: "number", Description: "Maximum results to return (default: 5, max: 20)"},
+					"granularity": {Type: "string", Description: "Result granularity: 'documents' for document-level results (default), 'chunks' for text blocks"},
 				},
 				Required: []string{"query"},
 			},

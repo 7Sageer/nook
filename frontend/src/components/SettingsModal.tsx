@@ -184,6 +184,8 @@ interface EmbeddingConfig {
     baseUrl: string;
     model: string;
     apiKey: string;
+    maxChunkSize: number;
+    overlap: number;
 }
 
 interface RAGStatus {
@@ -211,6 +213,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         baseUrl: 'http://localhost:11434',
         model: 'nomic-embed-text',
         apiKey: '',
+        maxChunkSize: 512,
+        overlap: 50,
     });
     const [status, setStatus] = useState<RAGStatus>({
         enabled: false,
