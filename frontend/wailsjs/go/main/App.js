@@ -166,6 +166,10 @@ export function SearchDocuments(arg1) {
   return window['go']['main']['App']['SearchDocuments'](arg1);
 }
 
+export function SemanticSearch(arg1, arg2) {
+  return window['go']['main']['App']['SemanticSearch'](arg1, arg2);
+}
+
 export function SetActiveDocument(arg1) {
   return window['go']['main']['App']['SetActiveDocument'](arg1);
 }

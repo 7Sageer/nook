@@ -18,6 +18,15 @@ export interface SearchResult {
   snippet: string;
 }
 
+export interface SemanticSearchResult {
+  docId: string;
+  docTitle: string;
+  blockId: string;
+  content: string;
+  blockType: string;
+  score: number;
+}
+
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
 }

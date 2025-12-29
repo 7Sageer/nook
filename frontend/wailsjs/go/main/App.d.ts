@@ -88,6 +88,8 @@ export function SaveSettings(arg1:main.Settings):Promise<void>;
 
 export function SearchDocuments(arg1:string):Promise<Array<main.SearchResult>>;
 
+export function SemanticSearch(arg1:string,arg2:number):Promise<Array<main.SemanticSearchResult>>;
+
 export function SetActiveDocument(arg1:string):Promise<void>;
 
 export function SetFolderCollapsed(arg1:string,arg2:boolean):Promise<void>;

@@ -154,6 +154,28 @@ export namespace main {
 	        this.snippet = source["snippet"];
 	    }
 	}
+	export class SemanticSearchResult {
+	    docId: string;
+	    docTitle: string;
+	    blockId: string;
+	    content: string;
+	    blockType: string;
+	    score: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SemanticSearchResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.docId = source["docId"];
+	        this.docTitle = source["docTitle"];
+	        this.blockId = source["blockId"];
+	        this.content = source["content"];
+	        this.blockType = source["blockType"];
+	        this.score = source["score"];
+	    }
+	}
 	export class Settings {
 	    theme: string;
 	    language: string;

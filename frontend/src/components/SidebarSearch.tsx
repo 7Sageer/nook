@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, forwardRef, useImperativeHandle } from 'react';
 import { Search, X } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 
@@ -7,8 +7,18 @@ interface SidebarSearchProps {
     onQueryChange: (query: string) => void;
 }
 
-export function SidebarSearch({ query, onQueryChange }: SidebarSearchProps) {
+export interface SidebarSearchRef {
+    focus: () => void;
+}
+
+export const SidebarSearch = forwardRef<SidebarSearchRef, SidebarSearchProps>(({ query, onQueryChange }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            inputRef.current?.focus();
+        }
+    }));
 
     const handleClear = () => {
         onQueryChange('');
@@ -47,4 +57,4 @@ export function SidebarSearch({ query, onQueryChange }: SidebarSearchProps) {
             )}
         </div>
     );
-}
+});

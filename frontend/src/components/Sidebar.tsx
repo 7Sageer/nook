@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import type { DocumentMeta, TagInfo } from '../types/document';
 import type { ExternalFileInfo } from '../types/external-file';
 import { useSettings } from '../contexts/SettingsContext';
@@ -7,10 +7,10 @@ import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { DocumentList } from './DocumentList';
 import { SidebarExternalFiles } from './SidebarExternalFiles';
-import { SidebarSearch } from './SidebarSearch';
+import { SidebarSearch, SidebarSearchRef } from './SidebarSearch';
 import { TagGroupItem } from './TagGroupItem';
 import { TagList } from './TagList';
-import { Plus, FileText, GripVertical } from 'lucide-react';
+import { Plus, FileText, GripVertical, Sparkles } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
 import {
@@ -67,13 +67,30 @@ export function Sidebar({
   } = useDocumentContext();
   const { theme, language } = useSettings();
   const STRINGS = getStrings(language);
-  const { query, results, setQuery } = useSearch();
+  const { query, results, semanticResults, isSearching, isLoadingSemantic, setQuery, clearSearch } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
+  const searchRef = useRef<SidebarSearchRef>(null);
   const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [activeDragDocId, setActiveDragDocId] = useState<string | null>(null);
   const [sourceGroupName, setSourceGroupName] = useState<string | null>(null);
+
+  // Global Keyboard Shortcut for Search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        // Optional: clear search on focus if desired, user requested "toggle" usually implies focus
+        if (!query) {
+          clearSearch();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [clearSearch, query]);
 
   // Sort tag groups by order
   const sortedGroups = useMemo(() => {
@@ -133,7 +150,9 @@ export function Sidebar({
   const tagFilteredUngrouped = selectedTag
     ? ungroupedDocs.filter(doc => doc.tags?.includes(selectedTag))
     : ungroupedDocs;
-  const displayList = query ? results : tagFilteredUngrouped;
+
+  // Logic to determine what to display
+  // When searching, we don't return a single list anymore, but render specific sections
 
   // Filter allTags to show only non-group tags in Tag section
   const regularTags = useMemo(() => {
@@ -159,6 +178,17 @@ export function Sidebar({
       onSelectInternal(id);
     } else {
       switchDoc(id);
+    }
+  }, [onSelectInternal, switchDoc]);
+
+  // For semantic search results
+  const handleSelectSemantic = useCallback((docId: string, blockId: string) => {
+    if (onSelectInternal) {
+      onSelectInternal(docId);
+      // Optionally handle block scrolling here if supported by switchDoc or passed separately
+      // For now just switching doc is fine
+    } else {
+      switchDoc(docId);
     }
   }, [onSelectInternal, switchDoc]);
 
@@ -309,7 +339,7 @@ export function Sidebar({
         role="complementary"
         aria-label={STRINGS.LABELS.SIDEBAR}
       >
-        <SidebarSearch query={query} onQueryChange={setQuery} />
+        <SidebarSearch ref={searchRef} query={query} onQueryChange={setQuery} />
 
         <SidebarExternalFiles
           externalFiles={externalFiles}
@@ -340,95 +370,148 @@ export function Sidebar({
         >
           <LayoutGroup>
             <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
-              {/* Tag Groups Section */}
-              {!query && sortedGroups.length > 0 && (
-                <div className="folders-section" role="tree" aria-label={STRINGS.LABELS.GROUPS}>
-                  <div className="section-label-row">
-                    <span className="section-label">{STRINGS.LABELS.GROUPS}</span>
-                    <button
-                      className="section-add-btn"
-                      onClick={handleCreateGroup}
-                      title={STRINGS.TOOLTIPS.NEW_GROUP}
-                      aria-label={STRINGS.TOOLTIPS.NEW_GROUP}
-                    >
-                      <Plus size={14} aria-hidden="true" />
-                    </button>
-                  </div>
-                  <SortableContext
-                    items={sortedGroups.map(g => g.name)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <AnimatePresence mode="popLayout">
-                      {sortedGroups.map((group, index) => (
-                        <TagGroupItem
-                          key={group.name}
-                          group={group}
-                          index={index}
-                          documents={filteredDocsByGroup.get(group.name) || []}
-                          disabled={editingGroupName === group.name}
-                          activeDocId={activeExternalPath ? null : activeId}
-                          onToggle={toggleTagGroupCollapsed}
-                          onRename={renameTagGroup}
-                          onDelete={handleDeleteGroupClick}
-                          onSelectDocument={handleSelect}
-                          onDeleteDocument={handleDeleteClick}
-                          onEditingChange={setEditingGroupName}
-                          onAddDocument={handleCreateInGroup}
-                        />
-                      ))}
-                    </AnimatePresence>
-                  </SortableContext>
-                </div>
-              )}
 
-              {/* Uncategorized Documents */}
-              {(displayList.length > 0 || query) && (
-                <motion.div
-                  ref={setUncategorizedDroppableRef}
-                  className="uncategorized-section"
-                  layout={!isDragging ? 'position' : false}
-                >
-                  {query ? (
+              {/* === SEARCH RESULTS VIEW === */}
+              {query ? (
+                <div className="search-results-container">
+
+                  {/* 1. Keyword Matches */}
+                  <div className="search-section">
                     <div className="section-label-row">
-                      <span className="section-label">{STRINGS.LABELS.DOCUMENTS}</span>
-                      <button
-                        className="section-add-btn"
-                        onClick={handleCreate}
-                        title={STRINGS.TOOLTIPS.NEW_DOC}
-                        aria-label={STRINGS.TOOLTIPS.NEW_DOC}
-                      >
-                        <Plus size={14} aria-hidden="true" />
-                      </button>
+                      <span className="section-label">{STRINGS.LABELS.DOCUMENTS || "Documents"}</span>
                     </div>
-                  ) : (
-                    <div className="section-label-row docs-section-header">
-                      {sortedGroups.length > 0 && <hr className="section-divider" />}
-                      <button
-                        className="section-add-btn"
-                        onClick={handleCreate}
-                        title={STRINGS.TOOLTIPS.NEW_DOC}
-                        aria-label={STRINGS.TOOLTIPS.NEW_DOC}
+                    {results.length > 0 ? (
+                      <ul className="document-list" role="listbox">
+                        <DocumentList
+                          items={results}
+                          activeId={activeExternalPath ? null : activeId}
+                          isSearchMode={true}
+                          onSelect={handleSelect}
+                          onDelete={() => { }}
+                          sortable={false}
+                          containerId="search-results"
+                        />
+                      </ul>
+                    ) : (
+                      <div className="search-empty-state">
+                        {isSearching ? "Searching..." : "No exact matches found"}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Semantic Matches */}
+                  <div className="search-section semantic-section">
+                    <div className="section-label-row">
+                      <span className="section-label">
+                        <Sparkles size={12} className="semantic-icon" />
+                        Semantic Matches
+                      </span>
+                      {isLoadingSemantic && <span className="loading-spinner-tiny"></span>}
+                    </div>
+                    {semanticResults.length > 0 ? (
+                      <ul className="document-list semantic-list">
+                        {semanticResults.map((res) => (
+                          <li
+                            key={res.blockId}
+                            className="document-item semantic-item"
+                            onClick={() => handleSelectSemantic(res.docId, res.blockId)}
+                          >
+                            <div className="doc-content">
+                              <span className="semantic-doc-title">{res.docTitle}</span>
+                              <span className="semantic-snippet">{res.content}</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      !isLoadingSemantic && query.length > 2 && (
+                        <div className="search-empty-state">
+                          No semantic matches found
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* === REGULAR VIEW === */
+                <>
+                  {/* Tag Groups Section */}
+                  {sortedGroups.length > 0 && (
+                    <div className="folders-section" role="tree" aria-label={STRINGS.LABELS.GROUPS}>
+                      <div className="section-label-row">
+                        <span className="section-label">{STRINGS.LABELS.GROUPS}</span>
+                        <button
+                          className="section-add-btn"
+                          onClick={handleCreateGroup}
+                          title={STRINGS.TOOLTIPS.NEW_GROUP}
+                          aria-label={STRINGS.TOOLTIPS.NEW_GROUP}
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+                      <SortableContext
+                        items={sortedGroups.map(g => g.name)}
+                        strategy={verticalListSortingStrategy}
                       >
-                        <Plus size={14} aria-hidden="true" />
-                      </button>
+                        <AnimatePresence mode="popLayout">
+                          {sortedGroups.map((group, index) => (
+                            <TagGroupItem
+                              key={group.name}
+                              group={group}
+                              index={index}
+                              documents={filteredDocsByGroup.get(group.name) || []}
+                              disabled={editingGroupName === group.name}
+                              activeDocId={activeExternalPath ? null : activeId}
+                              onToggle={toggleTagGroupCollapsed}
+                              onRename={renameTagGroup}
+                              onDelete={handleDeleteGroupClick}
+                              onSelectDocument={handleSelect}
+                              onDeleteDocument={handleDeleteClick}
+                              onEditingChange={setEditingGroupName}
+                              onAddDocument={handleCreateInGroup}
+                            />
+                          ))}
+                        </AnimatePresence>
+                      </SortableContext>
                     </div>
                   )}
-                  <ul
-                    className="document-list"
-                    role="listbox"
-                    aria-label={STRINGS.LABELS.DOCUMENTS}
-                  >
-                    <DocumentList
-                      items={displayList}
-                      activeId={activeExternalPath ? null : activeId}
-                      isSearchMode={!!query}
-                      onSelect={handleSelect}
-                      onDelete={handleDeleteClick}
-                      sortable={!query}
-                      containerId={UNCATEGORIZED_CONTAINER_ID}
-                    />
-                  </ul>
-                </motion.div>
+
+                  {/* Uncategorized Documents */}
+                  {(tagFilteredUngrouped.length > 0 || !query) && (
+                    <motion.div
+                      ref={setUncategorizedDroppableRef}
+                      className="uncategorized-section"
+                      layout={!isDragging ? 'position' : false}
+                    >
+                      <div className="section-label-row docs-section-header">
+                        {sortedGroups.length > 0 && <hr className="section-divider" />}
+                        <button
+                          className="section-add-btn"
+                          onClick={handleCreate}
+                          title={STRINGS.TOOLTIPS.NEW_DOC}
+                          aria-label={STRINGS.TOOLTIPS.NEW_DOC}
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                        </button>
+                      </div>
+                      <ul
+                        className="document-list"
+                        role="listbox"
+                        aria-label={STRINGS.LABELS.DOCUMENTS}
+                      >
+                        <DocumentList
+                          items={tagFilteredUngrouped}
+                          activeId={activeExternalPath ? null : activeId}
+                          isSearchMode={false}
+                          onSelect={handleSelect}
+                          onDelete={handleDeleteClick}
+                          sortable={true}
+                          containerId={UNCATEGORIZED_CONTAINER_ID}
+                        />
+                      </ul>
+                    </motion.div>
+                  )}
+                </>
               )}
             </div>
           </LayoutGroup>

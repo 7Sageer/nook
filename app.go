@@ -35,6 +35,16 @@ type SearchResult struct {
 	Snippet string `json:"snippet"`
 }
 
+// SemanticSearchResult 语义搜索结果
+type SemanticSearchResult struct {
+	DocID     string  `json:"docId"`
+	DocTitle  string  `json:"docTitle"`
+	BlockID   string  `json:"blockId"`
+	Content   string  `json:"content"`
+	BlockType string  `json:"blockType"`
+	Score     float32 `json:"score"`
+}
+
 // Settings 用户设置
 type Settings struct {
 	Theme        string `json:"theme"`
@@ -364,6 +374,35 @@ func (a *App) SearchDocuments(query string) ([]SearchResult, error) {
 		}
 	}
 	return searchResults, nil
+}
+
+// SemanticSearch 语义搜索
+func (a *App) SemanticSearch(query string, limit int) ([]SemanticSearchResult, error) {
+	if a.ragService == nil {
+		return nil, fmt.Errorf("RAG service not initialized")
+	}
+	// 默认限制 10 条
+	if limit <= 0 {
+		limit = 10
+	}
+	results, err := a.ragService.Search(query, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为前端兼容的类型
+	output := make([]SemanticSearchResult, len(results))
+	for i, r := range results {
+		output[i] = SemanticSearchResult{
+			DocID:     r.DocID,
+			DocTitle:  r.DocTitle,
+			BlockID:   r.BlockID,
+			Content:   r.Content,
+			BlockType: r.BlockType,
+			Score:     r.Score,
+		}
+	}
+	return output, nil
 }
 
 // ========== 设置 ==========
