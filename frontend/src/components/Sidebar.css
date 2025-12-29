@@ -45,17 +45,6 @@
     overflow: hidden;
 }
 
-.sidebar::after {
-    content: '';
-    position: absolute;
-    top: var(--space-2);
-    right: 0;
-    width: 1px;
-    height: calc(100% - var(--space-4));
-    background-color: var(--border-primary);
-    pointer-events: none;
-}
-
 /* 侧边栏内容容器（浮动岛屿效果） */
 .sidebar-header,
 .sidebar-content {

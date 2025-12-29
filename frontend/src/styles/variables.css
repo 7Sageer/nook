@@ -1,8 +1,8 @@
 /* ========== CSS Variables ========== */
 :root {
     /* ===== 主题色 ===== */
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
+    --primary: #4a8fd9;
+    --primary-hover: #3d7fc6;
     --danger: #ef4444;
     --danger-hover: #dc2626;
     --success: #10b981;
@@ -10,9 +10,9 @@
 
     /* ===== 背景色 ===== */
     --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-    --bg-hover: #e5e7eb;
+    --bg-secondary: #fbfaf8;
+    --bg-tertiary: #f5f4f2;
+    --bg-hover: rgba(55, 53, 47, 0.06);
     --bg-modal: #ffffff;
     --bg-input: #ffffff;
     --bg-overlay: rgba(0, 0, 0, 0.4);
@@ -29,13 +29,13 @@
     --border-focus: var(--primary);
 
     /* ===== 语义化 Alpha 颜色 ===== */
-    --primary-alpha-5: rgba(37, 99, 235, 0.05);
-    --primary-alpha-8: rgba(37, 99, 235, 0.08);
-    --primary-alpha-10: rgba(37, 99, 235, 0.1);
-    --primary-alpha-15: rgba(37, 99, 235, 0.15);
-    --primary-alpha-20: rgba(37, 99, 235, 0.2);
-    --primary-alpha-25: rgba(37, 99, 235, 0.25);
-    --primary-alpha-30: rgba(37, 99, 235, 0.3);
+    --primary-alpha-5: rgba(74, 143, 217, 0.05);
+    --primary-alpha-8: rgba(74, 143, 217, 0.08);
+    --primary-alpha-10: rgba(74, 143, 217, 0.1);
+    --primary-alpha-15: rgba(74, 143, 217, 0.15);
+    --primary-alpha-20: rgba(74, 143, 217, 0.2);
+    --primary-alpha-25: rgba(74, 143, 217, 0.25);
+    --primary-alpha-30: rgba(74, 143, 217, 0.3);
 
     --danger-alpha-10: rgba(239, 68, 68, 0.1);
     --danger-alpha-20: rgba(239, 68, 68, 0.2);
@@ -118,11 +118,11 @@
     --border-primary: #2a3545;
     --border-secondary: #374151;
 
-    --primary-alpha-8: rgba(37, 99, 235, 0.12);
-    --primary-alpha-10: rgba(37, 99, 235, 0.15);
-    --primary-alpha-15: rgba(37, 99, 235, 0.2);
-    --primary-alpha-20: rgba(37, 99, 235, 0.25);
-    --primary-alpha-25: rgba(37, 99, 235, 0.35);
+    --primary-alpha-8: rgba(74, 143, 217, 0.12);
+    --primary-alpha-10: rgba(74, 143, 217, 0.15);
+    --primary-alpha-15: rgba(74, 143, 217, 0.2);
+    --primary-alpha-20: rgba(74, 143, 217, 0.25);
+    --primary-alpha-25: rgba(74, 143, 217, 0.35);
 
     --black-alpha-4: rgba(255, 255, 255, 0.04);
     --black-alpha-5: rgba(255, 255, 255, 0.05);

@@ -6,8 +6,10 @@
     overflow-y: auto;
     overflow-x: hidden;
     min-width: 0;
-    background-color: transparent;
+    background-color: var(--bg-primary);
     transition: background-color var(--transition-normal);
+    /* Soft inset shadow on left side for smooth transition from sidebar */
+    box-shadow: inset 8px 0 16px -8px var(--black-alpha-6);
 }
 
 /* ========== Header ========== */
@@ -25,12 +27,11 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    /* Soft shadow instead of hard border for smoother visual transition */
-    box-shadow: 0 2px 8px -2px var(--black-alpha-8);
-    /* Frosted glass effect */
-    background-color: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    /* Combined shadow: inset for sidebar transition + bottom border */
+    box-shadow:
+        inset 8px 0 16px -8px var(--black-alpha-6),
+        0 1px 0 var(--border-primary);
+    background-color: var(--bg-primary);
 }
 
 .app-header.header-transparent {
@@ -41,8 +42,10 @@
 }
 
 .app-container.dark .app-header {
-    background-color: rgba(26, 32, 48, 0.8);
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.4);
+    background-color: var(--bg-primary);
+    box-shadow:
+        inset 8px 0 16px -8px var(--black-alpha-6),
+        0 1px 0 var(--border-primary);
 }
 
 .app-container.dark .app-header.header-transparent {

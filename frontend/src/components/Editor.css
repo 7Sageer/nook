@@ -2,9 +2,8 @@
 .editor-container {
     flex: 1;
     padding: var(--space-8) var(--editor-padding-x);
-    /* Soft inset shadow on left side for smooth transition from sidebar */
-    box-shadow: inset 8px 0 16px -8px var(--black-alpha-6);
-    background-color: var(--bg-primary);
+    /* Shadow moved to .main-content for full-height coverage */
+    background-color: transparent;
 }
 
 /* Editor wrapper containing tags and BlockNote */
