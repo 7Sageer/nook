@@ -91,6 +91,8 @@ export namespace main {
 	    baseUrl: string;
 	    model: string;
 	    apiKey: string;
+	    maxChunkSize: number;
+	    overlap: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new EmbeddingConfig(source);
@@ -102,6 +104,8 @@ export namespace main {
 	        this.baseUrl = source["baseUrl"];
 	        this.model = source["model"];
 	        this.apiKey = source["apiKey"];
+	        this.maxChunkSize = source["maxChunkSize"];
+	        this.overlap = source["overlap"];
 	    }
 	}
 	export class ExternalFile {

@@ -8,20 +8,38 @@ import (
 
 // Indexer 文档索引器
 type Indexer struct {
-	store      *VectorStore
-	embedder   EmbeddingClient
-	docRepo    *document.Repository
-	docStorage *document.Storage
+	store       *VectorStore
+	embedder    EmbeddingClient
+	docRepo     *document.Repository
+	docStorage  *document.Storage
+	chunkConfig ChunkConfig
 }
 
 // NewIndexer 创建索引器
 func NewIndexer(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage) *Indexer {
 	return &Indexer{
-		store:      store,
-		embedder:   embedder,
-		docRepo:    docRepo,
-		docStorage: docStorage,
+		store:       store,
+		embedder:    embedder,
+		docRepo:     docRepo,
+		docStorage:  docStorage,
+		chunkConfig: DefaultChunkConfig,
 	}
+}
+
+// NewIndexerWithConfig 创建带配置的索引器
+func NewIndexerWithConfig(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, config ChunkConfig) *Indexer {
+	return &Indexer{
+		store:       store,
+		embedder:    embedder,
+		docRepo:     docRepo,
+		docStorage:  docStorage,
+		chunkConfig: config,
+	}
+}
+
+// SetChunkConfig 更新分块配置
+func (idx *Indexer) SetChunkConfig(config ChunkConfig) {
+	idx.chunkConfig = config
 }
 
 // IndexDocument 索引单个文档（增量更新）
@@ -38,8 +56,8 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		existingHashes = make(map[string]string)
 	}
 
-	// 3. 提取新块并计算哈希
-	blocks := ExtractBlocks([]byte(content))
+	// 3. 使用配置提取新块并计算哈希
+	blocks := ExtractBlocksWithConfig([]byte(content), idx.chunkConfig)
 	newBlockIDs := make(map[string]bool)
 
 	for _, block := range blocks {
@@ -47,7 +65,7 @@ func (idx *Indexer) IndexDocument(docID string) error {
 			continue
 		}
 		newBlockIDs[block.ID] = true
-		newHash := HashContent(block.Content)
+		newHash := HashContent(block.Content + block.HeadingContext)
 
 		// 检查是否需要更新
 		if oldHash, exists := existingHashes[block.ID]; exists && oldHash == newHash {
@@ -61,12 +79,13 @@ func (idx *Indexer) IndexDocument(docID string) error {
 			continue
 		}
 		idx.store.Upsert(&BlockVector{
-			ID:          block.ID,
-			DocID:       docID,
-			Content:     block.Content,
-			ContentHash: newHash,
-			BlockType:   block.Type,
-			Embedding:   embedding,
+			ID:             block.ID,
+			DocID:          docID,
+			Content:        block.Content,
+			ContentHash:    newHash,
+			BlockType:      block.Type,
+			HeadingContext: block.HeadingContext,
+			Embedding:      embedding,
 		})
 	}
 

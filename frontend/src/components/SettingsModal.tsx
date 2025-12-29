@@ -52,36 +52,19 @@ const AppearancePanel: React.FC<AppearancePanelProps> = ({
                 {/* 侧边栏宽度滑块 */}
                 <div className="form-group">
                     <label>{strings.SETTINGS.SIDEBAR_WIDTH}: {sidebarWidth}px</label>
-                    <div className="slider-container">
-                        <div className="slider-input-wrapper">
-                            <div className="custom-track">
-                                {Array.from({ length: (MAX_SIDEBAR_WIDTH - MIN_SIDEBAR_WIDTH) / 25 + 1 }).map((_, i) => {
-                                    const value = MIN_SIDEBAR_WIDTH + i * 25;
-                                    const percent = ((value - MIN_SIDEBAR_WIDTH) / (MAX_SIDEBAR_WIDTH - MIN_SIDEBAR_WIDTH)) * 100;
-                                    return (
-                                        <div
-                                            key={value}
-                                            className={`slider-tick ${value <= sidebarWidth ? 'active' : ''}`}
-                                            style={{ left: `${percent}%` }}
-                                        />
-                                    );
-                                })}
-                            </div>
-                            <input
-                                type="range"
-                                min={MIN_SIDEBAR_WIDTH}
-                                max={MAX_SIDEBAR_WIDTH}
-                                step={25}
-                                value={sidebarWidth}
-                                onChange={(e) => onSidebarWidthChange(parseInt(e.target.value, 10))}
-                                className="sidebar-width-slider"
-                            />
-                        </div>
-                        <div className="slider-labels">
-                            <span>{MIN_SIDEBAR_WIDTH}px</span>
-                            <span>{(MIN_SIDEBAR_WIDTH + MAX_SIDEBAR_WIDTH) / 2}px</span>
-                            <span>{MAX_SIDEBAR_WIDTH}px</span>
-                        </div>
+                    <input
+                        type="range"
+                        min={MIN_SIDEBAR_WIDTH}
+                        max={MAX_SIDEBAR_WIDTH}
+                        step={25}
+                        value={sidebarWidth}
+                        onChange={(e) => onSidebarWidthChange(parseInt(e.target.value, 10))}
+                        className="sidebar-width-slider-default"
+                    />
+                    <div className="slider-labels">
+                        <span>{MIN_SIDEBAR_WIDTH}px</span>
+                        <span>{(MIN_SIDEBAR_WIDTH + MAX_SIDEBAR_WIDTH) / 2}px</span>
+                        <span>{MAX_SIDEBAR_WIDTH}px</span>
                     </div>
                 </div>
             </div>

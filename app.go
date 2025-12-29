@@ -54,10 +54,12 @@ type Settings struct {
 
 // EmbeddingConfig 嵌入模型配置（前端用）
 type EmbeddingConfig struct {
-	Provider string `json:"provider"`
-	BaseURL  string `json:"baseUrl"`
-	Model    string `json:"model"`
-	APIKey   string `json:"apiKey"`
+	Provider     string `json:"provider"`
+	BaseURL      string `json:"baseUrl"`
+	Model        string `json:"model"`
+	APIKey       string `json:"apiKey"`
+	MaxChunkSize int    `json:"maxChunkSize"`
+	Overlap      int    `json:"overlap"`
 }
 
 // RAGStatus RAG 索引状态
@@ -107,6 +109,16 @@ func NewApp() *App {
 	if err != nil {
 		// 文件监听失败不影响应用启动，仅记录警告
 		watcherService = nil
+	} else {
+		// 设置文件变更回调
+		// 注意：这里需要延迟引用，因为此时 app 还没初始化完成
+		// 但是我们是在 NewApp 里，还没法引用 a.searchService (searchService 还没创建)
+		// 所以我们需要把 callback 设置延后，或者让 callback 闭包引用 searchService (需调整初始化顺序)
+
+		// 更好的方式：先创建 App 结构体，再初始化 Service，最后设置 Callback
+		// 但这里的代码结构是一次性 return &App{...}
+
+		// 方案：让 watcherService 保持 nil callback，在 startup 里设置
 	}
 
 	return &App{
@@ -134,6 +146,23 @@ func (a *App) startup(ctx context.Context) {
 
 	// 启动文件监听服务
 	if a.watcherService != nil {
+		// 设置回调
+		a.watcherService.OnDocumentChanged = func(e watcher.FileChangeEvent) {
+			if e.IsIndex {
+				return
+			}
+			switch e.Type {
+			case "create", "write", "rename":
+				// 加载新内容并更新索引
+				content, err := a.docStorage.Load(e.DocID)
+				if err == nil {
+					a.searchService.UpdateIndex(e.DocID, content)
+				}
+			case "remove":
+				a.searchService.RemoveIndex(e.DocID)
+			}
+		}
+
 		if err := a.watcherService.Start(ctx); err != nil {
 			runtime.LogError(ctx, "Failed to start file watcher: "+err.Error())
 		}
@@ -145,6 +174,9 @@ func (a *App) startup(ctx context.Context) {
 		a.pendingExternalOpensMu.Unlock()
 		a.flushPendingExternalFileOpens()
 	})
+
+	// 异步构建搜索索引
+	go a.searchService.BuildIndex()
 }
 
 // migrateFoldersToTagGroups 将文件夹迁移为标签组（一次性）
@@ -273,6 +305,8 @@ func (a *App) DeleteDocument(id string) error {
 	a.markIndexWrite()
 	err := a.docRepo.Delete(id)
 	if err == nil {
+		// 更新搜索索引
+		a.searchService.RemoveIndex(id)
 		// 异步清理未使用的图像
 		go a.cleanupUnusedImages()
 	}
@@ -310,6 +344,8 @@ func (a *App) SaveDocumentContent(id string, content string) error {
 	a.docRepo.UpdateTimestamp(id)
 	err := a.docStorage.Save(id, content)
 	if err == nil {
+		// 更新搜索索引
+		a.searchService.UpdateIndex(id, content)
 		// 触发 debounced 异步索引
 		a.scheduleIndex(id)
 	}
@@ -430,20 +466,24 @@ func (a *App) GetRAGConfig() (EmbeddingConfig, error) {
 		return EmbeddingConfig{}, err
 	}
 	return EmbeddingConfig{
-		Provider: config.Provider,
-		BaseURL:  config.BaseURL,
-		Model:    config.Model,
-		APIKey:   config.APIKey,
+		Provider:     config.Provider,
+		BaseURL:      config.BaseURL,
+		Model:        config.Model,
+		APIKey:       config.APIKey,
+		MaxChunkSize: config.MaxChunkSize,
+		Overlap:      config.Overlap,
 	}, nil
 }
 
 // SaveRAGConfig 保存 RAG 配置
 func (a *App) SaveRAGConfig(config EmbeddingConfig) error {
 	ragConfig := &rag.EmbeddingConfig{
-		Provider: config.Provider,
-		BaseURL:  config.BaseURL,
-		Model:    config.Model,
-		APIKey:   config.APIKey,
+		Provider:     config.Provider,
+		BaseURL:      config.BaseURL,
+		Model:        config.Model,
+		APIKey:       config.APIKey,
+		MaxChunkSize: config.MaxChunkSize,
+		Overlap:      config.Overlap,
 	}
 	if err := rag.SaveConfig(a.dataPath, ragConfig); err != nil {
 		return err

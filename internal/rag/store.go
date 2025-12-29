@@ -18,21 +18,23 @@ func init() {
 
 // BlockVector 块向量记录
 type BlockVector struct {
-	ID          string    // block_id
-	DocID       string    // 所属文档 ID
-	Content     string    // 块的纯文本内容
-	ContentHash string    // 内容哈希（用于去重）
-	BlockType   string    // paragraph, heading, list 等
-	Embedding   []float32 // 向量
+	ID             string    // block_id
+	DocID          string    // 所属文档 ID
+	Content        string    // 块的纯文本内容
+	ContentHash    string    // 内容哈希（用于去重）
+	BlockType      string    // paragraph, heading, list 等
+	HeadingContext string    // 最近的 heading 文本
+	Embedding      []float32 // 向量
 }
 
 // SearchResult 搜索结果
 type SearchResult struct {
-	BlockID   string  `json:"blockId"`
-	DocID     string  `json:"docId"`
-	Content   string  `json:"content"`
-	BlockType string  `json:"blockType"`
-	Distance  float32 `json:"distance"`
+	BlockID        string  `json:"blockId"`
+	DocID          string  `json:"docId"`
+	Content        string  `json:"content"`
+	BlockType      string  `json:"blockType"`
+	HeadingContext string  `json:"headingContext"`
+	Distance       float32 `json:"distance"`
 }
 
 // VectorStore 向量存储接口
@@ -65,6 +67,7 @@ func (s *VectorStore) initSchema() error {
 			content TEXT NOT NULL,
 			content_hash TEXT,
 			block_type TEXT,
+			heading_context TEXT,
 			updated_at INTEGER DEFAULT (strftime('%s', 'now'))
 		);
 		CREATE INDEX IF NOT EXISTS idx_block_doc_id ON block_vectors(doc_id);
@@ -73,8 +76,9 @@ func (s *VectorStore) initSchema() error {
 		return err
 	}
 
-	// 添加 content_hash 列（如果不存在）
+	// 添加新列（如果不存在）
 	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
+	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
 
 	// 创建 sqlite-vec 虚拟表
 	query := fmt.Sprintf(`
@@ -95,11 +99,11 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 	}
 	defer tx.Rollback()
 
-	// 更新元数据（包含 content_hash）
+	// 更新元数据（包含 content_hash 和 heading_context）
 	_, err = tx.Exec(`
-		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type)
-		VALUES (?, ?, ?, ?, ?)
-	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType)
+		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext)
 	if err != nil {
 		return err
 	}
@@ -198,7 +202,7 @@ func (s *VectorStore) DeleteByDocID(docID string) error {
 func (s *VectorStore) Search(queryVec []float32, limit int) ([]SearchResult, error) {
 	vecBytes := serializeVector(queryVec)
 	rows, err := s.db.Query(`
-		SELECT v.id, v.distance, b.doc_id, b.content, b.block_type
+		SELECT v.id, v.distance, b.doc_id, b.content, b.block_type, COALESCE(b.heading_context, '')
 		FROM vec_blocks v
 		JOIN block_vectors b ON v.id = b.id
 		WHERE v.embedding MATCH ? AND k = ?
@@ -212,7 +216,7 @@ func (s *VectorStore) Search(queryVec []float32, limit int) ([]SearchResult, err
 	var results []SearchResult
 	for rows.Next() {
 		var r SearchResult
-		if err := rows.Scan(&r.BlockID, &r.Distance, &r.DocID, &r.Content, &r.BlockType); err != nil {
+		if err := rows.Scan(&r.BlockID, &r.Distance, &r.DocID, &r.Content, &r.BlockType, &r.HeadingContext); err != nil {
 			return nil, err
 		}
 		results = append(results, r)

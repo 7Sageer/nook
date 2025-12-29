@@ -477,7 +477,7 @@ export function Sidebar({
                   )}
 
                   {/* Uncategorized Documents */}
-                  {(tagFilteredUngrouped.length > 0 || !query) && (
+                  {tagFilteredUngrouped.length > 0 && (
                     <motion.div
                       ref={setUncategorizedDroppableRef}
                       className="uncategorized-section"

@@ -35,6 +35,9 @@ type Service struct {
 
 	// 追踪应用自己的写入，避免触发自己的事件
 	recentWrites map[string]time.Time
+
+	// Callbacks
+	OnDocumentChanged func(event FileChangeEvent)
 }
 
 // NewService 创建文件监听服务
@@ -233,6 +236,11 @@ func (s *Service) flushEvents() {
 		} else {
 			runtime.LogInfo(s.ctx, "File watcher emitting: file:document-changed for "+e.DocID)
 			runtime.EventsEmit(s.ctx, "file:document-changed", e)
+
+			// 触发回调 (用于更新后端 Search Index)
+			if s.OnDocumentChanged != nil {
+				s.OnDocumentChanged(*e)
+			}
 		}
 	}
 }

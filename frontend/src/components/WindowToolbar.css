@@ -206,7 +206,7 @@
 }
 
 .toolbar-settings-btn:hover svg {
-    transform: rotate(90deg);
+    transform: rotate(-90deg);
 }
 
 /* 折叠按钮 */
