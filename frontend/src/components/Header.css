@@ -27,11 +27,25 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    /* Combined shadow: inset for sidebar transition + bottom border */
-    box-shadow:
-        inset 8px 0 16px -8px var(--black-alpha-6),
-        0 1px 0 var(--border-primary);
+    /* Inset shadow for sidebar transition only */
+    box-shadow: inset 8px 0 16px -8px var(--black-alpha-6);
     background-color: var(--bg-primary);
+}
+
+/* Fading divider line - visible in center, fades at edges */
+.app-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 18%;
+    right: 18%;
+    height: 1px;
+    background: linear-gradient(90deg,
+            transparent,
+            var(--border-primary) 15%,
+            var(--border-primary) 85%,
+            transparent);
+    pointer-events: none;
 }
 
 .app-header.header-transparent {
@@ -41,11 +55,14 @@
     box-shadow: none;
 }
 
+/* Hide divider when header is transparent */
+.app-header.header-transparent::after {
+    opacity: 0;
+}
+
 .app-container.dark .app-header {
     background-color: var(--bg-primary);
-    box-shadow:
-        inset 8px 0 16px -8px var(--black-alpha-6),
-        0 1px 0 var(--border-primary);
+    box-shadow: inset 8px 0 16px -8px var(--black-alpha-6);
 }
 
 .app-container.dark .app-header.header-transparent {

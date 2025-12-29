@@ -9,12 +9,12 @@
     --warning: #f59e0b;
 
     /* ===== 背景色 ===== */
-    --bg-primary: #ffffff;
+    --bg-primary: #fffcf8;
     --bg-secondary: #fbfaf8;
     --bg-tertiary: #f5f4f2;
     --bg-hover: rgba(55, 53, 47, 0.06);
-    --bg-modal: #ffffff;
-    --bg-input: #ffffff;
+    --bg-modal: #fffdf9;
+    --bg-input: #fffef9;
     --bg-overlay: rgba(0, 0, 0, 0.4);
 
     /* ===== 文字色 ===== */

@@ -94,7 +94,7 @@
     width: 100%;
     position: relative;
     border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
-    background: var(--bn-colors-editor-background, #fff);
+    background: var(--bn-colors-editor-background, var(--bg-primary));
     text-decoration: none;
     color: inherit;
     overflow: hidden;
@@ -141,7 +141,7 @@
     height: 28px;
     border: none;
     border-radius: 6px;
-    background: var(--bn-colors-editor-background, #fff);
+    background: var(--bn-colors-editor-background, var(--bg-primary));
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     color: var(--bn-colors-side-menu-text, #666);
     cursor: pointer;

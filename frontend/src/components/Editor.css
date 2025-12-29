@@ -28,13 +28,13 @@
     width: 100%;
 }
 
-/* 暗色模式下覆盖 BlockNote 的背景颜色 */
-.app-container.dark .bn-container[data-color-scheme="dark"],
-.app-container.dark .bn-default-styles[data-color-scheme="dark"] {
+/* 覆盖 BlockNote 的背景颜色，使其透明以继承父容器背景 */
+.bn-container,
+.bn-default-styles {
     --bn-colors-editor-background: transparent !important;
 }
 
-.app-container.dark [data-mantine-color-scheme="dark"] {
+[data-mantine-color-scheme] {
     --mantine-color-body: transparent !important;
 }
 

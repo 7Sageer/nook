@@ -1,44 +1,95 @@
 /* ========== Scrollbar ========== */
+
+/* 全局滚动条样式 - 标准 CSS（Firefox 和部分 WebKit） */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+
+*:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+.dark *:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+/* WebKit 滚动条样式 */
 .sidebar-content::-webkit-scrollbar,
-.editor-container::-webkit-scrollbar {
+.editor-container::-webkit-scrollbar,
+.main-content::-webkit-scrollbar,
+.bn-container::-webkit-scrollbar,
+.bn-editor::-webkit-scrollbar,
+.ProseMirror::-webkit-scrollbar,
+[class*="bn-"]::-webkit-scrollbar {
     width: 6px;
 }
 
 .sidebar-content::-webkit-scrollbar-track,
-.editor-container::-webkit-scrollbar-track {
+.editor-container::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track,
+.bn-container::-webkit-scrollbar-track,
+.bn-editor::-webkit-scrollbar-track,
+.ProseMirror::-webkit-scrollbar-track,
+[class*="bn-"]::-webkit-scrollbar-track {
     background: transparent;
 }
 
 /* 默认滚动条透明，hover 时显示 */
 .sidebar-content::-webkit-scrollbar-thumb,
-.editor-container::-webkit-scrollbar-thumb {
+.editor-container::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb,
+.bn-container::-webkit-scrollbar-thumb,
+.bn-editor::-webkit-scrollbar-thumb,
+.ProseMirror::-webkit-scrollbar-thumb,
+[class*="bn-"]::-webkit-scrollbar-thumb {
     background-color: transparent;
     border-radius: 3px;
     transition: background-color 0.2s ease;
 }
 
 .sidebar-content:hover::-webkit-scrollbar-thumb,
-.editor-container:hover::-webkit-scrollbar-thumb {
+.editor-container:hover::-webkit-scrollbar-thumb,
+.main-content:hover::-webkit-scrollbar-thumb,
+.bn-container:hover::-webkit-scrollbar-thumb,
+.bn-editor:hover::-webkit-scrollbar-thumb,
+.ProseMirror:hover::-webkit-scrollbar-thumb {
     background-color: rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-content::-webkit-scrollbar-thumb:hover,
-.editor-container::-webkit-scrollbar-thumb:hover {
+.editor-container::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover,
+.bn-container::-webkit-scrollbar-thumb:hover,
+.bn-editor::-webkit-scrollbar-thumb:hover,
+.ProseMirror::-webkit-scrollbar-thumb:hover {
     background-color: rgba(0, 0, 0, 0.25);
 }
 
 /* Dark mode - 使用更低透明度融入背景 */
 .sidebar.dark .sidebar-content::-webkit-scrollbar-thumb,
-.app-container.dark .editor-container::-webkit-scrollbar-thumb {
+.app-container.dark .editor-container::-webkit-scrollbar-thumb,
+.app-container.dark .main-content::-webkit-scrollbar-thumb,
+.app-container.dark .bn-container::-webkit-scrollbar-thumb,
+.app-container.dark .bn-editor::-webkit-scrollbar-thumb,
+.app-container.dark .ProseMirror::-webkit-scrollbar-thumb {
     background-color: transparent;
 }
 
 .sidebar.dark .sidebar-content:hover::-webkit-scrollbar-thumb,
-.app-container.dark .editor-container:hover::-webkit-scrollbar-thumb {
+.app-container.dark .editor-container:hover::-webkit-scrollbar-thumb,
+.app-container.dark .main-content:hover::-webkit-scrollbar-thumb,
+.app-container.dark .bn-container:hover::-webkit-scrollbar-thumb,
+.app-container.dark .bn-editor:hover::-webkit-scrollbar-thumb,
+.app-container.dark .ProseMirror:hover::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar.dark .sidebar-content::-webkit-scrollbar-thumb:hover,
-.app-container.dark .editor-container::-webkit-scrollbar-thumb:hover {
+.app-container.dark .editor-container::-webkit-scrollbar-thumb:hover,
+.app-container.dark .main-content::-webkit-scrollbar-thumb:hover,
+.app-container.dark .bn-container::-webkit-scrollbar-thumb:hover,
+.app-container.dark .bn-editor::-webkit-scrollbar-thumb:hover,
+.app-container.dark .ProseMirror::-webkit-scrollbar-thumb:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }

@@ -24,6 +24,11 @@
     pointer-events: none;
 }
 
+/* 深色模式下侧边栏区域背景 */
+.app-container.dark .sidebar-wrapper {
+    background-color: #12161c;
+}
+
 /* ========== 侧边栏 ========== */
 .sidebar {
     width: var(--sidebar-width);
