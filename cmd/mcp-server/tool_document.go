@@ -46,6 +46,10 @@ func (s *MCPServer) toolCreateDocument(args json.RawMessage) ToolCallResult {
 		if err := s.docStorage.Save(doc.ID, params.Content); err != nil {
 			return errorResult("Created but failed to save content: " + err.Error())
 		}
+		// 触发 RAG 索引
+		if s.ragService != nil {
+			go s.ragService.IndexDocument(doc.ID)
+		}
 	}
 
 	data, _ := json.MarshalIndent(doc, "", "  ")
@@ -72,6 +76,10 @@ func (s *MCPServer) toolUpdateDocument(args json.RawMessage) ToolCallResult {
 		return errorResult("Failed to update: " + err.Error())
 	}
 	s.docRepo.UpdateTimestamp(params.ID)
+	// 触发 RAG 索引
+	if s.ragService != nil {
+		go s.ragService.IndexDocument(params.ID)
+	}
 	return textResult("Document updated successfully")
 }
 
@@ -84,6 +92,10 @@ func (s *MCPServer) toolDeleteDocument(args json.RawMessage) ToolCallResult {
 	}
 	if err := s.docRepo.Delete(params.ID); err != nil {
 		return errorResult("Failed to delete: " + err.Error())
+	}
+	// 删除 RAG 向量索引
+	if s.ragService != nil {
+		go s.ragService.DeleteDocument(params.ID)
 	}
 	return textResult("Document deleted successfully")
 }

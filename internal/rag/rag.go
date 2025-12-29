@@ -93,6 +93,14 @@ func (s *Service) ReindexAll() (int, error) {
 	return s.indexer.ReindexAll()
 }
 
+// DeleteDocument 删除文档的所有向量索引
+func (s *Service) DeleteDocument(docID string) error {
+	if err := s.init(); err != nil {
+		return err
+	}
+	return s.store.DeleteByDocID(docID)
+}
+
 // GetIndexedCount 获取已索引的文档数量
 func (s *Service) GetIndexedCount() (int, error) {
 	if s.store == nil {

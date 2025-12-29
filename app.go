@@ -324,6 +324,10 @@ func (a *App) DeleteDocument(id string) error {
 	if err == nil {
 		// 更新搜索索引
 		a.searchService.RemoveIndex(id)
+		// 删除 RAG 向量索引
+		if a.ragService != nil {
+			go a.ragService.DeleteDocument(id)
+		}
 		// 异步清理未使用的图像
 		go a.cleanupUnusedImages()
 	}
