@@ -18,20 +18,12 @@ export function CreateDocument(arg1) {
   return window['go']['main']['App']['CreateDocument'](arg1);
 }
 
-export function CreateFolder(arg1) {
-  return window['go']['main']['App']['CreateFolder'](arg1);
-}
-
 export function CreateTagGroup(arg1) {
   return window['go']['main']['App']['CreateTagGroup'](arg1);
 }
 
 export function DeleteDocument(arg1) {
   return window['go']['main']['App']['DeleteDocument'](arg1);
-}
-
-export function DeleteFolder(arg1) {
-  return window['go']['main']['App']['DeleteFolder'](arg1);
 }
 
 export function DeleteTagGroup(arg1) {
@@ -56,10 +48,6 @@ export function GetAllTags() {
 
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
-}
-
-export function GetFolders() {
-  return window['go']['main']['App']['GetFolders']();
 }
 
 export function GetRAGConfig() {
@@ -94,10 +82,6 @@ export function LoadExternalFile(arg1) {
   return window['go']['main']['App']['LoadExternalFile'](arg1);
 }
 
-export function MoveDocumentToFolder(arg1, arg2) {
-  return window['go']['main']['App']['MoveDocumentToFolder'](arg1, arg2);
-}
-
 export function OpenExternalFile() {
   return window['go']['main']['App']['OpenExternalFile']();
 }
@@ -118,20 +102,12 @@ export function RenameDocument(arg1, arg2) {
   return window['go']['main']['App']['RenameDocument'](arg1, arg2);
 }
 
-export function RenameFolder(arg1, arg2) {
-  return window['go']['main']['App']['RenameFolder'](arg1, arg2);
-}
-
 export function RenameTagGroup(arg1, arg2) {
   return window['go']['main']['App']['RenameTagGroup'](arg1, arg2);
 }
 
 export function ReorderDocuments(arg1) {
   return window['go']['main']['App']['ReorderDocuments'](arg1);
-}
-
-export function ReorderFolders(arg1) {
-  return window['go']['main']['App']['ReorderFolders'](arg1);
 }
 
 export function ReorderTagGroups(arg1) {
@@ -176,10 +152,6 @@ export function SemanticSearchDocuments(arg1, arg2) {
 
 export function SetActiveDocument(arg1) {
   return window['go']['main']['App']['SetActiveDocument'](arg1);
-}
-
-export function SetFolderCollapsed(arg1, arg2) {
-  return window['go']['main']['App']['SetFolderCollapsed'](arg1, arg2);
 }
 
 export function SetTagColor(arg1, arg2) {

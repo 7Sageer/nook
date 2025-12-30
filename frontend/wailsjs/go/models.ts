@@ -59,31 +59,6 @@ export namespace document {
 
 }
 
-export namespace folder {
-	
-	export class Folder {
-	    id: string;
-	    name: string;
-	    order: number;
-	    createdAt: number;
-	    collapsed: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new Folder(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.order = source["order"];
-	        this.createdAt = source["createdAt"];
-	        this.collapsed = source["collapsed"];
-	    }
-	}
-
-}
-
 export namespace main {
 	
 	export class ChunkMatch {

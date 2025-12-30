@@ -48,13 +48,16 @@ export const TagGroupItem = memo(function TagGroupItem({
         return [...documents].sort((a, b) => a.order - b.order);
     }, [documents]);
 
-    // Droppable wraps entire group for larger drop target
+    const isCollapsed = group.collapsed ?? false;
+
+    // Droppable only on header to allow precise drop targeting
+    // This prevents accidental selection of collapsed groups when dragging over them
     const {
-        setNodeRef: setGroupDroppableRef,
+        setNodeRef: setHeaderDroppableRef,
         isOver,
     } = useDroppable({
         id: `doc-container:${group.name}`,
-        data: { type: 'doc-container', containerId: group.name },
+        data: { type: 'doc-container', containerId: group.name, collapsed: isCollapsed },
     });
 
     const handleRenameSubmit = () => {
@@ -71,11 +74,8 @@ export const TagGroupItem = memo(function TagGroupItem({
         onEditingChange?.(group.name);
     };
 
-    const isCollapsed = group.collapsed ?? false;
-
     return (
         <motion.div
-            ref={setGroupDroppableRef}
             className={`folder-item ${isOver ? 'drop-target' : ''}`}
             layout
             initial={{ opacity: 0, y: -10 }}
@@ -83,6 +83,7 @@ export const TagGroupItem = memo(function TagGroupItem({
             exit={{ opacity: 0, y: -10 }}
         >
             <div
+                ref={setHeaderDroppableRef}
                 className="folder-header"
                 onClick={() => onToggle(group.name)}
                 role="treeitem"

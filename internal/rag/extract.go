@@ -98,8 +98,11 @@ func ExtractBlocksWithConfig(content []byte, config ChunkConfig) []ExtractedBloc
 		}
 	}
 
-	// 第三遍：合并连续的短块
-	result = mergeShortBlocks(afterListAggregation, config)
+	// 第三遍：合并 heading 到下一个内容块
+	afterHeadingMerge := mergeHeadingsWithContent(afterListAggregation)
+
+	// 第四遍：合并连续的短块
+	result = mergeShortBlocks(afterHeadingMerge, config)
 
 	return result
 }
@@ -186,6 +189,47 @@ func mergeShortBlocks(blocks []ExtractedBlock, config ChunkConfig) []ExtractedBl
 			result = append(result, block)
 			i++
 		}
+	}
+
+	return result
+}
+
+// mergeHeadingsWithContent 将 heading 块合并到下一个内容块
+// 规则：
+// 1. heading 不单独成为 chunk
+// 2. 连续的 heading 全部合并到下一个非 heading 块
+// 3. 如果文档以 heading 结尾（没有后续内容），保留该 heading
+func mergeHeadingsWithContent(blocks []ExtractedBlock) []ExtractedBlock {
+	if len(blocks) == 0 {
+		return blocks
+	}
+
+	var result []ExtractedBlock
+	var pendingHeadings []string
+
+	for _, block := range blocks {
+		if strings.HasPrefix(block.Type, "heading") {
+			// 收集 heading，暂不输出
+			pendingHeadings = append(pendingHeadings, block.Content)
+		} else {
+			// 非 heading 块：将之前的 heading 作为前缀
+			if len(pendingHeadings) > 0 {
+				prefix := strings.Join(pendingHeadings, "\n") + "\n\n"
+				block.Content = prefix + block.Content
+				pendingHeadings = nil
+			}
+			result = append(result, block)
+		}
+	}
+
+	// 处理末尾的 heading（没有后续内容的情况）
+	if len(pendingHeadings) > 0 {
+		result = append(result, ExtractedBlock{
+			ID:             generateAggregatedID(pendingHeadings),
+			Type:           "trailing_headings",
+			Content:        strings.Join(pendingHeadings, "\n"),
+			HeadingContext: pendingHeadings[len(pendingHeadings)-1],
+		})
 	}
 
 	return result

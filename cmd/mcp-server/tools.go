@@ -164,7 +164,7 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Type: "object",
 				Properties: map[string]Property{
 					"query":       {Type: "string", Description: "Natural language search query"},
-					"limit":       {Type: "number", Description: "Maximum results to return (default: 5, max: 20)"},
+					"limit":       {Type: "number", Description: "Maximum results to return (default: 5)"},
 					"granularity": {Type: "string", Description: "Result granularity: 'documents' for document-level results (default), 'chunks' for text blocks"},
 				},
 				Required: []string{"query"},

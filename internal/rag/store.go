@@ -239,6 +239,25 @@ func (s *VectorStore) GetIndexedDocCount() (int, error) {
 	return count, nil
 }
 
+// GetAllDocIDs 获取所有已索引的文档 ID
+func (s *VectorStore) GetAllDocIDs() ([]string, error) {
+	rows, err := s.db.Query(`SELECT DISTINCT doc_id FROM block_vectors`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var docIDs []string
+	for rows.Next() {
+		var docID string
+		if err := rows.Scan(&docID); err != nil {
+			return nil, err
+		}
+		docIDs = append(docIDs, docID)
+	}
+	return docIDs, nil
+}
+
 // serializeVector 将 float32 切片序列化为字节
 func serializeVector(vec []float32) []byte {
 	buf := make([]byte, len(vec)*4)

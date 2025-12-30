@@ -17,14 +17,42 @@ import {
   DndContext,
   DragOverlay,
   useDroppable,
-  closestCenter,
+  pointerWithin,
   PointerSensor,
   useSensor,
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
+  type CollisionDetection,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+
+/**
+ * Custom collision detection that prioritizes expanded groups over collapsed ones.
+ * When dragging across collapsed groups, they won't be selected unless they are the
+ * only match (i.e., pointer is directly on the collapsed group's header).
+ */
+const collisionDetectionWithExpandedPriority: CollisionDetection = (args) => {
+  const collisions = pointerWithin(args);
+
+  if (collisions.length <= 1) {
+    return collisions;
+  }
+
+  // Check if any collision is with an expanded (non-collapsed) doc-container
+  const expandedContainers = collisions.filter(collision => {
+    const data = collision.data?.droppableContainer?.data?.current;
+    return data?.type === 'doc-container' && !data?.collapsed;
+  });
+
+  // If there are expanded containers, prefer them
+  if (expandedContainers.length > 0) {
+    return expandedContainers;
+  }
+
+  // Otherwise return original collisions
+  return collisions;
+};
 
 const UNCATEGORIZED_CONTAINER_ID = '__uncategorized__';
 
@@ -359,7 +387,7 @@ export function Sidebar({
 
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={collisionDetectionWithExpandedPriority}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           onDragCancel={() => {
