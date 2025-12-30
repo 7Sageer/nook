@@ -2,7 +2,9 @@ package rag
 
 import (
 	"notion-lite/internal/document"
+	"regexp"
 	"sort"
+	"strings"
 )
 
 // SemanticSearchResult 搜索结果（包含文档标题）- Chunk 级别
@@ -18,6 +20,7 @@ type SemanticSearchResult struct {
 // ChunkMatch 匹配的 chunk 信息
 type ChunkMatch struct {
 	BlockID        string  `json:"blockId"`
+	SourceBlockId  string  `json:"sourceBlockId,omitempty"` // 原始 BlockNote block ID（用于定位）
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
 	HeadingContext string  `json:"headingContext"`
@@ -116,6 +119,7 @@ func (s *Searcher) SearchDocuments(query string, limit int) ([]DocumentSearchRes
 
 		chunk := ChunkMatch{
 			BlockID:        r.BlockID,
+			SourceBlockId:  parseSourceBlockId(r.BlockID),
 			Content:        r.Content,
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,
@@ -162,4 +166,43 @@ func (s *Searcher) SearchDocuments(query string, limit int) ([]DocumentSearchRes
 	}
 
 	return output, nil
+}
+
+// uuidPattern 匹配 UUID 格式
+var uuidPattern = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
+
+// parseSourceBlockId 从存储的 blockId 解析出原始的 BlockNote block ID
+// 支持的格式：
+// - 普通块：{blockId} 或 {blockId}_chunk_N
+// - Bookmark：{docId}_{blockId}_bookmark 或 {docId}_{blockId}_bookmark_chunk_N
+// - 聚合块：agg_xxx（无法定位，返回空）
+func parseSourceBlockId(blockId string) string {
+	// 聚合块无法定位到原始块
+	if strings.HasPrefix(blockId, "agg_") {
+		return ""
+	}
+
+	// 移除 _chunk_N 后缀
+	id := blockId
+	if idx := strings.Index(id, "_chunk_"); idx != -1 {
+		id = id[:idx]
+	}
+
+	// 处理 bookmark 格式：{docId}_{blockId}_bookmark
+	if strings.HasSuffix(id, "_bookmark") {
+		id = strings.TrimSuffix(id, "_bookmark")
+		// 提取两个 UUID，第二个是原始 blockId
+		uuids := uuidPattern.FindAllString(id, -1)
+		if len(uuids) >= 2 {
+			return uuids[1]
+		}
+		return ""
+	}
+
+	// 普通块：直接返回（可能是原始 UUID）
+	if uuidPattern.MatchString(id) {
+		return id
+	}
+
+	return ""
 }

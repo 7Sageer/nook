@@ -29,6 +29,7 @@ export interface SemanticSearchResult {
 
 export interface ChunkMatch {
   blockId: string;
+  sourceBlockId?: string; // 原始 BlockNote block ID（用于定位）
   content: string;
   blockType: string;
   headingContext: string;

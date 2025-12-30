@@ -59,7 +59,7 @@ export function SidebarSearchResults({
                                     matchCount={res.matchedChunks.length}
                                     isActive={false}
                                     variant="semantic"
-                                    onClick={() => onSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
+                                    onClick={() => onSelectSemantic(res.docId, res.matchedChunks[0]?.sourceBlockId || '')}
                                 />
                             ))}
                         </AnimatePresence>
