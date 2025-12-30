@@ -94,12 +94,25 @@
     width: 100%;
     position: relative;
     border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
+    border-left: 3px solid var(--bn-colors-menu-background, #d0d0d0);
     background: var(--bn-colors-editor-background, var(--bg-primary));
     text-decoration: none;
     color: inherit;
     overflow: hidden;
     user-select: none !important;
     -webkit-user-select: none !important;
+    transition: border-left-color 0.2s ease;
+}
+
+/* 已索引状态 - 左边框变为 success 色 */
+.bookmark-card.indexed {
+    border-left-color: var(--success);
+}
+
+/* 索引失败状态 - 左边框变为 error 色 */
+.bookmark-card.index-error {
+    border-left-color: #fa5252;
+    border-color: #ffc9c9;
 }
 
 .bookmark-card * {
@@ -116,6 +129,10 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transform: translateY(-1px);
     border-color: var(--bn-colors-highlighted-text, #0070f3);
+}
+
+.bookmark-card.index-error:hover {
+    border-color: #fa5252;
 }
 
 /* Action Buttons */
@@ -139,27 +156,39 @@
     justify-content: center;
     width: 28px;
     height: 28px;
-    border: none;
+    border: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
     border-radius: 6px;
-    background: var(--bn-colors-editor-background, var(--bg-primary));
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-    color: var(--bn-colors-side-menu-text, #666);
+    background: var(--bg-primary, #fff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    color: var(--text-tertiary, #666);
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: all 0.15s ease;
 }
 
 .bookmark-action-btn:hover {
-    background: var(--bn-colors-hovered-background, #f0f0f0);
-    color: var(--bn-colors-editor-text, #333);
+    background: var(--bg-hover, #f5f5f5);
+    color: var(--text-primary, #333);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
 /* 索引状态样式 */
 .bookmark-action-btn.indexed {
-    color: #40c057;
+    color: var(--success);
+}
+
+.bookmark-action-btn.index-error {
+    color: #fa5252;
 }
 
 .bookmark-action-btn.indexed:hover {
-    color: #2f9e44;
+    color: var(--success);
+    filter: brightness(0.85);
+}
+
+.bookmark-action-btn.index-error:hover {
+    color: #fa5252;
+    background: #fff5f5;
 }
 
 .bookmark-action-btn:disabled {
@@ -171,6 +200,7 @@
 .animate-spin {
     animation: bookmark-spin 1s linear infinite;
 }
+
 
 .bookmark-content {
     flex: 1;

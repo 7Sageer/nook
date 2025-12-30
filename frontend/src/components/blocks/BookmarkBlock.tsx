@@ -1,8 +1,9 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Pencil, ExternalLink, RefreshCw, Check, Loader2 } from "lucide-react";
+import { Pencil, ExternalLink, RefreshCw, Check, Loader2, AlertCircle } from "lucide-react";
 import { FetchLinkMetadata, IndexBookmarkContent } from "../../../wailsjs/go/main/App";
+import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/BookmarkBlock.css";
 
@@ -22,13 +23,14 @@ export const BookmarkBlock = createReactBlockSpec(
             error: { default: "" },
             indexed: { default: false },
             indexing: { default: false },
+            indexError: { default: "" },
         },
         content: "none",
     },
     {
         render: (props) => {
             const { block, editor } = props;
-            const { url, title, description, image, favicon, siteName, loading, error, indexed, indexing } = block.props;
+            const { url, title, description, image, favicon, siteName, loading, error, indexed, indexing, indexError } = block.props;
             const { activeId } = useDocumentContext();
 
             const [inputValue, setInputValue] = useState(url || "");
@@ -69,7 +71,7 @@ export const BookmarkBlock = createReactBlockSpec(
                 if (!currentBlock) return;
 
                 editor.updateBlock(currentBlock, {
-                    props: { ...currentBlock.props, indexing: true },
+                    props: { ...currentBlock.props, indexing: true, indexError: "" },
                 });
 
                 try {
@@ -80,7 +82,7 @@ export const BookmarkBlock = createReactBlockSpec(
                     const latestBlock = editor.getBlock(block.id);
                     if (latestBlock) {
                         editor.updateBlock(latestBlock, {
-                            props: { ...latestBlock.props, indexed: true, indexing: false },
+                            props: { ...latestBlock.props, indexed: true, indexing: false, indexError: "" },
                         });
                     }
                 } catch (err) {
@@ -88,7 +90,7 @@ export const BookmarkBlock = createReactBlockSpec(
                     const latestBlock = editor.getBlock(block.id);
                     if (latestBlock) {
                         editor.updateBlock(latestBlock, {
-                            props: { ...latestBlock.props, indexing: false },
+                            props: { ...latestBlock.props, indexing: false, indexError: "Failed to index" },
                         });
                     }
                 }
@@ -197,8 +199,10 @@ export const BookmarkBlock = createReactBlockSpec(
             // Render bookmark card
             return (
                 <div
-                    className="bookmark-block bookmark-card"
+                    className={`bookmark-block bookmark-card ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
                     contentEditable={false}
+                    onClick={() => BrowserOpenURL(url)}
+                    style={{ cursor: "pointer" }}
                 >
                     <div className="bookmark-content">
                         <div className="bookmark-title">{title || url}</div>
@@ -230,11 +234,11 @@ export const BookmarkBlock = createReactBlockSpec(
                             />
                         </div>
                     )}
+                    {/* 右上角的操作按钮 */}
                     <div className="bookmark-actions">
-                        {/* 索引状态指示器 */}
                         <button
-                            className={`bookmark-action-btn ${indexed ? 'indexed' : ''}`}
-                            title={indexing ? "Indexing..." : indexed ? "Re-index content" : "Index content"}
+                            className={`bookmark-action-btn ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
+                            title={indexing ? "Indexing..." : indexed ? "Re-index content" : indexError ? "Indexing failed, retry?" : "Index content"}
                             disabled={indexing}
                             onClick={(e) => {
                                 e.preventDefault();
@@ -246,6 +250,8 @@ export const BookmarkBlock = createReactBlockSpec(
                                 <Loader2 size={14} className="animate-spin" />
                             ) : indexed ? (
                                 <Check size={14} />
+                            ) : indexError ? (
+                                <AlertCircle size={14} />
                             ) : (
                                 <RefreshCw size={14} />
                             )}
@@ -268,7 +274,7 @@ export const BookmarkBlock = createReactBlockSpec(
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                window.open(url, "_blank");
+                                BrowserOpenURL(url);
                             }}
                         >
                             <ExternalLink size={14} />
