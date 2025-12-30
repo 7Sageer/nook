@@ -4,6 +4,7 @@ import { X, Database, Bot, RefreshCw, Palette, Sun, Moon, Monitor } from 'lucide
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
 import { getStrings } from '../constants/strings';
 import type { EmbeddingConfig, RAGStatus } from '../types/settings';
+import { Slider } from '@mantine/core';
 import './SettingsModal.css';
 
 // 外观面板
@@ -53,20 +54,30 @@ const AppearancePanel: React.FC<AppearancePanelProps> = ({
                 {/* 侧边栏宽度滑块 */}
                 <div className="form-group">
                     <label>{strings.SETTINGS.SIDEBAR_WIDTH}: {sidebarWidth}px</label>
-                    <input
-                        type="range"
+                    <Slider
                         min={MIN_SIDEBAR_WIDTH}
                         max={MAX_SIDEBAR_WIDTH}
                         step={25}
                         value={sidebarWidth}
-                        onChange={(e) => onSidebarWidthChange(parseInt(e.target.value, 10))}
-                        className="sidebar-width-slider-default"
+                        onChange={onSidebarWidthChange}
+                        marks={[
+                            { value: MIN_SIDEBAR_WIDTH, label: `${MIN_SIDEBAR_WIDTH}px` },
+                            { value: (MIN_SIDEBAR_WIDTH + MAX_SIDEBAR_WIDTH) / 2, label: `${(MIN_SIDEBAR_WIDTH + MAX_SIDEBAR_WIDTH) / 2}px` },
+                            { value: MAX_SIDEBAR_WIDTH, label: `${MAX_SIDEBAR_WIDTH}px` },
+                        ]}
+                        styles={{
+                            track: { backgroundColor: 'var(--border-primary)' },
+                            bar: { backgroundColor: 'var(--primary)' },
+                            thumb: {
+                                backgroundColor: 'var(--primary)',
+                                borderColor: 'var(--bg-modal)',
+                            },
+                            markLabel: {
+                                color: 'var(--text-muted)',
+                                fontSize: '11px',
+                            },
+                        }}
                     />
-                    <div className="slider-labels">
-                        <span>{MIN_SIDEBAR_WIDTH}px</span>
-                        <span>{(MIN_SIDEBAR_WIDTH + MAX_SIDEBAR_WIDTH) / 2}px</span>
-                        <span>{MAX_SIDEBAR_WIDTH}px</span>
-                    </div>
                 </div>
             </div>
         </div>
