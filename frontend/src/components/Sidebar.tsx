@@ -62,7 +62,7 @@ interface SidebarProps {
   onSelectExternal?: (path: string) => void;
   onCloseExternal?: (path: string) => void;
   collapsed?: boolean;
-  onSelectInternal?: (id: string) => void;
+  onSelectInternal?: (id: string, blockId?: string) => void;
 }
 
 export function Sidebar({
@@ -212,9 +212,7 @@ export function Sidebar({
   // For semantic search results
   const handleSelectSemantic = useCallback((docId: string, blockId: string) => {
     if (onSelectInternal) {
-      onSelectInternal(docId);
-      // Optionally handle block scrolling here if supported by switchDoc or passed separately
-      // For now just switching doc is fine
+      onSelectInternal(docId, blockId);
     } else {
       switchDoc(docId);
     }

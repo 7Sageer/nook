@@ -23,6 +23,8 @@ interface UseEditorReturn {
     markDirty: () => void;
     /** 清除脏标记（保存后调用） */
     clearDirty: () => void;
+    /** 设置目标块 ID，文档加载后自动滚动到该块 */
+    setTargetBlockId: (blockId: string | null) => void;
 }
 
 /**
@@ -42,6 +44,9 @@ export function useEditor({
 
     // 脏标记：跟踪用户是否有未保存的更改
     const [isDirty, setIsDirty] = useState(false);
+
+    // 目标块 ID：文档加载后自动滚动到该块
+    const [targetBlockId, setTargetBlockId] = useState<string | null>(null);
 
     const markDirty = useCallback(() => {
         setIsDirty(true);
@@ -117,6 +122,40 @@ export function useEditor({
         }
     }, [activeId, editorKey, isExternalMode, loadContent]);
 
+    // 滚动到目标块
+    useEffect(() => {
+        if (!targetBlockId || contentLoading || editorAnimating) return;
+
+        // 延迟执行，确保编辑器 DOM 已渲染
+        const timer = setTimeout(() => {
+            // 解析块 ID：处理聚合 ID 和分割 ID
+            let actualBlockId = targetBlockId;
+
+            // 分割块 ID 格式：originalId_chunk_N
+            if (targetBlockId.includes('_chunk_')) {
+                actualBlockId = targetBlockId.split('_chunk_')[0];
+            }
+            // 聚合块 ID 格式：agg_xxx 或 merged_short_blocks
+            // 这些无法直接映射到原始块，尝试在文档中查找
+
+            // 尝试通过 data-id 属性查找块元素
+            const blockElement = document.querySelector(`[data-id="${actualBlockId}"]`);
+            if (blockElement) {
+                blockElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 添加高亮效果
+                blockElement.classList.add('highlight-block');
+                setTimeout(() => {
+                    blockElement.classList.remove('highlight-block');
+                }, 2000);
+            }
+
+            // 清除目标块 ID
+            setTargetBlockId(null);
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, [targetBlockId, contentLoading, editorAnimating]);
+
     return {
         content,
         setContent,
@@ -130,5 +169,6 @@ export function useEditor({
         isDirty,
         markDirty,
         clearDirty,
+        setTargetBlockId,
     };
 }

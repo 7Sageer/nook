@@ -75,6 +75,7 @@ function AppContent() {
     isDirty,
     markDirty,
     clearDirty,
+    setTargetBlockId,
   } = useEditor({
     isExternalMode,
     activeId,
@@ -225,10 +226,14 @@ function AppContent() {
   });
 
   // 切换回内部文档
-  const handleSwitchToInternal = useCallback((id: string) => {
+  const handleSwitchToInternal = useCallback((id: string, blockId?: string) => {
     deactivateExternal();
     switchDoc(id);
-  }, [deactivateExternal, switchDoc]);
+    // 如果指定了 blockId，设置目标块以便滚动
+    if (blockId) {
+      setTargetBlockId(blockId);
+    }
+  }, [deactivateExternal, switchDoc, setTargetBlockId]);
 
   // 重新激活外部文件
   const handleSwitchToExternal = useCallback(async (path: string) => {

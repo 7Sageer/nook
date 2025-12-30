@@ -67,3 +67,20 @@
 .ProseMirror li {
     transition: padding-left 0.1s ease;
 }
+
+/* ========== 搜索结果高亮 ========== */
+/* 语义搜索跳转时的块高亮效果 */
+.highlight-block {
+    animation: highlight-fade 2s ease-out;
+}
+
+@keyframes highlight-fade {
+    0% {
+        background-color: var(--primary-alpha-25);
+        box-shadow: 0 0 0 2px var(--primary-alpha-25);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: none;
+    }
+}

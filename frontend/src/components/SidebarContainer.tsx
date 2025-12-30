@@ -12,7 +12,7 @@ interface SidebarContainerProps {
   collapsed: boolean;
 
   // 回调
-  onSelectInternal: (id: string) => void;
+  onSelectInternal: (id: string, blockId?: string) => void;
   onSelectExternal: (path: string) => void;
   onCloseExternal: (path: string) => void;
 }
