@@ -1,9 +1,9 @@
 
 import { ReactNode } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
-import { listItemVariants } from '../utils/animations';
+import { listItemVariants, durations, easings } from '../utils/animations';
 
 interface SearchResultItemProps {
     title: string;
@@ -16,6 +16,25 @@ interface SearchResultItemProps {
     onDelete?: (e: React.MouseEvent) => void;
     index: number;
 }
+
+// Simpler animation for semantic items - no fixed height
+const semanticItemVariants = {
+    initial: { opacity: 0, x: -12 },
+    animate: ({ index }: { index: number }) => ({
+        opacity: 1,
+        x: 0,
+        transition: {
+            delay: index * durations.stagger,
+            duration: durations.normal,
+            ease: easings.standard,
+        },
+    }),
+    exit: {
+        opacity: 0,
+        x: -12,
+        transition: { duration: durations.fast },
+    },
+};
 
 export function SearchResultItem({
     title,
@@ -35,10 +54,12 @@ export function SearchResultItem({
         ? `document-item semantic-item ${isActive ? 'active' : ''}`
         : `document-item ${isActive ? 'active' : ''}`;
 
+    // Use different variants based on item type
+    const variants = isSemantic ? semanticItemVariants : listItemVariants;
+
     return (
         <motion.li
-            layout
-            variants={listItemVariants}
+            variants={variants}
             initial="initial"
             animate="animate"
             exit="exit"

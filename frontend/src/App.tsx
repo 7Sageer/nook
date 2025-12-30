@@ -16,6 +16,7 @@ import { useH1Visibility } from "./hooks/useH1Visibility";
 import { useAppEvents } from "./hooks/useAppEvents";
 import { useExternalLinks } from "./hooks/useExternalLinks";
 import { useFileWatcher } from "./hooks/useFileWatcher";
+import { useExternalFileHandler } from "./hooks/useExternalFileHandler";
 import { Block } from "@blocknote/core";
 import { getStrings } from "./constants/strings";
 import "./App.css";
@@ -151,6 +152,18 @@ function AppContent() {
     onError: (err) => console.error('Export failed:', err),
   });
 
+  // 外部文件操作
+  const { handleOpenExternal, handleSwitchToExternal } = useExternalFileHandler({
+    externalFiles,
+    openExternal,
+    openExternalByPath,
+    activateExternal,
+    parseMarkdownToBlocks,
+    setContent,
+    setContentLoading,
+    setEditorKey,
+  });
+
   // 使用 useAppEvents 处理文件打开和保存事件
   const { handleChange } = useAppEvents({
     openExternalByPath,
@@ -189,25 +202,7 @@ function AppContent() {
     setSettingsOpen(true);
   }, []);
 
-  // 打开外部文件
-  const handleOpenExternal = useCallback(async () => {
-    const file = await openExternal();
-    if (!file) return;
 
-    setContentLoading(true);
-    try {
-      const blocks = await parseMarkdownToBlocks(file.content);
-      setContent(blocks);
-      setEditorKey(`external-${file.path}`);
-      activateExternal();
-    } catch (e) {
-      console.error('解析文件失败:', e);
-      setEditorKey(`external-${file.path}`);
-      activateExternal();
-    } finally {
-      setContentLoading(false);
-    }
-  }, [activateExternal, openExternal, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
   // 监听菜单事件
   useMenuEvents({
@@ -235,26 +230,7 @@ function AppContent() {
     }
   }, [deactivateExternal, switchDoc, setTargetBlockId]);
 
-  // 重新激活外部文件
-  const handleSwitchToExternal = useCallback(async (path: string) => {
-    const file = externalFiles.find(f => f.path === path);
-    if (!file) return;
-    setContentLoading(true);
-    try {
-      const { LoadExternalFile } = await import('../wailsjs/go/main/App');
-      const fileContent = await LoadExternalFile(file.path);
 
-      openExternalByPath(file.path, fileContent);
-      const blocks = await parseMarkdownToBlocks(fileContent);
-      setContent(blocks);
-      setEditorKey(`external-${file.path}`);
-      activateExternal(file.path);
-    } catch (e) {
-      console.error('打开外部文件失败:', e);
-    } finally {
-      setContentLoading(false);
-    }
-  }, [activateExternal, externalFiles, openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
 
   return (
     <div className={`app-container ${theme}`}>

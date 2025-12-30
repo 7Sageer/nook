@@ -3,6 +3,7 @@ import { useSettings, ThemeSetting, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from 
 import { X, Database, Bot, RefreshCw, Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
 import { getStrings } from '../constants/strings';
+import type { EmbeddingConfig, RAGStatus } from '../types/settings';
 import './SettingsModal.css';
 
 // 外观面板
@@ -185,22 +186,6 @@ const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
     </div>
 );
 
-interface EmbeddingConfig {
-    provider: string;
-    baseUrl: string;
-    model: string;
-    apiKey: string;
-    maxChunkSize: number;
-    overlap: number;
-}
-
-interface RAGStatus {
-    enabled: boolean;
-    indexedDocs: number;
-    indexedBookmarks: number;
-    totalDocs: number;
-    lastIndexTime: string;
-}
 
 interface SettingsModalProps {
     isOpen: boolean;

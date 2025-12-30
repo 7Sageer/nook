@@ -91,6 +91,16 @@
     margin-bottom: var(--space-4);
 }
 
+/* Semantic results list - ensure proper layout for animation */
+.semantic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
 .search-empty-state {
     padding: var(--space-4);
     text-align: center;

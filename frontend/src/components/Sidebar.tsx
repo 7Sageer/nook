@@ -5,57 +5,16 @@ import { useSettings } from '../contexts/SettingsContext';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
-import { DocumentList } from './DocumentList';
+import { useSidebarDnD } from '../hooks/useSidebarDnD';
 import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch, SidebarSearchRef } from './SidebarSearch';
-import { TagGroupItem } from './TagGroupItem';
+import { SidebarSearchResults } from './SidebarSearchResults';
+import { SidebarTagGroups } from './SidebarTagGroups';
 import { TagList } from './TagList';
-import { SearchResultItem } from './SearchResultItem';
-import { Plus, FileText, GripVertical, Sparkles } from 'lucide-react';
+import { FileText, GripVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
-import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
-import {
-  DndContext,
-  DragOverlay,
-  useDroppable,
-  pointerWithin,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragStartEvent,
-  type DragEndEvent,
-  type CollisionDetection,
-} from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-
-/**
- * Custom collision detection that prioritizes expanded groups over collapsed ones.
- * When dragging across collapsed groups, they won't be selected unless they are the
- * only match (i.e., pointer is directly on the collapsed group's header).
- */
-const collisionDetectionWithExpandedPriority: CollisionDetection = (args) => {
-  const collisions = pointerWithin(args);
-
-  if (collisions.length <= 1) {
-    return collisions;
-  }
-
-  // Check if any collision is with an expanded (non-collapsed) doc-container
-  const expandedContainers = collisions.filter(collision => {
-    const data = collision.data?.droppableContainer?.data?.current;
-    return data?.type === 'doc-container' && !data?.collapsed;
-  });
-
-  // If there are expanded containers, prefer them
-  if (expandedContainers.length > 0) {
-    return expandedContainers;
-  }
-
-  // Otherwise return original collisions
-  return collisions;
-};
-
-const UNCATEGORIZED_CONTAINER_ID = '__uncategorized__';
+import { LayoutGroup } from 'framer-motion';
+import { DndContext, DragOverlay } from '@dnd-kit/core';
 
 interface SidebarProps {
   externalFiles?: ExternalFileInfo[];
@@ -86,7 +45,6 @@ export function Sidebar({
     deleteTagGroup,
     renameTagGroup,
     toggleTagGroupCollapsed,
-    reorderTagGroups,
     addTag,
     removeTag,
     allTags,
@@ -101,9 +59,6 @@ export function Sidebar({
 
   const searchRef = useRef<SidebarSearchRef>(null);
   const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [activeDragDocId, setActiveDragDocId] = useState<string | null>(null);
-  const [sourceGroupName, setSourceGroupName] = useState<string | null>(null);
 
   // Global Keyboard Shortcut for Search
   useEffect(() => {
@@ -111,7 +66,6 @@ export function Sidebar({
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         searchRef.current?.focus();
-        // Optional: clear search on focus if desired, user requested "toggle" usually implies focus
         if (!query) {
           clearSearch();
         }
@@ -145,7 +99,6 @@ export function Sidebar({
       const matchingGroups = docTags.filter(t => groupNameSet.has(t));
 
       if (matchingGroups.length > 0) {
-        // Add to ALL matching groups
         for (const groupName of matchingGroups) {
           const list = docsByGroup.get(groupName);
           if (list) {
@@ -180,25 +133,27 @@ export function Sidebar({
     ? ungroupedDocs.filter(doc => doc.tags?.includes(selectedTag))
     : ungroupedDocs;
 
-  // Logic to determine what to display
-  // When searching, we don't return a single list anymore, but render specific sections
-
   // Filter allTags to show only non-group tags in Tag section
   const regularTags = useMemo(() => {
     return allTags.filter(t => !t.isGroup);
   }, [allTags]);
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 5 },
-    })
-  );
-
-  const { setNodeRef: setUncategorizedDroppableRef } = useDroppable({
-    id: `doc-container:${UNCATEGORIZED_CONTAINER_ID}`,
-    data: { type: 'doc-container', containerId: UNCATEGORIZED_CONTAINER_ID },
-    disabled: !!query,
+  // Use extracted DnD hook
+  const {
+    isDragging,
+    activeDragDocId,
+    sensors,
+    collisionDetection,
+    handleDragStart,
+    handleDragEnd,
+    handleDragCancel,
+  } = useSidebarDnD({
+    groupNameSet,
+    ungroupedDocs,
+    filteredDocsByGroup,
+    addTag,
+    removeTag,
+    reorderDocuments,
   });
 
   // Event handlers
@@ -210,7 +165,6 @@ export function Sidebar({
     }
   }, [onSelectInternal, switchDoc]);
 
-  // For semantic search results
   const handleSelectSemantic = useCallback((docId: string, blockId: string) => {
     if (onSelectInternal) {
       onSelectInternal(docId, blockId);
@@ -231,7 +185,7 @@ export function Sidebar({
     createTagGroup();
   }, [createTagGroup]);
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = useCallback((id: string) => {
     openModal(
       {
         title: STRINGS.MODALS.DELETE_TITLE,
@@ -239,9 +193,9 @@ export function Sidebar({
       },
       () => deleteDoc(id)
     );
-  };
+  }, [openModal, STRINGS.MODALS, deleteDoc]);
 
-  const handleDeleteGroupClick = (name: string) => {
+  const handleDeleteGroupClick = useCallback((name: string) => {
     openModal(
       {
         title: STRINGS.MODALS.DELETE_GROUP_TITLE,
@@ -249,115 +203,7 @@ export function Sidebar({
       },
       () => deleteTagGroup(name)
     );
-  };
-
-  // Handle DnD start - track which doc is being dragged and from which group
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setIsDragging(true);
-    const activeData = event.active.data.current;
-    if (activeData?.type === 'document') {
-      setActiveDragDocId(activeData.docId);
-      // Find the source group (containerId tells us which group it came from)
-      const containerId = activeData.containerId;
-      if (containerId !== UNCATEGORIZED_CONTAINER_ID && groupNameSet.has(containerId)) {
-        setSourceGroupName(containerId);
-      } else {
-        setSourceGroupName(null);
-      }
-    }
-  }, [groupNameSet]);
-
-  // Handle DnD end - move by default (remove source, add target), Alt+drag to copy
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setIsDragging(false);
-    setActiveDragDocId(null);
-    const currentSourceGroup = sourceGroupName;
-    setSourceGroupName(null);
-
-    if (!over) return;
-
-    const activeData = active.data.current;
-    if (activeData?.type !== 'document') return;
-
-    const docId = activeData.docId;
-    const overId = over.id as string;
-    const overData = over.data.current;
-
-    // Check if Alt/Option key is held (copy mode)
-    const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
-
-    // Case 1: Dropping on a group container (move/copy between groups)
-    if (overId.startsWith('doc-container:')) {
-      const targetGroup = overId.replace('doc-container:', '');
-
-      // Skip if dropping on the same group
-      if (targetGroup === currentSourceGroup) return;
-
-      if (targetGroup === UNCATEGORIZED_CONTAINER_ID) {
-        // Dropped to uncategorized: remove source group tag
-        if (currentSourceGroup) {
-          await removeTag(docId, currentSourceGroup);
-        }
-      } else {
-        // Dropped to a group
-        // Move: remove source tag first (if exists and different), then add target
-        if (!isCopyMode && currentSourceGroup && currentSourceGroup !== targetGroup) {
-          await removeTag(docId, currentSourceGroup);
-        }
-        await addTag(docId, targetGroup);
-      }
-      return;
-    }
-
-    // Case 2: Dropping on another document
-    if (overData?.type === 'document') {
-      const sourceContainerId = activeData.containerId;
-      const targetContainerId = overData.containerId;
-
-      // Same container: reorder
-      if (sourceContainerId === targetContainerId) {
-        // Get documents in this container
-        let containerDocs: DocumentMeta[];
-        if (sourceContainerId === UNCATEGORIZED_CONTAINER_ID) {
-          containerDocs = ungroupedDocs;
-        } else {
-          containerDocs = filteredDocsByGroup.get(sourceContainerId) || [];
-        }
-
-        // Find indices
-        const sortedDocs = [...containerDocs].sort((a, b) => a.order - b.order);
-        const activeIndex = sortedDocs.findIndex(d => d.id === docId);
-        const overIndex = sortedDocs.findIndex(d => d.id === overData.docId);
-
-        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-          // Create new order
-          const newOrder = [...sortedDocs];
-          const [removed] = newOrder.splice(activeIndex, 1);
-          newOrder.splice(overIndex, 0, removed);
-
-          // Call reorder with new IDs order
-          await reorderDocuments(newOrder.map(d => d.id));
-        }
-      } else {
-        // Different container: move between groups
-        const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
-
-        if (targetContainerId === UNCATEGORIZED_CONTAINER_ID) {
-          // Moving to uncategorized: remove source group tag
-          if (currentSourceGroup) {
-            await removeTag(docId, currentSourceGroup);
-          }
-        } else {
-          // Moving to a different group
-          if (!isCopyMode && currentSourceGroup && currentSourceGroup !== targetContainerId) {
-            await removeTag(docId, currentSourceGroup);
-          }
-          await addTag(docId, targetContainerId);
-        }
-      }
-    }
-  }, [sourceGroupName, addTag, removeTag, ungroupedDocs, filteredDocsByGroup, reorderDocuments]);
+  }, [openModal, STRINGS.MODALS, deleteTagGroup]);
 
   return (
     <>
@@ -386,159 +232,47 @@ export function Sidebar({
 
         <DndContext
           sensors={sensors}
-          collisionDetection={collisionDetectionWithExpandedPriority}
+          collisionDetection={collisionDetection}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          onDragCancel={() => {
-            setIsDragging(false);
-            setActiveDragDocId(null);
-            setSourceGroupName(null);
-          }}
+          onDragCancel={handleDragCancel}
         >
           <LayoutGroup>
             <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
-
-              {/* === SEARCH RESULTS VIEW === */}
               {query ? (
-                <div className="search-results-container">
-
-                  {/* 1. Semantic Matches (放在上方) */}
-                  <div className="search-section semantic-section">
-                    <div className="section-label-row">
-                      <span className="section-label">
-                        <Sparkles size={12} className="semantic-icon" />
-                        Semantic Matches
-                      </span>
-                      {isLoadingSemantic && <span className="loading-spinner-tiny"></span>}
-                    </div>
-                    {semanticResults.length > 0 ? (
-                      <ul className="document-list semantic-list">
-                        {semanticResults.map((res, index) => (
-                          <SearchResultItem
-                            key={res.docId}
-                            index={index}
-                            title={res.docTitle}
-                            snippet={res.matchedChunks[0]?.content || ''}
-                            matchCount={res.matchedChunks.length}
-                            isActive={false} // Semantic results don't track active ID the same way or use global activeId if needed
-                            variant="semantic"
-                            onClick={() => handleSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      !isLoadingSemantic && query.length > 2 && (
-                        <div className="search-empty-state">
-                          No semantic matches found
-                        </div>
-                      )
-                    )}
-                  </div>
-
-                  {/* 2. Keyword Matches */}
-                  <div className="search-section">
-                    <div className="section-label-row">
-                      <span className="section-label">{STRINGS.LABELS.DOCUMENTS || "Documents"}</span>
-                    </div>
-                    {results.length > 0 ? (
-                      <ul className="document-list" role="listbox">
-                        <DocumentList
-                          items={results}
-                          activeId={activeExternalPath ? null : activeId}
-                          isSearchMode={true}
-                          onSelect={handleSelect}
-                          onDelete={() => { }}
-                          sortable={false}
-                          containerId="search-results"
-                        />
-                      </ul>
-                    ) : (
-                      <div className="search-empty-state">
-                        {isSearching ? "Searching..." : "No exact matches found"}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <SidebarSearchResults
+                  query={query}
+                  semanticResults={semanticResults}
+                  keywordResults={results}
+                  isLoadingSemantic={isLoadingSemantic}
+                  isSearching={isSearching}
+                  activeId={activeId}
+                  activeExternalPath={activeExternalPath ?? null}
+                  onSelectSemantic={handleSelectSemantic}
+                  onSelectKeyword={handleSelect}
+                  strings={STRINGS}
+                />
               ) : (
-                /* === REGULAR VIEW === */
-                <>
-                  {/* Tag Groups Section */}
-                  {sortedGroups.length > 0 && (
-                    <div className="folders-section" role="tree" aria-label={STRINGS.LABELS.GROUPS}>
-                      <div className="section-label-row">
-                        <span className="section-label">{STRINGS.LABELS.GROUPS}</span>
-                        <button
-                          className="section-add-btn"
-                          onClick={handleCreateGroup}
-                          title={STRINGS.TOOLTIPS.NEW_GROUP}
-                          aria-label={STRINGS.TOOLTIPS.NEW_GROUP}
-                        >
-                          <Plus size={14} aria-hidden="true" />
-                        </button>
-                      </div>
-                      <SortableContext
-                        items={sortedGroups.map(g => g.name)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <AnimatePresence mode="popLayout">
-                          {sortedGroups.map((group, index) => (
-                            <TagGroupItem
-                              key={group.name}
-                              group={group}
-                              index={index}
-                              documents={filteredDocsByGroup.get(group.name) || []}
-                              disabled={editingGroupName === group.name}
-                              activeDocId={activeExternalPath ? null : activeId}
-                              onToggle={toggleTagGroupCollapsed}
-                              onRename={renameTagGroup}
-                              onDelete={handleDeleteGroupClick}
-                              onSelectDocument={handleSelect}
-                              onDeleteDocument={handleDeleteClick}
-                              onEditingChange={setEditingGroupName}
-                              onAddDocument={handleCreateInGroup}
-                            />
-                          ))}
-                        </AnimatePresence>
-                      </SortableContext>
-                    </div>
-                  )}
-
-                  {/* Uncategorized Documents */}
-                  {tagFilteredUngrouped.length > 0 && (
-                    <motion.div
-                      ref={setUncategorizedDroppableRef}
-                      className="uncategorized-section"
-                      layout={!isDragging ? 'position' : false}
-                    >
-                      <div className="section-label-row docs-section-header">
-                        {sortedGroups.length > 0 && <hr className="section-divider" />}
-                        <button
-                          className="section-add-btn"
-                          onClick={handleCreate}
-                          title={STRINGS.TOOLTIPS.NEW_DOC}
-                          aria-label={STRINGS.TOOLTIPS.NEW_DOC}
-                        >
-                          <Plus size={14} aria-hidden="true" />
-                        </button>
-                      </div>
-                      <ul
-                        className="document-list"
-                        role="listbox"
-                        aria-label={STRINGS.LABELS.DOCUMENTS}
-                      >
-                        <DocumentList
-                          items={tagFilteredUngrouped}
-                          activeId={activeExternalPath ? null : activeId}
-                          isSearchMode={false}
-                          onSelect={handleSelect}
-                          onDelete={handleDeleteClick}
-                          sortable={true}
-                          containerId={UNCATEGORIZED_CONTAINER_ID}
-                        />
-                      </ul>
-                    </motion.div>
-                  )}
-                </>
+                <SidebarTagGroups
+                  sortedGroups={sortedGroups}
+                  filteredDocsByGroup={filteredDocsByGroup}
+                  tagFilteredUngrouped={tagFilteredUngrouped}
+                  activeDocId={activeId}
+                  activeExternalPath={activeExternalPath ?? null}
+                  isDragging={isDragging}
+                  editingGroupName={editingGroupName}
+                  hasQuery={!!query}
+                  onToggleCollapsed={toggleTagGroupCollapsed}
+                  onRenameGroup={renameTagGroup}
+                  onDeleteGroup={handleDeleteGroupClick}
+                  onSelectDocument={handleSelect}
+                  onDeleteDocument={handleDeleteClick}
+                  onEditingChange={setEditingGroupName}
+                  onAddDocumentToGroup={handleCreateInGroup}
+                  onCreateGroup={handleCreateGroup}
+                  onCreateDocument={handleCreate}
+                  strings={STRINGS}
+                />
               )}
             </div>
           </LayoutGroup>
