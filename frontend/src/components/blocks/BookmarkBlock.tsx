@@ -58,13 +58,81 @@ export const BookmarkBlock = createReactBlockSpec(
                 };
             }, [isEditing]);
 
+            // Auto-fetch metadata when block is created with URL but no title (from paste menu)
+            // Track fetched blocks globally to prevent re-fetch on component remount
+            useEffect(() => {
+                // Skip if no URL or not in loading state or already has title
+                if (!url || !loading || title) return;
+
+                // Use a global tracking mechanism since component may remount
+                const fetchKey = `bookmark-fetch-${block.id}`;
+                if ((window as unknown as Record<string, boolean>)[fetchKey]) return;
+                (window as unknown as Record<string, boolean>)[fetchKey] = true;
+
+                (async () => {
+                    try {
+                        const metadata = await FetchLinkMetadata(url);
+
+                        const currentBlock = editor.getBlock(block.id);
+                        if (currentBlock) {
+                            editor.updateBlock(currentBlock, {
+                                props: {
+                                    url,
+                                    title: metadata.title || url,
+                                    description: metadata.description || "",
+                                    image: metadata.image || "",
+                                    favicon: metadata.favicon || "",
+                                    siteName: metadata.siteName || "",
+                                    loading: false,
+                                    error: "",
+                                },
+                            });
+
+                            // Trigger RAG indexing after successful fetch
+                            if (activeId) {
+                                try {
+                                    const blockForIndex = editor.getBlock(block.id);
+                                    if (blockForIndex) {
+                                        editor.updateBlock(blockForIndex, {
+                                            props: { ...blockForIndex.props, indexing: true, indexError: "" },
+                                        });
+                                    }
+                                    await IndexBookmarkContent(url, activeId, block.id);
+                                    const latestBlock = editor.getBlock(block.id);
+                                    if (latestBlock) {
+                                        editor.updateBlock(latestBlock, {
+                                            props: { ...latestBlock.props, indexed: true, indexing: false, indexError: "" },
+                                        });
+                                    }
+                                } catch {
+                                    // Indexing failed, but metadata was saved successfully
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        const currentBlock = editor.getBlock(block.id);
+                        if (currentBlock) {
+                            editor.updateBlock(currentBlock, {
+                                props: {
+                                    ...currentBlock.props,
+                                    url,
+                                    loading: false,
+                                    error: err instanceof Error ? err.message : "Failed to fetch link metadata",
+                                },
+                            });
+                        }
+                    } finally {
+                        // Clean up the tracking key after a delay
+                        setTimeout(() => {
+                            delete (window as unknown as Record<string, boolean>)[fetchKey];
+                        }, 5000);
+                    }
+                })();
+            }, [url, loading, title, block.id, editor, activeId]);
+
             // 索引书签内容到 RAG
             const handleIndex = useCallback(async (urlToIndex: string) => {
-                console.log("[BookmarkBlock] handleIndex called with:", urlToIndex, "activeId:", activeId);
-                if (!urlToIndex || !activeId) {
-                    console.log("[BookmarkBlock] handleIndex skipped - missing url or activeId");
-                    return;
-                }
+                if (!urlToIndex || !activeId) return;
 
                 // 获取最新的 block 状态
                 const currentBlock = editor.getBlock(block.id);
@@ -75,9 +143,7 @@ export const BookmarkBlock = createReactBlockSpec(
                 });
 
                 try {
-                    console.log("[BookmarkBlock] Calling IndexBookmarkContent...");
                     await IndexBookmarkContent(urlToIndex, activeId, block.id);
-                    console.log("[BookmarkBlock] IndexBookmarkContent succeeded!");
                     // 再次获取最新状态
                     const latestBlock = editor.getBlock(block.id);
                     if (latestBlock) {
@@ -85,8 +151,7 @@ export const BookmarkBlock = createReactBlockSpec(
                             props: { ...latestBlock.props, indexed: true, indexing: false, indexError: "" },
                         });
                     }
-                } catch (err) {
-                    console.error("[BookmarkBlock] IndexBookmarkContent error:", err);
+                } catch {
                     const latestBlock = editor.getBlock(block.id);
                     if (latestBlock) {
                         editor.updateBlock(latestBlock, {
@@ -97,7 +162,6 @@ export const BookmarkBlock = createReactBlockSpec(
             }, [block.id, editor, activeId]);
 
             const handleFetch = useCallback(async (urlToFetch: string) => {
-                console.log("[BookmarkBlock] handleFetch called with:", urlToFetch);
                 if (!urlToFetch.trim()) return;
 
                 // Normalize URL
@@ -105,7 +169,6 @@ export const BookmarkBlock = createReactBlockSpec(
                 if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
                     normalizedUrl = "https://" + normalizedUrl;
                 }
-                console.log("[BookmarkBlock] Normalized URL:", normalizedUrl);
 
                 // Set loading state
                 editor.updateBlock(block, {
@@ -113,9 +176,7 @@ export const BookmarkBlock = createReactBlockSpec(
                 });
 
                 try {
-                    console.log("[BookmarkBlock] Calling FetchLinkMetadata...");
                     const metadata = await FetchLinkMetadata(normalizedUrl);
-                    console.log("[BookmarkBlock] Metadata received:", metadata);
                     editor.updateBlock(block, {
                         props: {
                             url: normalizedUrl,
@@ -130,10 +191,8 @@ export const BookmarkBlock = createReactBlockSpec(
                     });
                     setIsEditing(false);
                     // 异步触发 RAG 索引
-                    console.log("[BookmarkBlock] Triggering handleIndex...");
                     handleIndex(normalizedUrl);
                 } catch (err) {
-                    console.error("[BookmarkBlock] FetchLinkMetadata error:", err);
                     editor.updateBlock(block, {
                         props: {
                             ...block.props,

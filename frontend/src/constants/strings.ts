@@ -76,6 +76,11 @@ export const EN = {
         NEW_GROUP: "New Group",
     },
 
+    PASTE_LINK: {
+        AS_LINK: "Paste as link",
+        AS_BOOKMARK: "Create bookmark",
+    },
+
     SETTINGS: {
         TITLE: "Settings",
         KNOWLEDGE_BASE: "Knowledge Base",

@@ -7,11 +7,13 @@ import {
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
 import { BlockNoteSchema, defaultBlockSpecs, Block } from "@blocknote/core";
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState, useCallback } from "react";
 import { getStrings } from "../constants/strings";
 import { useSettings } from "../contexts/SettingsContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
+import { isValidUrl, PasteLinkState } from "../plugins/pasteLink";
+import { PasteLinkMenu } from "./PasteLinkMenu";
 import "../plugins/smoothCaret.css";
 import { SaveImage } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
@@ -21,6 +23,7 @@ import {
   createChineseIMEPlugin,
   bookmarkAtomExtension,
   createBookmarkMenuItem,
+  insertBookmarkWithUrl,
 } from "../utils/editorExtensions";
 
 // Re-export getIsComposing for external use
@@ -65,6 +68,17 @@ export function Editor({
   // Fix for drag preview in Wails WebView
   useDragPreviewFix();
 
+  // 粘贴链接菜单状态
+  const [pasteLinkState, setPasteLinkState] = useState<PasteLinkState | null>(null);
+
+  // Ref for editor container to attach paste listener
+  const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  // 关闭菜单
+  const handleDismissPasteMenu = useCallback(() => {
+    setPasteLinkState(null);
+  }, []);
+
   // Create custom schema with bookmark block
   const schema = useMemo(
     () =>
@@ -105,6 +119,29 @@ export function Editor({
     },
   });
 
+  // 粘贴为链接文本
+  const handlePasteAsLink = useCallback(() => {
+    if (!pasteLinkState || !editor) return;
+
+    editor.insertInlineContent([
+      {
+        type: "link",
+        href: pasteLinkState.url,
+        content: pasteLinkState.url,
+      },
+    ]);
+
+    setPasteLinkState(null);
+  }, [pasteLinkState, editor]);
+
+  // 创建书签
+  const handleCreateBookmark = useCallback(() => {
+    if (!pasteLinkState || !editor) return;
+
+    insertBookmarkWithUrl(editor, pasteLinkState.url);
+    setPasteLinkState(null);
+  }, [pasteLinkState, editor]);
+
   // Inject plugins after editor is created (only once)
   useEffect(() => {
     if (editor && editor._tiptapEditor && !pluginInjectedRef.current) {
@@ -129,6 +166,7 @@ export function Editor({
           const chineseIMEPlugin = createChineseIMEPlugin(editor);
 
           // Add plugins to the editor's state
+          // Note: pasteLinkPlugin is now registered via pasteLinkExtension in useCreateBlockNote
           const { state } = view;
           const newState = state.reconfigure({
             plugins: [...state.plugins, smoothCaretPlugin, bookmarkSelectionPlugin, chineseIMEPlugin],
@@ -147,6 +185,59 @@ export function Editor({
     }
   }, [editor]);
 
+  // DOM-level paste event listener to capture real clipboard data
+  // TipTap/BlockNote creates synthetic events without clipboardData, so we need to listen at DOM level
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container || !editor) return;
+
+    const handlePaste = (event: ClipboardEvent) => {
+      // Skip if pasting into bookmark input field - let the URL paste directly
+      const target = event.target as HTMLElement;
+      if (target.tagName === 'INPUT' && target.closest('.bookmark-input')) {
+        return;
+      }
+
+      const clipboardData = event.clipboardData;
+      if (!clipboardData) return;
+
+      const text = clipboardData.getData('text/plain').trim();
+      if (!isValidUrl(text)) return;
+
+      // Prevent default paste behavior for URLs
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Get cursor position from the editor
+      try {
+        const view = editor._tiptapEditor?.view;
+        if (view) {
+          const { from } = view.state.selection;
+          const coords = view.coordsAtPos(from);
+          setPasteLinkState({
+            url: text,
+            position: { x: coords.left, y: coords.bottom + 4 },
+            cursorPos: from,
+          });
+        }
+      } catch {
+        // Fallback: show menu at default position
+        setPasteLinkState({
+          url: text,
+          position: { x: 200, y: 200 },
+          cursorPos: 0,
+        });
+      }
+    };
+
+    // Use capture phase to intercept before TipTap processes
+    container.addEventListener('paste', handlePaste, { capture: true });
+
+    return () => {
+      container.removeEventListener('paste', handlePaste, { capture: true });
+    };
+  }, [editor]);
+
   useEffect(() => {
     if (editorRef) {
       editorRef.current = editor;
@@ -154,7 +245,7 @@ export function Editor({
   }, [editor, editorRef]);
 
   return (
-    <div className="editor-wrapper">
+    <div className="editor-wrapper" ref={editorContainerRef}>
       {showTags && (
         <div className="editor-tags-area">
           <EditorTagInput
@@ -196,6 +287,16 @@ export function Editor({
           }}
         />
       </BlockNoteView>
+      {pasteLinkState && (
+        <PasteLinkMenu
+          url={pasteLinkState.url}
+          position={pasteLinkState.position}
+          onPasteAsText={handlePasteAsLink}
+          onCreateBookmark={handleCreateBookmark}
+          onDismiss={handleDismissPasteMenu}
+          language={language}
+        />
+      )}
     </div>
   );
 }

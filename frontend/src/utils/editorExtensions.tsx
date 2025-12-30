@@ -139,6 +139,49 @@ export function insertOrUpdateBookmarkForSlashMenu(editor: InternalEditor) {
 }
 
 /**
+ * Insert a bookmark block with a pre-filled URL.
+ * Used when pasting a URL and choosing to create a bookmark.
+ */
+export function insertBookmarkWithUrl(editor: InternalEditor, url: string) {
+    const currentBlock = editor.getTextCursorPosition().block;
+    const currentContent = currentBlock.content;
+
+    // 检查当前块是否为空
+    const isEmpty =
+        Array.isArray(currentContent) && currentContent.length === 0;
+
+    const bookmarkProps = {
+        url,
+        title: "",
+        description: "",
+        image: "",
+        favicon: "",
+        siteName: "",
+        loading: true,
+        error: "",
+        indexed: false,
+        indexing: false,
+        indexError: "",
+    };
+
+    const newBlock = isEmpty
+        ? editor.updateBlock(currentBlock, {
+              type: "bookmark" as const,
+              props: bookmarkProps,
+          })
+        : editor.insertBlocks(
+              [{ type: "bookmark" as const, props: bookmarkProps }],
+              currentBlock,
+              "after"
+          )[0];
+
+    editor.setTextCursorPosition(newBlock);
+    setSelectionToNextContentEditableBlock(editor);
+
+    return newBlock;
+}
+
+/**
  * Create a custom slash menu item for inserting bookmarks.
  */
 export function createBookmarkMenuItem(editor: InternalEditor, strings: StringsType) {
