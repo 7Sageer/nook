@@ -183,7 +183,7 @@ func (s *Service) Reinitialize() error {
 	return nil
 }
 
-// IndexBookmarkContent 索引书签网页内容
+// IndexBookmarkContent 索引书签网页内容（分块存储）
 func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	if err := s.init(); err != nil {
 		return err
@@ -200,32 +200,64 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 		return fmt.Errorf("no content extracted from URL")
 	}
 
-	// 3. 生成唯一的块 ID
-	bookmarkBlockID := fmt.Sprintf("%s_%s_bookmark", sourceDocID, blockID)
-
-	// 4. 计算内容哈希
-	contentHash := HashContent(content.TextContent)
-
-	// 5. 生成 embedding
-	embedding, err := s.embedder.Embed(content.TextContent)
-	if err != nil {
-		return fmt.Errorf("failed to generate embedding: %w", err)
-	}
-
-	// 6. 构建上下文信息
+	// 3. 构建上下文信息
 	headingContext := content.Title
 	if content.SiteName != "" {
 		headingContext = fmt.Sprintf("%s - %s", content.Title, content.SiteName)
 	}
 
-	// 7. 存入向量数据库
-	return s.store.Upsert(&BlockVector{
-		ID:             bookmarkBlockID,
-		DocID:          sourceDocID,
-		Content:        content.TextContent,
-		ContentHash:    contentHash,
-		BlockType:      "bookmark",
-		HeadingContext: headingContext,
-		Embedding:      embedding,
-	})
+	// 4. 生成基础 ID
+	baseID := fmt.Sprintf("%s_%s_bookmark", sourceDocID, blockID)
+
+	// 5. 对内容进行分块
+	chunks := ChunkTextContent(content.TextContent, headingContext, baseID, s.indexer.chunkConfig)
+
+	// 如果分块结果为空，创建一个单独的块
+	if len(chunks) == 0 {
+		chunks = []ExtractedBlock{{
+			ID:             baseID,
+			Type:           "bookmark",
+			Content:        content.TextContent,
+			HeadingContext: headingContext,
+		}}
+	}
+
+	// 调试输出
+	if debugChunks {
+		fmt.Printf("\n🔖 [RAG] Indexing bookmark: %s\n", url)
+		fmt.Printf("   Title: %s\n", content.Title)
+		fmt.Printf("   Total chunks: %d\n", len(chunks))
+		fmt.Println("   ─────────────────────────────────────────────────")
+		for i, chunk := range chunks {
+			fmt.Printf("   [%d] ID: %s\n", i, chunk.ID)
+			fmt.Printf("       Content (%4d chars): %s\n",
+				len(chunk.Content), truncateContent(chunk.Content, 80))
+		}
+		fmt.Println("   ─────────────────────────────────────────────────")
+	}
+
+	// 6. 为每个 chunk 生成 embedding 并存储
+	for _, chunk := range chunks {
+		if chunk.Content == "" {
+			continue
+		}
+
+		embedding, err := s.embedder.Embed(chunk.Content)
+		if err != nil {
+			continue // 跳过失败的块
+		}
+
+		contentHash := HashContent(chunk.Content)
+		s.store.Upsert(&BlockVector{
+			ID:             chunk.ID,
+			DocID:          sourceDocID,
+			Content:        chunk.Content,
+			ContentHash:    contentHash,
+			BlockType:      "bookmark",
+			HeadingContext: chunk.HeadingContext,
+			Embedding:      embedding,
+		})
+	}
+
+	return nil
 }

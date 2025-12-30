@@ -135,6 +135,22 @@ export function useEditor({
             if (targetBlockId.includes('_chunk_')) {
                 actualBlockId = targetBlockId.split('_chunk_')[0];
             }
+
+            // 处理 bookmark ID 格式：{docID}_{blockID}_bookmark
+            // docID 和 blockID 都是 UUID 格式（包含连字符）
+            if (actualBlockId.includes('_bookmark')) {
+                // 移除 _bookmark 后缀
+                const withoutSuffix = actualBlockId.replace(/_bookmark$/, '');
+                // 格式：{docID}_{blockID}，用下划线分隔两个 UUID
+                // UUID 格式：xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+                const uuidPattern = /([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})_([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i;
+                const match = withoutSuffix.match(uuidPattern);
+                if (match) {
+                    // match[2] 是 blockID
+                    actualBlockId = match[2];
+                }
+            }
+
             // 聚合块 ID 格式：agg_xxx 或 merged_short_blocks
             // 这些无法直接映射到原始块，尝试在文档中查找
 

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -37,6 +38,36 @@ var listTypes = map[string]bool{
 	"bulletListItem":   true,
 	"numberedListItem": true,
 	"checkListItem":    true,
+}
+
+// ExtractBookmarkBlockIDs 从文档 JSON 中提取所有 bookmark 块的 ID
+// 用于清理孤儿 bookmark 索引
+func ExtractBookmarkBlockIDs(content []byte) []string {
+	var blocks []interface{}
+	if err := json.Unmarshal(content, &blocks); err != nil {
+		return nil
+	}
+
+	var bookmarkIDs []string
+	extractBookmarkIDsRecursive(blocks, &bookmarkIDs)
+	return bookmarkIDs
+}
+
+// extractBookmarkIDsRecursive 递归提取 bookmark 块 ID
+func extractBookmarkIDsRecursive(blocks []interface{}, ids *[]string) {
+	for _, block := range blocks {
+		if blockMap, ok := block.(map[string]interface{}); ok {
+			if blockType, ok := blockMap["type"].(string); ok && blockType == "bookmark" {
+				if id, ok := blockMap["id"].(string); ok {
+					*ids = append(*ids, id)
+				}
+			}
+			// 递归处理 children
+			if children, ok := blockMap["children"].([]interface{}); ok {
+				extractBookmarkIDsRecursive(children, ids)
+			}
+		}
+	}
 }
 
 // ExtractBlocks 从 BlockNote JSON 内容提取块（使用默认配置）
@@ -428,4 +459,109 @@ func extractTextFromContent(content []interface{}) string {
 		}
 	}
 	return strings.TrimSpace(strings.Join(texts, ""))
+}
+
+// ChunkTextContent 对纯文本进行分块（用于书签等外部内容）
+// 按段落分割，合并短段落，分割长段落
+func ChunkTextContent(text, headingContext, baseID string, config ChunkConfig) []ExtractedBlock {
+	if strings.TrimSpace(text) == "" {
+		return nil
+	}
+
+	// 1. 按双换行分割为段落
+	paragraphs := strings.Split(text, "\n\n")
+	var cleanParagraphs []string
+	for _, p := range paragraphs {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			cleanParagraphs = append(cleanParagraphs, p)
+		}
+	}
+
+	if len(cleanParagraphs) == 0 {
+		return nil
+	}
+
+	// 2. 合并短段落 + 分割长段落
+	var chunks []string
+	var currentChunk strings.Builder
+
+	for _, para := range cleanParagraphs {
+		// 如果段落本身就超长，先分割它
+		if len(para) > config.MaxChunkSize {
+			// 先保存当前累积的内容
+			if currentChunk.Len() > 0 {
+				chunks = append(chunks, strings.TrimSpace(currentChunk.String()))
+				currentChunk.Reset()
+			}
+			// 按句子分割长段落
+			splitChunks := splitLongText(para, config)
+			chunks = append(chunks, splitChunks...)
+			continue
+		}
+
+		// 检查是否可以合并到当前 chunk
+		newLen := currentChunk.Len() + len(para)
+		if currentChunk.Len() > 0 {
+			newLen += 2 // 换行符
+		}
+
+		if newLen <= config.MaxMergedLength || currentChunk.Len() == 0 {
+			// 可以合并
+			if currentChunk.Len() > 0 {
+				currentChunk.WriteString("\n\n")
+			}
+			currentChunk.WriteString(para)
+		} else {
+			// 保存当前块，开始新块
+			chunks = append(chunks, strings.TrimSpace(currentChunk.String()))
+			currentChunk.Reset()
+			currentChunk.WriteString(para)
+		}
+	}
+
+	// 保存最后一个块
+	if currentChunk.Len() > 0 {
+		chunks = append(chunks, strings.TrimSpace(currentChunk.String()))
+	}
+
+	// 3. 转换为 ExtractedBlock
+	var result []ExtractedBlock
+	for i, chunk := range chunks {
+		if chunk == "" {
+			continue
+		}
+		result = append(result, ExtractedBlock{
+			ID:             fmt.Sprintf("%s_chunk_%d", baseID, i),
+			Type:           "bookmark_chunk",
+			Content:        chunk,
+			HeadingContext: headingContext,
+		})
+	}
+
+	return result
+}
+
+// splitLongText 分割超长文本
+func splitLongText(text string, config ChunkConfig) []string {
+	sentences := splitIntoSentences(text)
+	var result []string
+	var currentChunk strings.Builder
+
+	for _, sentence := range sentences {
+		if currentChunk.Len() > 0 && currentChunk.Len()+len(sentence) > config.MaxChunkSize {
+			result = append(result, strings.TrimSpace(currentChunk.String()))
+			// 应用 overlap
+			overlapContent := getOverlapContent(currentChunk.String(), config.Overlap)
+			currentChunk.Reset()
+			currentChunk.WriteString(overlapContent)
+		}
+		currentChunk.WriteString(sentence)
+	}
+
+	if currentChunk.Len() > 0 {
+		result = append(result, strings.TrimSpace(currentChunk.String()))
+	}
+
+	return result
 }

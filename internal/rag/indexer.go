@@ -117,10 +117,11 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		})
 	}
 
-	// 4. 删除已不存在的块（保留书签块）
+	// 4. 删除已不存在的块
 	var toDelete []string
 	for id := range existingHashes {
-		if !newBlockIDs[id] && !strings.HasSuffix(id, "_bookmark") {
+		// 常规块：如果在新的块列表中不存在，且不是 bookmark，则删除
+		if !newBlockIDs[id] && !strings.Contains(id, "_bookmark") {
 			toDelete = append(toDelete, id)
 		}
 	}
@@ -128,18 +129,31 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		idx.store.DeleteBlocks(toDelete)
 	}
 
+	// 5. 清理孤儿 bookmark（即在编辑器中已删除的 bookmark）
+	currentBookmarkBlockIDs := ExtractBookmarkBlockIDs([]byte(content))
+	if err := idx.store.DeleteOrphanBookmarks(docID, currentBookmarkBlockIDs); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
+	}
+
 	return nil
 }
 
 // ForceReindexDocument 强制重建单个文档索引（删除所有旧块后重新索引）
 func (idx *Indexer) ForceReindexDocument(docID string) error {
-	// 1. 删除该文档的所有现有块
-	idx.store.DeleteByDocID(docID)
-
-	// 2. 加载文档内容
+	// 1. 加载文档内容
 	content, err := idx.docStorage.Load(docID)
 	if err != nil {
 		return fmt.Errorf("failed to load document: %w", err)
+	}
+
+	// 2. 清理旧索引
+	// 删除该文档的所有非 bookmark 块
+	idx.store.DeleteNonBookmarkByDocID(docID)
+
+	// 清理孤儿 bookmark（保留当前存在的）
+	currentBookmarkBlockIDs := ExtractBookmarkBlockIDs([]byte(content))
+	if err := idx.store.DeleteOrphanBookmarks(docID, currentBookmarkBlockIDs); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
 	}
 
 	// 3. 使用新配置提取块

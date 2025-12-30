@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 	_ "github.com/mattn/go-sqlite3"
@@ -247,13 +248,121 @@ func (s *VectorStore) GetIndexedStats() (int, int, error) {
 		return 0, 0, err
 	}
 
-	var bookmarkCount int
-	err = s.db.QueryRow(`SELECT COUNT(*) FROM block_vectors WHERE block_type = 'bookmark'`).Scan(&bookmarkCount)
+	// For bookmarks, we need to count unique "base" bookmarks, not chunks.
+	// Since we don't have a separate table or column for base ID, we infer it from the ID.
+	// ID format: {docID}_{blockID}_bookmark_chunk_{N} or {docID}_{blockID}_bookmark
+	rows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'bookmark'`)
 	if err != nil {
 		return 0, 0, err
 	}
+	defer rows.Close()
 
-	return docCount, bookmarkCount, nil
+	uniqueBookmarks := make(map[string]bool)
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return 0, 0, err
+		}
+
+		baseID := id
+		// If it's a chunk, strip the suffix to get the base ID
+		if idx := strings.LastIndex(id, "_chunk_"); idx != -1 {
+			baseID = id[:idx]
+		}
+		uniqueBookmarks[baseID] = true
+	}
+
+	return docCount, len(uniqueBookmarks), nil
+}
+
+// GetBookmarkBlockIDs 获取文档的所有 bookmark 块 ID
+func (s *VectorStore) GetBookmarkBlockIDs(docID string) ([]string, error) {
+	rows, err := s.db.Query(`
+		SELECT id FROM block_vectors 
+		WHERE doc_id = ? AND block_type = 'bookmark'
+	`, docID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+// DeleteOrphanBookmarks 删除不在 keepBlockIDs 列表中的 bookmark 块
+// keepBlockIDs 是文档中当前存在的 bookmark 块的 BlockNote ID
+func (s *VectorStore) DeleteOrphanBookmarks(docID string, keepBlockIDs []string) error {
+	// 构建保留的 bookmark ID 前缀集合
+	keepPrefixes := make(map[string]bool)
+	for _, blockID := range keepBlockIDs {
+		prefix := fmt.Sprintf("%s_%s_bookmark", docID, blockID)
+		keepPrefixes[prefix] = true
+	}
+
+	// 获取所有 bookmark 块
+	allBookmarks, err := s.GetBookmarkBlockIDs(docID)
+	if err != nil {
+		return err
+	}
+
+	// 找出需要删除的块（ID 不以任何保留前缀开头）
+	var toDelete []string
+	for _, bookmarkID := range allBookmarks {
+		shouldKeep := false
+		for prefix := range keepPrefixes {
+			if strings.HasPrefix(bookmarkID, prefix) {
+				shouldKeep = true
+				break
+			}
+		}
+		if !shouldKeep {
+			toDelete = append(toDelete, bookmarkID)
+		}
+	}
+
+	if len(toDelete) > 0 {
+		return s.DeleteBlocks(toDelete)
+	}
+	return nil
+}
+
+// DeleteNonBookmarkByDocID 删除文档的所有非 bookmark 块
+func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 获取要删除的非 bookmark block IDs
+	rows, err := tx.Query(`
+		SELECT id FROM block_vectors 
+		WHERE doc_id = ? AND block_type != 'bookmark'
+	`, docID)
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	rows.Close()
+
+	// 删除向量和元数据
+	for _, id := range ids {
+		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+	}
+
+	return tx.Commit()
 }
 
 // GetAllDocIDs 获取所有已索引的文档 ID
