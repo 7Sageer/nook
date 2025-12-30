@@ -26,7 +26,6 @@ type App struct {
 	dataPath        string
 	docRepo         *document.Repository
 	docStorage      *document.Storage
-	folderRepo      *folder.Repository
 	searchService   *search.Service
 	settingsService *settings.Service
 	markdownService *markdown.Service
@@ -73,7 +72,6 @@ func NewApp() *App {
 		dataPath:        dataPath,
 		docRepo:         docRepo,
 		docStorage:      docStorage,
-		folderRepo:      folderRepo,
 		searchService:   searchService,
 		settingsService: settingsService,
 		markdownService: markdownService,
@@ -89,7 +87,7 @@ func NewApp() *App {
 	app.searchHandler = handlers.NewSearchHandler(docRepo, searchService, ragService)
 	app.ragHandler = handlers.NewRAGHandler(dataPath, docRepo, ragService)
 	app.settingsHandler = handlers.NewSettingsHandler(settingsService)
-	app.tagHandler = handlers.NewTagHandler(dataPath, docRepo, tagStore, watcherService)
+	app.tagHandler = handlers.NewTagHandler(dataPath, docRepo, tagStore, folderRepo, watcherService)
 	app.fileHandler = handlers.NewFileHandler(nil, dataPath, markdownService)
 
 	return app
@@ -102,7 +100,7 @@ func (a *App) startup(ctx context.Context) {
 	a.fileHandler.SetContext(ctx)
 
 	// 一次性迁移：将文件夹转换为标签组
-	a.migrateFoldersToTagGroups()
+	a.tagHandler.MigrateFoldersToTagGroups()
 
 	// 启动文件监听服务
 	if a.watcherService != nil {
@@ -143,52 +141,6 @@ func (a *App) shutdown(ctx context.Context) {
 		a.watcherService.Stop()
 	}
 	a.Cleanup()
-}
-
-// migrateFoldersToTagGroups 将文件夹迁移为标签组（一次性）
-func (a *App) migrateFoldersToTagGroups() {
-	foldersPath := filepath.Join(a.dataPath, "folders.json")
-
-	if _, err := os.Stat(foldersPath); os.IsNotExist(err) {
-		return
-	}
-
-	folders, err := a.folderRepo.GetAll()
-	if err != nil || len(folders) == 0 {
-		return
-	}
-
-	index, err := a.docRepo.GetAll()
-	if err != nil {
-		return
-	}
-
-	folderNameByID := make(map[string]string)
-	for _, f := range folders {
-		folderNameByID[f.ID] = f.Name
-		a.tagStore.CreateGroup(f.Name)
-		if f.Collapsed {
-			a.tagStore.SetGroupCollapsed(f.Name, true)
-		}
-	}
-
-	for _, doc := range index.Documents {
-		if doc.FolderId != "" {
-			if folderName, ok := folderNameByID[doc.FolderId]; ok {
-				a.docRepo.AddTag(doc.ID, folderName)
-				a.docRepo.MoveToFolder(doc.ID, "")
-			}
-		}
-	}
-
-	groupNames := make([]string, len(folders))
-	for i, f := range folders {
-		groupNames[i] = f.Name
-	}
-	a.tagStore.ReorderGroups(groupNames)
-
-	backupPath := foldersPath + ".bak"
-	os.Rename(foldersPath, backupPath)
 }
 
 func (a *App) handleExternalFileOpen(filePath string) {
@@ -264,83 +216,30 @@ func (a *App) ReorderDocuments(ids []string) error {
 
 // ========== 搜索 API (委托给 SearchHandler) ==========
 
-func (a *App) SearchDocuments(query string) ([]SearchResult, error) {
-	results, err := a.searchHandler.SearchDocuments(query)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]SearchResult, len(results))
-	for i, r := range results {
-		out[i] = SearchResult{ID: r.ID, Title: r.Title, Snippet: r.Snippet}
-	}
-	return out, nil
+func (a *App) SearchDocuments(query string) ([]handlers.SearchResult, error) {
+	return a.searchHandler.SearchDocuments(query)
 }
 
-func (a *App) SemanticSearch(query string, limit int) ([]SemanticSearchResult, error) {
-	results, err := a.searchHandler.SemanticSearch(query, limit)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]SemanticSearchResult, len(results))
-	for i, r := range results {
-		out[i] = SemanticSearchResult{
-			DocID: r.DocID, DocTitle: r.DocTitle, BlockID: r.BlockID,
-			Content: r.Content, BlockType: r.BlockType, Score: r.Score,
-		}
-	}
-	return out, nil
+func (a *App) SemanticSearch(query string, limit int) ([]handlers.SemanticSearchResult, error) {
+	return a.searchHandler.SemanticSearch(query, limit)
 }
 
-func (a *App) SemanticSearchDocuments(query string, limit int) ([]DocumentSearchResult, error) {
-	results, err := a.searchHandler.SemanticSearchDocuments(query, limit)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]DocumentSearchResult, len(results))
-	for i, r := range results {
-		chunks := make([]ChunkMatch, len(r.MatchedChunks))
-		for j, c := range r.MatchedChunks {
-			chunks[j] = ChunkMatch{
-				BlockID: c.BlockID, Content: c.Content, BlockType: c.BlockType,
-				HeadingContext: c.HeadingContext, Score: c.Score,
-			}
-		}
-		out[i] = DocumentSearchResult{
-			DocID: r.DocID, DocTitle: r.DocTitle, MaxScore: r.MaxScore, MatchedChunks: chunks,
-		}
-	}
-	return out, nil
+func (a *App) SemanticSearchDocuments(query string, limit int) ([]handlers.DocumentSearchResult, error) {
+	return a.searchHandler.SemanticSearchDocuments(query, limit)
 }
 
 // ========== RAG API (委托给 RAGHandler) ==========
 
-func (a *App) GetRAGConfig() (EmbeddingConfig, error) {
-	cfg, err := a.ragHandler.GetRAGConfig()
-	if err != nil {
-		return EmbeddingConfig{}, err
-	}
-	return EmbeddingConfig{
-		Provider: cfg.Provider, BaseURL: cfg.BaseURL, Model: cfg.Model,
-		APIKey: cfg.APIKey, MaxChunkSize: cfg.MaxChunkSize, Overlap: cfg.Overlap,
-	}, nil
+func (a *App) GetRAGConfig() (handlers.EmbeddingConfig, error) {
+	return a.ragHandler.GetRAGConfig()
 }
 
-func (a *App) SaveRAGConfig(config EmbeddingConfig) error {
-	return a.ragHandler.SaveRAGConfig(handlers.EmbeddingConfig{
-		Provider: config.Provider, BaseURL: config.BaseURL, Model: config.Model,
-		APIKey: config.APIKey, MaxChunkSize: config.MaxChunkSize, Overlap: config.Overlap,
-	})
+func (a *App) SaveRAGConfig(config handlers.EmbeddingConfig) error {
+	return a.ragHandler.SaveRAGConfig(config)
 }
 
-func (a *App) GetRAGStatus() RAGStatus {
-	s := a.ragHandler.GetRAGStatus()
-	return RAGStatus{
-		Enabled:          s.Enabled,
-		IndexedDocs:      s.IndexedDocs,
-		IndexedBookmarks: s.IndexedBookmarks,
-		TotalDocs:        s.TotalDocs,
-		LastIndexTime:    s.LastIndexTime,
-	}
+func (a *App) GetRAGStatus() handlers.RAGStatus {
+	return a.ragHandler.GetRAGStatus()
 }
 
 func (a *App) RebuildIndex() (int, error) {
@@ -354,18 +253,12 @@ func (a *App) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
-func (a *App) GetSettings() (Settings, error) {
-	s, err := a.settingsHandler.GetSettings()
-	if err != nil {
-		return Settings{Theme: "light", Language: "zh", SidebarWidth: 0}, nil
-	}
-	return Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth}, nil
+func (a *App) GetSettings() (handlers.Settings, error) {
+	return a.settingsHandler.GetSettings()
 }
 
-func (a *App) SaveSettings(s Settings) error {
-	return a.settingsHandler.SaveSettings(handlers.Settings{
-		Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth,
-	})
+func (a *App) SaveSettings(s handlers.Settings) error {
+	return a.settingsHandler.SaveSettings(s)
 }
 
 // ========== 标签 API (委托给 TagHandler) ==========
@@ -378,19 +271,8 @@ func (a *App) RemoveDocumentTag(docId string, tagName string) error {
 	return a.tagHandler.RemoveDocumentTag(docId, tagName)
 }
 
-func (a *App) GetAllTags() ([]TagInfo, error) {
-	tags, err := a.tagHandler.GetAllTags()
-	if err != nil {
-		return nil, err
-	}
-	out := make([]TagInfo, len(tags))
-	for i, t := range tags {
-		out[i] = TagInfo{
-			Name: t.Name, Count: t.Count, Color: t.Color,
-			IsGroup: t.IsGroup, Collapsed: t.Collapsed, Order: t.Order,
-		}
-	}
-	return out, nil
+func (a *App) GetAllTags() ([]handlers.TagInfo, error) {
+	return a.tagHandler.GetAllTags()
 }
 
 func (a *App) GetTagColors() map[string]string {
@@ -409,16 +291,8 @@ func (a *App) SetTagGroupCollapsed(name string, collapsed bool) error {
 	return a.tagHandler.SetTagGroupCollapsed(name, collapsed)
 }
 
-func (a *App) GetTagGroups() []TagInfo {
-	groups := a.tagHandler.GetTagGroups()
-	out := make([]TagInfo, len(groups))
-	for i, g := range groups {
-		out[i] = TagInfo{
-			Name: g.Name, Count: g.Count, Color: g.Color,
-			IsGroup: g.IsGroup, Collapsed: g.Collapsed, Order: g.Order,
-		}
-	}
-	return out
+func (a *App) GetTagGroups() []handlers.TagInfo {
+	return a.tagHandler.GetTagGroups()
 }
 
 func (a *App) ReorderTagGroups(names []string) error {
@@ -447,12 +321,8 @@ func (a *App) ExportHTMLFile(content string, defaultName string) error {
 	return a.fileHandler.ExportHTMLFile(content, defaultName)
 }
 
-func (a *App) OpenExternalFile() (ExternalFile, error) {
-	f, err := a.fileHandler.OpenExternalFile()
-	if err != nil {
-		return ExternalFile{}, err
-	}
-	return ExternalFile{Path: f.Path, Name: f.Name, Content: f.Content}, nil
+func (a *App) OpenExternalFile() (handlers.ExternalFile, error) {
+	return a.fileHandler.OpenExternalFile()
 }
 
 func (a *App) SaveExternalFile(path string, content string) error {

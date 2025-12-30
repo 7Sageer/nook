@@ -59,7 +59,7 @@ export namespace document {
 
 }
 
-export namespace main {
+export namespace handlers {
 	
 	export class ChunkMatch {
 	    blockId: string;

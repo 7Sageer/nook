@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"os"
 	"path/filepath"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/folder"
 	"notion-lite/internal/tag"
 	"notion-lite/internal/watcher"
 )
@@ -13,6 +15,7 @@ type TagHandler struct {
 	dataPath       string
 	docRepo        *document.Repository
 	tagStore       *tag.Store
+	folderRepo     *folder.Repository
 	watcherService *watcher.Service
 }
 
@@ -21,12 +24,14 @@ func NewTagHandler(
 	dataPath string,
 	docRepo *document.Repository,
 	tagStore *tag.Store,
+	folderRepo *folder.Repository,
 	watcherService *watcher.Service,
 ) *TagHandler {
 	return &TagHandler{
 		dataPath:       dataPath,
 		docRepo:        docRepo,
 		tagStore:       tagStore,
+		folderRepo:     folderRepo,
 		watcherService: watcherService,
 	}
 }
@@ -164,4 +169,54 @@ func (h *TagHandler) DeleteTagGroup(name string) error {
 		}
 	}
 	return h.tagStore.DeleteGroup(name)
+}
+
+// MigrateFoldersToTagGroups 将文件夹迁移为标签组（一次性）
+func (h *TagHandler) MigrateFoldersToTagGroups() {
+	if h.folderRepo == nil {
+		return
+	}
+
+	foldersPath := filepath.Join(h.dataPath, "folders.json")
+
+	if _, err := os.Stat(foldersPath); os.IsNotExist(err) {
+		return
+	}
+
+	folders, err := h.folderRepo.GetAll()
+	if err != nil || len(folders) == 0 {
+		return
+	}
+
+	index, err := h.docRepo.GetAll()
+	if err != nil {
+		return
+	}
+
+	folderNameByID := make(map[string]string)
+	for _, f := range folders {
+		folderNameByID[f.ID] = f.Name
+		h.tagStore.CreateGroup(f.Name)
+		if f.Collapsed {
+			h.tagStore.SetGroupCollapsed(f.Name, true)
+		}
+	}
+
+	for _, doc := range index.Documents {
+		if doc.FolderId != "" {
+			if folderName, ok := folderNameByID[doc.FolderId]; ok {
+				h.docRepo.AddTag(doc.ID, folderName)
+				h.docRepo.MoveToFolder(doc.ID, "")
+			}
+		}
+	}
+
+	groupNames := make([]string, len(folders))
+	for i, f := range folders {
+		groupNames[i] = f.Name
+	}
+	h.tagStore.ReorderGroups(groupNames)
+
+	backupPath := foldersPath + ".bak"
+	os.Rename(foldersPath, backupPath)
 }
