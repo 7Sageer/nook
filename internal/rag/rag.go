@@ -1,10 +1,12 @@
 package rag
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/opengraph"
 )
 
 // Service RAG 服务统一入口
@@ -165,5 +167,71 @@ func (s *Service) Reinitialize() error {
 	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage)
 	s.searcher = NewSearcher(store, s.embedder, s.docRepo)
 
+	return nil
+}
+
+// IndexBookmarkContent 索引书签网页内容
+func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
+	fmt.Printf("[RAG] IndexBookmarkContent called: url=%s, docID=%s, blockID=%s\n", url, sourceDocID, blockID)
+
+	if err := s.init(); err != nil {
+		fmt.Printf("[RAG] init failed: %v\n", err)
+		return err
+	}
+
+	// 1. 抓取网页内容
+	fmt.Printf("[RAG] Fetching content from URL...\n")
+	content, err := opengraph.FetchContent(url)
+	if err != nil {
+		fmt.Printf("[RAG] FetchContent failed: %v\n", err)
+		return fmt.Errorf("failed to fetch content: %w", err)
+	}
+	fmt.Printf("[RAG] FetchContent succeeded: title=%s, content_len=%d\n", content.Title, len(content.TextContent))
+
+	// 2. 检查内容是否为空
+	if content.TextContent == "" {
+		fmt.Printf("[RAG] No content extracted from URL\n")
+		return fmt.Errorf("no content extracted from URL")
+	}
+
+	// 3. 生成唯一的块 ID
+	bookmarkBlockID := fmt.Sprintf("%s_%s_bookmark", sourceDocID, blockID)
+	fmt.Printf("[RAG] Generated bookmark block ID: %s\n", bookmarkBlockID)
+
+	// 4. 计算内容哈希
+	contentHash := HashContent(content.TextContent)
+
+	// 5. 生成 embedding
+	fmt.Printf("[RAG] Generating embedding...\n")
+	embedding, err := s.embedder.Embed(content.TextContent)
+	if err != nil {
+		fmt.Printf("[RAG] Embed failed: %v\n", err)
+		return fmt.Errorf("failed to generate embedding: %w", err)
+	}
+	fmt.Printf("[RAG] Embedding generated: dimension=%d\n", len(embedding))
+
+	// 6. 构建上下文信息
+	headingContext := content.Title
+	if content.SiteName != "" {
+		headingContext = fmt.Sprintf("%s - %s", content.Title, content.SiteName)
+	}
+
+	// 7. 存入向量数据库
+	fmt.Printf("[RAG] Upserting to vector store...\n")
+	err = s.store.Upsert(&BlockVector{
+		ID:             bookmarkBlockID,
+		DocID:          sourceDocID,
+		Content:        content.TextContent,
+		ContentHash:    contentHash,
+		BlockType:      "bookmark",
+		HeadingContext: headingContext,
+		Embedding:      embedding,
+	})
+	if err != nil {
+		fmt.Printf("[RAG] Upsert failed: %v\n", err)
+		return err
+	}
+
+	fmt.Printf("[RAG] IndexBookmarkContent completed successfully!\n")
 	return nil
 }

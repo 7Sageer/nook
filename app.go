@@ -343,6 +343,11 @@ func (a *App) RebuildIndex() (int, error) {
 	return a.ragHandler.RebuildIndex()
 }
 
+// IndexBookmarkContent 索引书签网页内容
+func (a *App) IndexBookmarkContent(url, sourceDocID, blockID string) error {
+	return a.ragHandler.IndexBookmarkContent(url, sourceDocID, blockID)
+}
+
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
 func (a *App) GetSettings() (Settings, error) {

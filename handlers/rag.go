@@ -95,3 +95,8 @@ func (h *RAGHandler) GetRAGStatus() RAGStatus {
 func (h *RAGHandler) RebuildIndex() (int, error) {
 	return h.ragService.ReindexAll()
 }
+
+// IndexBookmarkContent 索引书签网页内容
+func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) error {
+	return h.ragService.IndexBookmarkContent(url, sourceDocID, blockID)
+}

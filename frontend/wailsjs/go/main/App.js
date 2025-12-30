@@ -74,6 +74,10 @@ export function ImportMarkdownFile() {
   return window['go']['main']['App']['ImportMarkdownFile']();
 }
 
+export function IndexBookmarkContent(arg1, arg2, arg3) {
+  return window['go']['main']['App']['IndexBookmarkContent'](arg1, arg2, arg3);
+}
+
 export function LoadDocumentContent(arg1) {
   return window['go']['main']['App']['LoadDocumentContent'](arg1);
 }

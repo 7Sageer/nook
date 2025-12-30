@@ -1,8 +1,9 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Pencil, ExternalLink } from "lucide-react";
-import { FetchLinkMetadata } from "../../../wailsjs/go/main/App";
+import { Pencil, ExternalLink, RefreshCw, Check, Loader2 } from "lucide-react";
+import { FetchLinkMetadata, IndexBookmarkContent } from "../../../wailsjs/go/main/App";
+import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/BookmarkBlock.css";
 
 // BookmarkBlock component
@@ -19,13 +20,16 @@ export const BookmarkBlock = createReactBlockSpec(
             siteName: { default: "" },
             loading: { default: false },
             error: { default: "" },
+            indexed: { default: false },
+            indexing: { default: false },
         },
         content: "none",
     },
     {
         render: (props) => {
             const { block, editor } = props;
-            const { url, title, description, image, favicon, siteName, loading, error } = block.props;
+            const { url, title, description, image, favicon, siteName, loading, error, indexed, indexing } = block.props;
+            const { activeId } = useDocumentContext();
 
             const [inputValue, setInputValue] = useState(url || "");
             const [isEditing, setIsEditing] = useState(!url);
@@ -52,7 +56,46 @@ export const BookmarkBlock = createReactBlockSpec(
                 };
             }, [isEditing]);
 
+            // 索引书签内容到 RAG
+            const handleIndex = useCallback(async (urlToIndex: string) => {
+                console.log("[BookmarkBlock] handleIndex called with:", urlToIndex, "activeId:", activeId);
+                if (!urlToIndex || !activeId) {
+                    console.log("[BookmarkBlock] handleIndex skipped - missing url or activeId");
+                    return;
+                }
+
+                // 获取最新的 block 状态
+                const currentBlock = editor.getBlock(block.id);
+                if (!currentBlock) return;
+
+                editor.updateBlock(currentBlock, {
+                    props: { ...currentBlock.props, indexing: true },
+                });
+
+                try {
+                    console.log("[BookmarkBlock] Calling IndexBookmarkContent...");
+                    await IndexBookmarkContent(urlToIndex, activeId, block.id);
+                    console.log("[BookmarkBlock] IndexBookmarkContent succeeded!");
+                    // 再次获取最新状态
+                    const latestBlock = editor.getBlock(block.id);
+                    if (latestBlock) {
+                        editor.updateBlock(latestBlock, {
+                            props: { ...latestBlock.props, indexed: true, indexing: false },
+                        });
+                    }
+                } catch (err) {
+                    console.error("[BookmarkBlock] IndexBookmarkContent error:", err);
+                    const latestBlock = editor.getBlock(block.id);
+                    if (latestBlock) {
+                        editor.updateBlock(latestBlock, {
+                            props: { ...latestBlock.props, indexing: false },
+                        });
+                    }
+                }
+            }, [block.id, editor, activeId]);
+
             const handleFetch = useCallback(async (urlToFetch: string) => {
+                console.log("[BookmarkBlock] handleFetch called with:", urlToFetch);
                 if (!urlToFetch.trim()) return;
 
                 // Normalize URL
@@ -60,6 +103,7 @@ export const BookmarkBlock = createReactBlockSpec(
                 if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
                     normalizedUrl = "https://" + normalizedUrl;
                 }
+                console.log("[BookmarkBlock] Normalized URL:", normalizedUrl);
 
                 // Set loading state
                 editor.updateBlock(block, {
@@ -67,7 +111,9 @@ export const BookmarkBlock = createReactBlockSpec(
                 });
 
                 try {
+                    console.log("[BookmarkBlock] Calling FetchLinkMetadata...");
                     const metadata = await FetchLinkMetadata(normalizedUrl);
+                    console.log("[BookmarkBlock] Metadata received:", metadata);
                     editor.updateBlock(block, {
                         props: {
                             url: normalizedUrl,
@@ -81,7 +127,11 @@ export const BookmarkBlock = createReactBlockSpec(
                         },
                     });
                     setIsEditing(false);
+                    // 异步触发 RAG 索引
+                    console.log("[BookmarkBlock] Triggering handleIndex...");
+                    handleIndex(normalizedUrl);
                 } catch (err) {
+                    console.error("[BookmarkBlock] FetchLinkMetadata error:", err);
                     editor.updateBlock(block, {
                         props: {
                             ...block.props,
@@ -91,7 +141,7 @@ export const BookmarkBlock = createReactBlockSpec(
                         },
                     });
                 }
-            }, [block, editor]);
+            }, [block, editor, handleIndex]);
 
             const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
                 e.stopPropagation();
@@ -181,6 +231,25 @@ export const BookmarkBlock = createReactBlockSpec(
                         </div>
                     )}
                     <div className="bookmark-actions">
+                        {/* 索引状态指示器 */}
+                        <button
+                            className={`bookmark-action-btn ${indexed ? 'indexed' : ''}`}
+                            title={indexing ? "Indexing..." : indexed ? "Re-index content" : "Index content"}
+                            disabled={indexing}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleIndex(url);
+                            }}
+                        >
+                            {indexing ? (
+                                <Loader2 size={14} className="animate-spin" />
+                            ) : indexed ? (
+                                <Check size={14} />
+                            ) : (
+                                <RefreshCw size={14} />
+                            )}
+                        </button>
                         <button
                             className="bookmark-action-btn"
                             title="Edit"

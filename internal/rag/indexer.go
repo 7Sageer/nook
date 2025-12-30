@@ -117,10 +117,10 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		})
 	}
 
-	// 4. 删除已不存在的块
+	// 4. 删除已不存在的块（保留书签块）
 	var toDelete []string
 	for id := range existingHashes {
-		if !newBlockIDs[id] {
+		if !newBlockIDs[id] && !strings.HasSuffix(id, "_bookmark") {
 			toDelete = append(toDelete, id)
 		}
 	}

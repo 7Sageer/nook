@@ -41,6 +41,8 @@ export function GetTagGroups():Promise<Array<main.TagInfo>>;
 
 export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
+export function IndexBookmarkContent(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function LoadDocumentContent(arg1:string):Promise<string>;
 
 export function LoadExternalFile(arg1:string):Promise<string>;

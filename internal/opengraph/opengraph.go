@@ -2,10 +2,12 @@ package opengraph
 
 import (
 	"context"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	readability "github.com/go-shiori/go-readability"
 	og "github.com/otiai10/opengraph/v2"
 )
 
@@ -66,5 +68,60 @@ func Fetch(targetURL string) (*LinkMetadata, error) {
 		Image:       imageURL,
 		Favicon:     faviconURL,
 		SiteName:    siteName,
+	}, nil
+}
+
+// LinkContent 网页正文内容
+type LinkContent struct {
+	URL         string `json:"url"`
+	Title       string `json:"title"`
+	TextContent string `json:"textContent"`
+	Excerpt     string `json:"excerpt"`
+	SiteName    string `json:"siteName"`
+	Byline      string `json:"byline"`
+}
+
+// FetchContent 使用 go-readability 提取网页正文内容
+func FetchContent(targetURL string) (*LinkContent, error) {
+	// 创建带超时的 HTTP 客户端
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// 创建请求
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置 User-Agent 避免被拒绝
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+
+	// 发送请求
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 解析 URL
+	parsedURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用 readability 提取正文
+	article, err := readability.FromReader(resp.Body, parsedURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LinkContent{
+		URL:         targetURL,
+		Title:       article.Title,
+		TextContent: article.TextContent,
+		Excerpt:     article.Excerpt,
+		SiteName:    article.SiteName,
+		Byline:      article.Byline,
 	}, nil
 }

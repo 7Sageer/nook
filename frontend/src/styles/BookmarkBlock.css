@@ -153,6 +153,25 @@
     color: var(--bn-colors-editor-text, #333);
 }
 
+/* 索引状态样式 */
+.bookmark-action-btn.indexed {
+    color: #40c057;
+}
+
+.bookmark-action-btn.indexed:hover {
+    color: #2f9e44;
+}
+
+.bookmark-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* 旋转动画 */
+.animate-spin {
+    animation: bookmark-spin 1s linear infinite;
+}
+
 .bookmark-content {
     flex: 1;
     padding: 14px 16px;
