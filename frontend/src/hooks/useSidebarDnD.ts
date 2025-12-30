@@ -9,8 +9,10 @@ import {
     type CollisionDetection,
 } from '@dnd-kit/core';
 import type { DocumentMeta } from '../types/document';
+import { DND_CONSTANTS } from '../constants/strings';
 
-const UNCATEGORIZED_CONTAINER_ID = '__uncategorized__';
+const { UNCATEGORIZED_CONTAINER_ID, DOC_CONTAINER_PREFIX } = DND_CONSTANTS;
+
 
 /**
  * Custom collision detection that prioritizes expanded groups over collapsed ones.
@@ -104,8 +106,8 @@ export function useSidebarDnD({
         const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
 
         // Case 1: Dropping on a group container (move/copy between groups)
-        if (overId.startsWith('doc-container:')) {
-            const targetGroup = overId.replace('doc-container:', '');
+        if (overId.startsWith(DOC_CONTAINER_PREFIX)) {
+            const targetGroup = overId.replace(DOC_CONTAINER_PREFIX, '');
 
             // Skip if dropping on the same group
             if (targetGroup === currentSourceGroup) return;

@@ -1,11 +1,3 @@
-
-// Set to true to enable debug logging
-const DEBUG = false;
-
-export function debugLog(...args: unknown[]) {
-    if (DEBUG) console.log('[DragFix]', ...args);
-}
-
 /**
  * Find the block element being dragged
  */

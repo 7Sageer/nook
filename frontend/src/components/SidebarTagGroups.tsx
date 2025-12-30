@@ -5,8 +5,10 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TagGroupItem } from './TagGroupItem';
 import { DocumentList } from './DocumentList';
 import type { DocumentMeta, TagInfo } from '../types/document';
+import { DND_CONSTANTS } from '../constants/strings';
 
-const UNCATEGORIZED_CONTAINER_ID = '__uncategorized__';
+const { UNCATEGORIZED_CONTAINER_ID } = DND_CONSTANTS;
+
 
 interface SidebarTagGroupsProps {
     sortedGroups: TagInfo[];

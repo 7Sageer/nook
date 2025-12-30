@@ -1,3 +1,9 @@
+// DnD constants
+export const DND_CONSTANTS = {
+    UNCATEGORIZED_CONTAINER_ID: '__uncategorized__',
+    DOC_CONTAINER_PREFIX: 'doc-container:',
+} as const;
+
 export const EN = {
     APP_NAME: "Nook",
     ABOUT_INFO: "Nook v1.0.0\n\nA simple and elegant local note-taking application",

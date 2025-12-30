@@ -3,6 +3,7 @@
 import {document} from '../models';
 import {opengraph} from '../models';
 import {handlers} from '../models';
+import {rag} from '../models';
 import {markdown} from '../models';
 
 export function AddDocumentTag(arg1:string,arg2:string):Promise<void>;
@@ -29,7 +30,7 @@ export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetDocumentList():Promise<document.Index>;
 
-export function GetRAGConfig():Promise<handlers.EmbeddingConfig>;
+export function GetRAGConfig():Promise<rag.EmbeddingConfig>;
 
 export function GetRAGStatus():Promise<handlers.RAGStatus>;
 
@@ -71,7 +72,7 @@ export function SaveImage(arg1:string,arg2:string):Promise<string>;
 
 export function SaveImageFile(arg1:string,arg2:string):Promise<void>;
 
-export function SaveRAGConfig(arg1:handlers.EmbeddingConfig):Promise<void>;
+export function SaveRAGConfig(arg1:rag.EmbeddingConfig):Promise<void>;
 
 export function SaveSettings(arg1:handlers.Settings):Promise<void>;
 

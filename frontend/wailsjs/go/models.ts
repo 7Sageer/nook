@@ -117,28 +117,6 @@ export namespace handlers {
 		    return a;
 		}
 	}
-	export class EmbeddingConfig {
-	    provider: string;
-	    baseUrl: string;
-	    model: string;
-	    apiKey: string;
-	    maxChunkSize: number;
-	    overlap: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new EmbeddingConfig(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.provider = source["provider"];
-	        this.baseUrl = source["baseUrl"];
-	        this.model = source["model"];
-	        this.apiKey = source["apiKey"];
-	        this.maxChunkSize = source["maxChunkSize"];
-	        this.overlap = source["overlap"];
-	    }
-	}
 	export class ExternalFile {
 	    path: string;
 	    name: string;
@@ -295,6 +273,33 @@ export namespace opengraph {
 	        this.image = source["image"];
 	        this.favicon = source["favicon"];
 	        this.siteName = source["siteName"];
+	    }
+	}
+
+}
+
+export namespace rag {
+	
+	export class EmbeddingConfig {
+	    provider: string;
+	    baseUrl: string;
+	    model: string;
+	    apiKey: string;
+	    maxChunkSize: number;
+	    overlap: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new EmbeddingConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.provider = source["provider"];
+	        this.baseUrl = source["baseUrl"];
+	        this.model = source["model"];
+	        this.apiKey = source["apiKey"];
+	        this.maxChunkSize = source["maxChunkSize"];
+	        this.overlap = source["overlap"];
 	    }
 	}
 

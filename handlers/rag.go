@@ -26,14 +26,9 @@ func NewRAGHandler(
 }
 
 // EmbeddingConfig 嵌入模型配置（前端用）
-type EmbeddingConfig struct {
-	Provider     string `json:"provider"`
-	BaseURL      string `json:"baseUrl"`
-	Model        string `json:"model"`
-	APIKey       string `json:"apiKey"`
-	MaxChunkSize int    `json:"maxChunkSize"`
-	Overlap      int    `json:"overlap"`
-}
+// Note: This type aliases rag.EmbeddingConfig to avoid breaking the Wails bindings.
+// Wails generates TypeScript types from Go structs, and the frontend expects this name.
+type EmbeddingConfig = rag.EmbeddingConfig
 
 // RAGStatus RAG 索引状态
 type RAGStatus struct {
@@ -50,27 +45,12 @@ func (h *RAGHandler) GetRAGConfig() (EmbeddingConfig, error) {
 	if err != nil {
 		return EmbeddingConfig{}, err
 	}
-	return EmbeddingConfig{
-		Provider:     config.Provider,
-		BaseURL:      config.BaseURL,
-		Model:        config.Model,
-		APIKey:       config.APIKey,
-		MaxChunkSize: config.MaxChunkSize,
-		Overlap:      config.Overlap,
-	}, nil
+	return *config, nil
 }
 
 // SaveRAGConfig 保存 RAG 配置
 func (h *RAGHandler) SaveRAGConfig(config EmbeddingConfig) error {
-	ragConfig := &rag.EmbeddingConfig{
-		Provider:     config.Provider,
-		BaseURL:      config.BaseURL,
-		Model:        config.Model,
-		APIKey:       config.APIKey,
-		MaxChunkSize: config.MaxChunkSize,
-		Overlap:      config.Overlap,
-	}
-	if err := rag.SaveConfig(h.dataPath, ragConfig); err != nil {
+	if err := rag.SaveConfig(h.dataPath, &config); err != nil {
 		return err
 	}
 	// 重新初始化 RAG 服务

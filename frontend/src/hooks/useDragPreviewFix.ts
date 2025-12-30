@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { debugLog, createOverlay, findHoveredBlock } from "./dragPreviewUtils";
+import { createOverlay, findHoveredBlock } from "./dragPreviewUtils";
 
 /**
  * useDragPreviewFix - Fixes the drag preview (ghost image) issue in Wails WebView.
@@ -18,11 +18,10 @@ export function useDragPreviewFix() {
     useEffect(() => {
         // Only enable this workaround inside Wails (WKWebView) runtime.
         // In a regular browser BlockNote's native drag preview works correctly.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (typeof (window as any).runtime === "undefined") {
             return;
         }
-
-        debugLog('Hook initialized');
 
         let mouseX = 0;
         let mouseY = 0;
@@ -66,8 +65,6 @@ export function useDragPreviewFix() {
         const handleDragStart = (e: DragEvent) => {
             const isCapturePhase = e.eventPhase === Event.CAPTURING_PHASE;
 
-            debugLog('dragstart event fired');
-
             const target = e.target as HTMLElement | null;
             if (!target) return;
 
@@ -92,7 +89,6 @@ export function useDragPreviewFix() {
             if (e.dataTransfer && dragImageRef.current) {
                 try {
                     e.dataTransfer.setDragImage(dragImageRef.current, 0, 0);
-                    debugLog('setDragImage called');
                 } catch (err) {
                     console.error('[DragFix] setDragImage error:', err);
                 }
@@ -107,7 +103,6 @@ export function useDragPreviewFix() {
             const hoveredBlock = findHoveredBlock(target);
 
             if (!hoveredBlock) {
-                debugLog('No block found');
                 return;
             }
 
@@ -125,8 +120,6 @@ export function useDragPreviewFix() {
                 requestAnimationFrame(() => {
                     if (overlay) overlay.style.opacity = '1';
                 });
-
-                debugLog('Overlay added to DOM');
             }
         };
 
@@ -134,7 +127,6 @@ export function useDragPreviewFix() {
          * Handle drag end - remove overlay
          */
         const handleDragEnd = () => {
-            debugLog('dragend/drop event');
             if (overlayRef.current) {
                 overlayRef.current.remove();
                 overlayRef.current = null;
@@ -167,8 +159,6 @@ export function useDragPreviewFix() {
         document.addEventListener('dragend', handleDragEnd, true);
         document.addEventListener('drop', handleDragEnd, true);
 
-        debugLog('Event listeners registered');
-
         return () => {
             document.removeEventListener('mousemove', handleMouseMove);
             document.removeEventListener('dragstart', handleDragStart, true);
@@ -185,9 +175,9 @@ export function useDragPreviewFix() {
                 dragImageRef.current.remove();
                 dragImageRef.current = null;
             }
-            debugLog('Cleanup complete');
         };
     }, []);
 }
 
 export default useDragPreviewFix;
+

@@ -6,9 +6,7 @@ import {
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
-import { BlockNoteSchema, defaultBlockSpecs, createExtension, Block, BlockNoteEditor } from "@blocknote/core";
-import { Extension } from "@tiptap/core";
-import { Plugin, PluginKey } from "prosemirror-state";
+import { BlockNoteSchema, defaultBlockSpecs, Block } from "@blocknote/core";
 import { useEffect, useRef, useMemo } from "react";
 import { getStrings } from "../constants/strings";
 import { useSettings } from "../contexts/SettingsContext";
@@ -19,83 +17,17 @@ import { SaveImage } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
 import { EditorTagInput } from "./EditorTagInput";
+import {
+  createChineseIMEPlugin,
+  bookmarkAtomExtension,
+  createBookmarkMenuItem,
+} from "../utils/editorExtensions";
 
-/**
- * Module-level state to track Chinese IME composition.
- * Used to prevent slash menu from triggering during IME input.
- */
-let isComposing = false;
+// Re-export getIsComposing for external use
+export { getIsComposing } from "../utils/editorExtensions";
 
-const chineseIMEPluginKey = new PluginKey("chineseIMEFix");
-
-// 编辑器类型（BlockNote 内部 API 使用 any 以避免复杂的类型问题）
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type InternalEditor = any;
-
-/**
- * ProseMirror plugin to fix Chinese IME breaking slash menu.
- * Tracks composition state and closes the suggestion menu if triggered during composition.
- */
-function createChineseIMEPlugin(editor: InternalEditor) {
-  return new Plugin({
-    key: chineseIMEPluginKey,
-    props: {
-      handleDOMEvents: {
-        compositionstart: () => {
-          isComposing = true;
-          return false;
-        },
-        compositionend: () => {
-          // Use setTimeout to ensure compositionend fires after the last input event
-          setTimeout(() => {
-            isComposing = false;
-          }, 0);
-          return false;
-        },
-      },
-    },
-    view: () => ({
-      update: () => {
-        // If we're composing and the suggestion menu is shown, close it
-        if (isComposing) {
-          try {
-            // Access BlockNote's internal suggestion menu state
-            const suggestionMenuExt = editor._extensions?.suggestionMenu;
-            if (suggestionMenuExt?.shown?.()) {
-              suggestionMenuExt.closeMenu?.();
-            }
-          } catch {
-            // Silently ignore if we can't access the menu
-          }
-        }
-      },
-      destroy: () => { },
-    }),
-  });
-}
-
-// Export composition state getter for external use
-export function getIsComposing(): boolean {
-  return isComposing;
-}
-
-// TipTap extension to make bookmark node atomic (prevents selecting internal content)
-const BookmarkAtomTiptapExtension = Extension.create({
-  name: "bookmarkAtom",
-  extendNodeSchema(extension) {
-    // Only set atom: true for the bookmark node type
-    if (extension.name === "bookmark") {
-      return { atom: true };
-    }
-    return {};
-  },
-});
-
-// BlockNote extension wrapper for the TipTap extension
-const bookmarkAtomExtension = createExtension({
-  key: "bookmarkAtom",
-  tiptapExtensions: [BookmarkAtomTiptapExtension],
-});
 
 interface EditorProps {
   initialContent?: Block[];
@@ -111,62 +43,6 @@ interface EditorProps {
   onTagClick?: (tag: string) => void;
   isExternalMode?: boolean;
 }
-
-// Mirrors BlockNote's default slash-menu behavior: if the current block is empty
-// (or only contains the trigger "/"), update it in-place; otherwise insert
-// below and move the selection to the next editable block.
-function setSelectionToNextContentEditableBlock(editor: InternalEditor) {
-  let block = editor.getTextCursorPosition().block;
-  let contentType = editor.schema.blockSchema[block.type].content;
-
-  while (contentType === "none") {
-    block = editor.getTextCursorPosition().nextBlock;
-    if (!block) return;
-    contentType = editor.schema.blockSchema[block.type].content;
-    editor.setTextCursorPosition(block, "end");
-  }
-}
-
-function insertOrUpdateBookmarkForSlashMenu(editor: InternalEditor) {
-  const currentBlock = editor.getTextCursorPosition().block;
-  const currentContent = currentBlock.content;
-
-  const isEmptyOrSlash =
-    Array.isArray(currentContent) &&
-    (currentContent.length === 0 ||
-      (currentContent.length === 1 &&
-        currentContent[0]?.type === "text" &&
-        currentContent[0]?.text === "/"));
-
-  const newBlock = isEmptyOrSlash
-    ? editor.updateBlock(currentBlock, { type: "bookmark" as const })
-    : editor.insertBlocks([{ type: "bookmark" as const }], currentBlock, "after")[0];
-
-  editor.setTextCursorPosition(newBlock);
-  setSelectionToNextContentEditableBlock(editor);
-
-  return newBlock;
-}
-
-// 国际化字符串类型
-type StringsType = ReturnType<typeof getStrings>;
-
-// Custom slash menu item for bookmark
-const insertBookmark = (editor: InternalEditor, STRINGS: StringsType) => ({
-  title: STRINGS.LABELS.BOOKMARK,
-  onItemClick: () => {
-    insertOrUpdateBookmarkForSlashMenu(editor);
-  },
-  aliases: ["bookmark", "link", "embed", "url"],
-  group: "Media",
-  icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-    </svg>
-  ),
-  subtext: STRINGS.TOOLTIPS.OPEN_FILE,
-});
 
 export function Editor({
   initialContent,
@@ -229,11 +105,9 @@ export function Editor({
     },
   });
 
-  // Inject smooth caret plugin after editor is created (only once)
-  // Also set bookmark node's atom property to true
+  // Inject plugins after editor is created (only once)
   useEffect(() => {
     if (editor && editor._tiptapEditor && !pluginInjectedRef.current) {
-      // Access the ProseMirror view and register the plugin
       const view = editor._tiptapEditor.view;
       if (view) {
         try {
@@ -241,20 +115,17 @@ export function Editor({
           const bookmarkNodeType = view.state.schema.nodes.bookmark;
           if (bookmarkNodeType) {
             // Directly modify the node type spec to make it atomic
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (bookmarkNodeType.spec as any).atom = true;
           }
 
-          // Create plugin instance
+          // Create plugins
           const smoothCaretPlugin = createSmoothCaretPlugin({
             transitionDuration: 60,
             cursorWidth: 2,
             enableBlink: true,
           });
-
-          // Create bookmark selection plugin
           const bookmarkSelectionPlugin = createBookmarkSelectionPlugin();
-
-          // Create Chinese IME fix plugin (prevents slash menu during composition)
           const chineseIMEPlugin = createChineseIMEPlugin(editor);
 
           // Add plugins to the editor's state
@@ -265,12 +136,12 @@ export function Editor({
           view.updateState(newState);
           pluginInjectedRef.current = true;
 
-          // 自动聚焦编辑器，让用户可以直接开始输入
+          // Auto-focus editor for immediate input
           setTimeout(() => {
             editor.focus();
           }, 50);
         } catch (err) {
-          console.warn("Failed to inject smooth caret plugin:", err);
+          console.warn("Failed to inject editor plugins:", err);
         }
       }
     }
@@ -307,10 +178,9 @@ export function Editor({
           triggerCharacter="/"
           getItems={async (query) => {
             const defaultItems = getDefaultReactSlashMenuItems(editor);
-            const customBookmark = insertBookmark(editor, STRINGS);
+            const customBookmark = createBookmarkMenuItem(editor, STRINGS);
 
             // Insert custom bookmark item right after other Media group items
-            // This prevents duplicate "Media" section headers when filtering
             const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");
             const allItems = lastMediaIndex >= 0
               ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, ...defaultItems.slice(lastMediaIndex + 1)]
