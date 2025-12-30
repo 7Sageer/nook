@@ -15,7 +15,7 @@ import { useSettings } from "../contexts/SettingsContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import "../plugins/smoothCaret.css";
-import { SaveImage } from "../../wailsjs/go/handlers/FileHandler";
+import { SaveImage } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
 import { EditorTagInput } from "./EditorTagInput";

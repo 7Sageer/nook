@@ -241,7 +241,7 @@ function AppContent() {
     if (!file) return;
     setContentLoading(true);
     try {
-      const { LoadExternalFile } = await import('../wailsjs/go/handlers/FileHandler');
+      const { LoadExternalFile } = await import('../wailsjs/go/main/App');
       const fileContent = await LoadExternalFile(file.path);
 
       openExternalByPath(file.path, fileContent);

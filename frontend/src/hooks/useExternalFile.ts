@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { OpenExternalFile, SaveExternalFile } from '../../wailsjs/go/handlers/FileHandler';
+import { OpenExternalFile, SaveExternalFile } from '../../wailsjs/go/main/App';
 import type { ExternalFileInfo } from '../types/external-file';
 
 // Re-export for convenience

@@ -6,7 +6,7 @@ import {
     PrintHTML,
     CopyImageToClipboard,
     SaveImageFile
-} from '../../wailsjs/go/handlers/FileHandler';
+} from '../../wailsjs/go/main/App';
 import { STRINGS } from '../constants/strings';
 import { DocumentMeta } from '../types/document';
 import { generateBeautifiedImage } from '../utils/imageGenerator';

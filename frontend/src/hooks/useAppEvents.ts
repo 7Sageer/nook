@@ -56,7 +56,7 @@ export function useAppEvents({
     const unsubscribe = EventsOn('file:open-external', async (filePath: string) => {
       setContentLoading(true);
       try {
-        const { LoadExternalFile } = await import('../../wailsjs/go/handlers/FileHandler');
+        const { LoadExternalFile } = await import('../../wailsjs/go/main/App');
         const fileContent = await LoadExternalFile(filePath);
 
         openExternalByPath(filePath, fileContent);

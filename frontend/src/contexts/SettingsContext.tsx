@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { GetSettings, SaveSettings } from '../../wailsjs/go/handlers/SettingsHandler';
+import { GetSettings, SaveSettings } from '../../wailsjs/go/main/App';
 
 export type ThemeSetting = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';

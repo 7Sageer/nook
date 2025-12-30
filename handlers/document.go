@@ -19,7 +19,6 @@ type DocumentHandler struct {
 	searchService  *search.Service
 	ragService     *rag.Service
 	watcherService *watcher.Service
-	imageCleaner   func()
 
 	// RAG 索引 debounce
 	indexDebounceMu sync.Mutex
@@ -34,7 +33,6 @@ func NewDocumentHandler(
 	searchService *search.Service,
 	ragService *rag.Service,
 	watcherService *watcher.Service,
-	imageCleaner func(),
 ) *DocumentHandler {
 	return &DocumentHandler{
 		dataPath:       dataPath,
@@ -43,7 +41,6 @@ func NewDocumentHandler(
 		searchService:  searchService,
 		ragService:     ragService,
 		watcherService: watcherService,
-		imageCleaner:   imageCleaner,
 		indexDebounce:  make(map[string]*time.Timer),
 	}
 }
@@ -73,7 +70,7 @@ func (h *DocumentHandler) CreateDocument(title string) (document.Meta, error) {
 }
 
 // DeleteDocument 删除文档
-func (h *DocumentHandler) DeleteDocument(id string) error {
+func (h *DocumentHandler) DeleteDocument(id string, cleanupImages func()) error {
 	h.markIndexWrite()
 	err := h.docRepo.Delete(id)
 	if err == nil {
@@ -84,8 +81,8 @@ func (h *DocumentHandler) DeleteDocument(id string) error {
 			go h.ragService.DeleteDocument(id)
 		}
 		// 异步清理未使用的图像
-		if h.imageCleaner != nil {
-			go h.imageCleaner()
+		if cleanupImages != nil {
+			go cleanupImages()
 		}
 	}
 	return err
