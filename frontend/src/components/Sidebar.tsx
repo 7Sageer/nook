@@ -10,6 +10,7 @@ import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch, SidebarSearchRef } from './SidebarSearch';
 import { TagGroupItem } from './TagGroupItem';
 import { TagList } from './TagList';
+import { SearchResultItem } from './SearchResultItem';
 import { Plus, FileText, GripVertical, Sparkles } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { LayoutGroup, motion, AnimatePresence } from 'framer-motion';
@@ -401,7 +402,42 @@ export function Sidebar({
               {query ? (
                 <div className="search-results-container">
 
-                  {/* 1. Keyword Matches */}
+                  {/* 1. Semantic Matches (放在上方) */}
+                  <div className="search-section semantic-section">
+                    <div className="section-label-row">
+                      <span className="section-label">
+                        <Sparkles size={12} className="semantic-icon" />
+                        Semantic Matches
+                      </span>
+                      {isLoadingSemantic && <span className="loading-spinner-tiny"></span>}
+                    </div>
+                    {semanticResults.length > 0 ? (
+                      <ul className="document-list semantic-list">
+                        {semanticResults.map((res, index) => (
+                          <SearchResultItem
+                            key={res.docId}
+                            index={index}
+                            title={res.docTitle}
+                            snippet={res.matchedChunks[0]?.content || ''}
+                            matchCount={res.matchedChunks.length}
+                            isActive={false} // Semantic results don't track active ID the same way or use global activeId if needed
+                            variant="semantic"
+                            onClick={() => handleSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
+                          />
+                        ))
+                        }
+                        ))}
+                      </ul>
+                    ) : (
+                      !isLoadingSemantic && query.length > 2 && (
+                        <div className="search-empty-state">
+                          No semantic matches found
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {/* 2. Keyword Matches */}
                   <div className="search-section">
                     <div className="section-label-row">
                       <span className="section-label">{STRINGS.LABELS.DOCUMENTS || "Documents"}</span>
@@ -422,46 +458,6 @@ export function Sidebar({
                       <div className="search-empty-state">
                         {isSearching ? "Searching..." : "No exact matches found"}
                       </div>
-                    )}
-                  </div>
-
-                  {/* 2. Semantic Matches */}
-                  <div className="search-section semantic-section">
-                    <div className="section-label-row">
-                      <span className="section-label">
-                        <Sparkles size={12} className="semantic-icon" />
-                        Semantic Matches
-                      </span>
-                      {isLoadingSemantic && <span className="loading-spinner-tiny"></span>}
-                    </div>
-                    {semanticResults.length > 0 ? (
-                      <ul className="document-list semantic-list">
-                        {semanticResults.map((res) => (
-                          <li
-                            key={res.docId}
-                            className="document-item semantic-item"
-                            onClick={() => handleSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
-                          >
-                            <div className="doc-content">
-                              <span className="semantic-doc-title">{res.docTitle}</span>
-                              <span className="semantic-snippet">
-                                {res.matchedChunks[0]?.content || ''}
-                              </span>
-                              {res.matchedChunks.length > 1 && (
-                                <span className="semantic-more">
-                                  +{res.matchedChunks.length - 1} more matches
-                                </span>
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      !isLoadingSemantic && query.length > 2 && (
-                        <div className="search-empty-state">
-                          No semantic matches found
-                        </div>
-                      )
                     )}
                   </div>
                 </div>

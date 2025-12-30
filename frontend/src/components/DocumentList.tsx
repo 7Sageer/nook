@@ -8,6 +8,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { docDndId } from '../utils/dnd';
 import { listItemVariants } from '../utils/animations';
 import { SortableDocItem } from './SortableDocItem';
+import { SearchResultItem } from './SearchResultItem';
 
 interface DocumentListProps {
     items: (DocumentMeta | SearchResult)[];
@@ -82,41 +83,55 @@ export function DocumentList({
         );
     }
 
-    // 非 sortable 模式（搜索结果）
+    // Non-sortable mode (Search Results or Read-only list)
     return (
         <AnimatePresence mode="popLayout">
             {sortedItems.map((item, index) => (
-                <motion.li
-                    key={item.id}
-                    layout
-                    variants={listItemVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    custom={index}
-                    className={`document-item ${item.id === activeId ? 'active' : ''}`}
-                    onClick={() => onSelect(item.id)}
-                    role="option"
-                    aria-selected={item.id === activeId}
-                    tabIndex={0}
-                >
-                    <FileText size={16} className="doc-icon" aria-hidden="true" />
-                    <div className="doc-content">
-                        <span className="doc-title">{item.title}</span>
-                        {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
-                    </div>
-                    <div className="doc-actions">
-                        <button
-                            className="action-btn danger"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => handleDeleteClick(e, item.id)}
-                            title={STRINGS.TOOLTIPS.DELETE}
-                            aria-label={`${STRINGS.TOOLTIPS.DELETE} ${item.title}`}
-                        >
-                            <Trash2 size={14} aria-hidden="true" />
-                        </button>
-                    </div>
-                </motion.li>
+                isSearchMode ? (
+                    <SearchResultItem
+                        key={item.id}
+                        index={index}
+                        title={item.title}
+                        snippet={'snippet' in item ? item.snippet : undefined}
+                        icon={<FileText size={16} className="doc-icon" aria-hidden="true" />}
+                        isActive={item.id === activeId}
+                        variant="document"
+                        onClick={() => onSelect(item.id)}
+                        onDelete={(e) => handleDeleteClick(e, item.id)}
+                    />
+                ) : (
+                    <motion.li
+                        key={item.id}
+                        layout
+                        variants={listItemVariants}
+                        initial="initial"
+                        animate="animate"
+                        exit="exit"
+                        custom={index}
+                        className={`document-item ${item.id === activeId ? 'active' : ''}`}
+                        onClick={() => onSelect(item.id)}
+                        role="option"
+                        aria-selected={item.id === activeId}
+                        tabIndex={0}
+                    >
+                        <FileText size={16} className="doc-icon" aria-hidden="true" />
+                        <div className="doc-content">
+                            <span className="doc-title">{item.title}</span>
+                            {'snippet' in item && <span className="doc-snippet">{item.snippet}</span>}
+                        </div>
+                        <div className="doc-actions">
+                            <button
+                                className="action-btn danger"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => handleDeleteClick(e, item.id)}
+                                title={STRINGS.TOOLTIPS.DELETE}
+                                aria-label={`${STRINGS.TOOLTIPS.DELETE} ${item.title}`}
+                            >
+                                <Trash2 size={14} aria-hidden="true" />
+                            </button>
+                        </div>
+                    </motion.li>
+                )
             ))}
         </AnimatePresence>
     );

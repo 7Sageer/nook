@@ -129,15 +129,23 @@
     }
 }
 
+/* 语义搜索 item - 与 document-item 样式统一 */
 .semantic-item {
     cursor: pointer;
-    padding: var(--space-2) var(--space-3);
+    padding: 10px var(--space-3);
     border-radius: var(--radius-md);
-    transition: background-color var(--transition-fast);
+    margin-bottom: 2px;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+    transform-origin: left center;
 }
 
 .semantic-item:hover {
-    background-color: var(--bg-hover);
+    background-color: var(--bg-tertiary);
+    transform: translateX(4px);
+}
+
+.semantic-item:active {
+    transform: translateX(4px) scale(0.98);
 }
 
 .semantic-item .doc-content {
@@ -158,7 +166,7 @@
 
 .semantic-snippet {
     font-size: var(--text-sm);
-    color: var(--text-primary);
+    color: var(--text-secondary);
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;

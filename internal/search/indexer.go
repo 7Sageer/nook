@@ -19,11 +19,18 @@ func NewIndex() *Index {
 	}
 }
 
+// InlineContent BlockNote 的 inline content 结构
+type InlineContent struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+	Href string `json:"href,omitempty"` // for links
+}
+
 // Block 简化的 Block 结构，用于 JSON 解析
 type Block struct {
 	ID       string                 `json:"id"`
 	Type     string                 `json:"type"`
-	Content  string                 `json:"content"` // HTML or text
+	Content  []InlineContent        `json:"content"` // BlockNote 的 content 是数组
 	Children []Block                `json:"children"`
 	Props    map[string]interface{} `json:"props"`
 }
@@ -85,15 +92,12 @@ func ExtractTextFromBlocks(jsonContent string) string {
 
 func extractTextRecursive(blocks []Block, sb *strings.Builder) {
 	for _, block := range blocks {
-		// 简单的提取 content 字段
-		// 这里可以根据 block.Type 做更精细的处理，目前先提取所有 textual content
-		if block.Content != "" {
-			// 简单的去除 HTML 标签 (如果 content 是 HTML)
-			// 这里假设 content 主要是纯文本或者简单的 HTML
-			// 为了搜索准确，最好去除 HTML tags
-			text := stripHTML(block.Content)
-			sb.WriteString(text)
-			sb.WriteString(" ")
+		// 提取 content 数组中的所有文本
+		for _, inline := range block.Content {
+			if inline.Text != "" {
+				sb.WriteString(inline.Text)
+				sb.WriteString(" ")
+			}
 		}
 
 		if len(block.Children) > 0 {
@@ -102,25 +106,3 @@ func extractTextRecursive(blocks []Block, sb *strings.Builder) {
 	}
 }
 
-func stripHTML(input string) string {
-	// 极简 HTML 去除，只为了搜索索引
-	// 如果需要更复杂的，可以引入 external lib，但尽量保持 stdlib
-	// 这里简单替换 <...> 为空格
-	var sb strings.Builder
-	inTag := false
-	for _, r := range input {
-		if r == '<' {
-			inTag = true
-			continue
-		}
-		if r == '>' {
-			inTag = false
-			sb.WriteRune(' ') // 用空格代替标签，避免文字粘连
-			continue
-		}
-		if !inTag {
-			sb.WriteRune(r)
-		}
-	}
-	return sb.String()
-}
