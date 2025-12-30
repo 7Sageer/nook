@@ -1,6 +1,7 @@
 package main
 
 import (
+	"notion-lite/internal/document"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -9,15 +10,9 @@ import (
 
 // ========== 清理功能 ==========
 
-// Cleanup 执行所有清理任务
-func (a *App) Cleanup() {
-	a.cleanupUnusedImages()
-	a.cleanupTempFiles()
-}
-
-// cleanupUnusedImages 清理未被任何文档引用的图像文件
-func (a *App) cleanupUnusedImages() {
-	imagesDir := filepath.Join(a.dataPath, "images")
+// CleanupUnusedImages 清理未被任何文档引用的图像文件
+func CleanupUnusedImages(dataPath string, docRepo *document.Repository, docStorage *document.Storage) {
+	imagesDir := filepath.Join(dataPath, "images")
 
 	// 获取所有图像文件
 	entries, err := os.ReadDir(imagesDir)
@@ -33,13 +28,13 @@ func (a *App) cleanupUnusedImages() {
 	referencedImages := make(map[string]bool)
 	imagePattern := regexp.MustCompile(`/images/([^"\s\]]+)`)
 
-	index, err := a.docRepo.GetAll()
+	index, err := docRepo.GetAll()
 	if err != nil {
 		return
 	}
 
 	for _, doc := range index.Documents {
-		content, err := a.docStorage.Load(doc.ID)
+		content, err := docStorage.Load(doc.ID)
 		if err != nil {
 			continue
 		}
@@ -63,9 +58,9 @@ func (a *App) cleanupUnusedImages() {
 	}
 }
 
-// cleanupTempFiles 清理超过 24 小时的临时文件
-func (a *App) cleanupTempFiles() {
-	tempDir := filepath.Join(a.dataPath, "temp")
+// CleanupTempFiles 清理超过 24 小时的临时文件
+func CleanupTempFiles(dataPath string) {
+	tempDir := filepath.Join(dataPath, "temp")
 
 	entries, err := os.ReadDir(tempDir)
 	if err != nil {

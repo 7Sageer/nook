@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"net/http"
 	"os"
@@ -16,7 +17,16 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
+	"notion-lite/handlers"
 	"notion-lite/internal/constant"
+	"notion-lite/internal/document"
+	"notion-lite/internal/folder"
+	"notion-lite/internal/markdown"
+	"notion-lite/internal/rag"
+	"notion-lite/internal/search"
+	"notion-lite/internal/settings"
+	"notion-lite/internal/tag"
+	"notion-lite/internal/watcher"
 )
 
 //go:embed all:frontend/dist
@@ -77,8 +87,59 @@ func (h *ImageHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
+	// 1. 初始化数据路径
+	homeDir, _ := os.UserHomeDir()
+	dataPath := filepath.Join(homeDir, ".Nook")
+	os.MkdirAll(dataPath, 0755)
+	os.MkdirAll(filepath.Join(dataPath, "documents"), 0755)
+
+	// 2. 初始化所有 Service
+	docRepo := document.NewRepository(dataPath)
+	docStorage := document.NewStorage(dataPath)
+	folderRepo := folder.NewRepository(dataPath)
+	searchService := search.NewService(docRepo, docStorage)
+	settingsService := settings.NewService(dataPath)
+	markdownService := markdown.NewService()
+	tagStore := tag.NewStore(dataPath)
+	ragService := rag.NewService(dataPath, docRepo, docStorage)
+
+	watcherService, err := watcher.NewService(dataPath)
+	if err != nil {
+		// Log error but continue? or set to nil
+		watcherService = nil
+	}
+
+	// 3. 初始化所有 Handlers
+
+	// 定义清理函数闭包
+	cleanupImagesFunc := func() {
+		CleanupUnusedImages(dataPath, docRepo, docStorage)
+	}
+
+	docHandler := handlers.NewDocumentHandler(
+		dataPath, docRepo, docStorage, searchService, ragService, watcherService, cleanupImagesFunc,
+	)
+	searchHandler := handlers.NewSearchHandler(docRepo, searchService, ragService)
+	ragHandler := handlers.NewRAGHandler(dataPath, docRepo, ragService)
+	settingsHandler := handlers.NewSettingsHandler(settingsService)
+	tagHandler := handlers.NewTagHandler(dataPath, docRepo, tagStore, watcherService)
+
+	// FileHandler 需要 context，稍后设置
+	fileHandler := handlers.NewFileHandler(context.Background(), dataPath, markdownService)
+
+	// 4. 初始化主应用 (Lifecycle & Menu Events)
+	// 注意：NewApp 签名需要修改为接受这些依赖
+	app := NewApp(
+		dataPath,
+		docRepo,
+		docStorage,
+		folderRepo,
+		tagStore,
+		searchService,
+		watcherService,
+		markdownService,
+		fileHandler,
+	)
 
 	// Create application menu
 	AppMenu := menu.NewMenu()
@@ -146,8 +207,8 @@ func main() {
 		runtime.EventsEmit(app.ctx, "menu:settings")
 	})
 
-	// Create application with options
-	err := wails.Run(&options.App{
+	// 5. 启动 Wails 应用
+	err = wails.Run(&options.App{
 		Title:  constant.AppTitle,
 		Width:  1200,
 		Height: 800,
@@ -157,10 +218,19 @@ func main() {
 			Handler: NewImageHandler(),
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.startup,
-		OnShutdown:       app.shutdown,
+		OnStartup: func(ctx context.Context) {
+			app.startup(ctx)
+			fileHandler.SetContext(ctx) // Update context for FileHandler
+		},
+		OnShutdown: app.shutdown,
 		Bind: []interface{}{
-			app,
+			app, // Lifecycle methods
+			docHandler,
+			searchHandler,
+			ragHandler,
+			settingsHandler,
+			tagHandler,
+			fileHandler,
 		},
 		Mac: &mac.Options{
 			TitleBar:   mac.TitleBarHiddenInset(),

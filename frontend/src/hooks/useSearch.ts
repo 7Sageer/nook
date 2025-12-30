@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
-import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
+import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/handlers/SearchHandler';
 
 interface UseSearchReturn {
     query: string;

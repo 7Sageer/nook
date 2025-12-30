@@ -2,7 +2,8 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Pencil, ExternalLink, RefreshCw, Check, Loader2 } from "lucide-react";
-import { FetchLinkMetadata, IndexBookmarkContent } from "../../../wailsjs/go/main/App";
+import { FetchLinkMetadata } from "../../../wailsjs/go/handlers/FileHandler";
+import { IndexBookmarkContent } from "../../../wailsjs/go/handlers/RAGHandler";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/BookmarkBlock.css";
 

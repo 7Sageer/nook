@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Block, BlockNoteEditor } from '@blocknote/core';
-import { ImportMarkdownFile } from '../../wailsjs/go/main/App';
+import { ImportMarkdownFile } from '../../wailsjs/go/handlers/FileHandler';
 import { DocumentMeta } from '../types/document';
 
 interface UseImportProps {

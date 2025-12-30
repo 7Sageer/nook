@@ -12,6 +12,8 @@ import {
   LoadDocumentContent,
   SaveDocumentContent,
   ReorderDocuments,
+} from '../../wailsjs/go/handlers/DocumentHandler';
+import {
   AddDocumentTag,
   RemoveDocumentTag,
   GetAllTags,
@@ -23,7 +25,7 @@ import {
   ReorderTagGroups,
   RenameTagGroup,
   DeleteTagGroup,
-} from '../../wailsjs/go/main/App';
+} from '../../wailsjs/go/handlers/TagHandler';
 
 interface DocumentContextType {
   // 文档状态

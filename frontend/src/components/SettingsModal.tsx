@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSettings, ThemeSetting, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from '../contexts/SettingsContext';
 import { X, Database, Bot, RefreshCw, Palette, Sun, Moon, Monitor } from 'lucide-react';
-import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
+import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/handlers/RAGHandler';
 import { getStrings } from '../constants/strings';
 import './SettingsModal.css';
 
