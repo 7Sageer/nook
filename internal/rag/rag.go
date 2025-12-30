@@ -116,6 +116,19 @@ func (s *Service) GetIndexedCount() (int, error) {
 	return s.store.GetIndexedDocCount()
 }
 
+// GetIndexedStats 获取索引统计信息
+func (s *Service) GetIndexedStats() (int, int, error) {
+	if s.store == nil {
+		dbPath := filepath.Join(s.dataPath, "vectors.db")
+		store, err := NewVectorStore(dbPath, 768) // 默认维度
+		if err != nil {
+			return 0, 0, nil // 数据库不存在，返回 0
+		}
+		s.store = store
+	}
+	return s.store.GetIndexedStats()
+}
+
 // Reinitialize 重新初始化（配置变更后调用）
 // 如果新模型的维度与旧模型不同，会自动删除向量数据库
 func (s *Service) Reinitialize() error {

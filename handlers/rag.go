@@ -37,10 +37,11 @@ type EmbeddingConfig struct {
 
 // RAGStatus RAG 索引状态
 type RAGStatus struct {
-	Enabled       bool   `json:"enabled"`
-	IndexedDocs   int    `json:"indexedDocs"`
-	TotalDocs     int    `json:"totalDocs"`
-	LastIndexTime string `json:"lastIndexTime"`
+	Enabled          bool   `json:"enabled"`
+	IndexedDocs      int    `json:"indexedDocs"`
+	IndexedBookmarks int    `json:"indexedBookmarks"`
+	TotalDocs        int    `json:"totalDocs"`
+	LastIndexTime    string `json:"lastIndexTime"`
 }
 
 // GetRAGConfig 获取 RAG 配置
@@ -81,13 +82,14 @@ func (h *RAGHandler) GetRAGStatus() RAGStatus {
 	index, _ := h.docRepo.GetAll()
 	totalDocs := len(index.Documents)
 
-	indexedDocs, _ := h.ragService.GetIndexedCount()
+	indexedDocs, indexedBookmarks, _ := h.ragService.GetIndexedStats()
 
 	return RAGStatus{
-		Enabled:       true,
-		IndexedDocs:   indexedDocs,
-		TotalDocs:     totalDocs,
-		LastIndexTime: "",
+		Enabled:          true,
+		IndexedDocs:      indexedDocs,
+		IndexedBookmarks: indexedBookmarks,
+		TotalDocs:        totalDocs,
+		LastIndexTime:    "",
 	}
 }
 

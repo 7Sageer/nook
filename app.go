@@ -335,7 +335,11 @@ func (a *App) SaveRAGConfig(config EmbeddingConfig) error {
 func (a *App) GetRAGStatus() RAGStatus {
 	s := a.ragHandler.GetRAGStatus()
 	return RAGStatus{
-		Enabled: s.Enabled, IndexedDocs: s.IndexedDocs, TotalDocs: s.TotalDocs, LastIndexTime: s.LastIndexTime,
+		Enabled:          s.Enabled,
+		IndexedDocs:      s.IndexedDocs,
+		IndexedBookmarks: s.IndexedBookmarks,
+		TotalDocs:        s.TotalDocs,
+		LastIndexTime:    s.LastIndexTime,
 	}
 }
 

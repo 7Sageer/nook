@@ -96,6 +96,12 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                     {status.indexedDocs} / {status.totalDocs} {strings.SETTINGS.DOCUMENTS}
                 </span>
             </div>
+            <div className="status-row">
+                <span className="status-label">{strings.SETTINGS.INDEXED_BOOKMARKS || "Indexed Bookmarks"}</span>
+                <span className="status-value">
+                    {status.indexedBookmarks || 0}
+                </span>
+            </div>
             {status.lastIndexTime && (
                 <div className="status-row">
                     <span className="status-label">{strings.SETTINGS.LAST_UPDATE}</span>
@@ -191,6 +197,7 @@ interface EmbeddingConfig {
 interface RAGStatus {
     enabled: boolean;
     indexedDocs: number;
+    indexedBookmarks: number;
     totalDocs: number;
     lastIndexTime: string;
 }
@@ -219,6 +226,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [status, setStatus] = useState<RAGStatus>({
         enabled: false,
         indexedDocs: 0,
+        indexedBookmarks: 0,
         totalDocs: 0,
         lastIndexTime: '',
     });

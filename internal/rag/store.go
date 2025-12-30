@@ -232,11 +232,28 @@ func (s *VectorStore) Close() error {
 // GetIndexedDocCount 获取已索引的文档数量
 func (s *VectorStore) GetIndexedDocCount() (int, error) {
 	var count int
-	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors`).Scan(&count)
+	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type != 'bookmark'`).Scan(&count)
 	if err != nil {
 		return 0, err
 	}
 	return count, nil
+}
+
+// GetIndexedStats 获取索引统计信息 (文档数, 书签数)
+func (s *VectorStore) GetIndexedStats() (int, int, error) {
+	var docCount int
+	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type != 'bookmark'`).Scan(&docCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	var bookmarkCount int
+	err = s.db.QueryRow(`SELECT COUNT(*) FROM block_vectors WHERE block_type = 'bookmark'`).Scan(&bookmarkCount)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return docCount, bookmarkCount, nil
 }
 
 // GetAllDocIDs 获取所有已索引的文档 ID

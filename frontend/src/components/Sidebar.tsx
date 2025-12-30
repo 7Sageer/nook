@@ -424,8 +424,6 @@ export function Sidebar({
                             variant="semantic"
                             onClick={() => handleSelectSemantic(res.docId, res.matchedChunks[0]?.blockId || '')}
                           />
-                        ))
-                        }
                         ))}
                       </ul>
                     ) : (

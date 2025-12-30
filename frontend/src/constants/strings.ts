@@ -75,6 +75,7 @@ export const EN = {
         KNOWLEDGE_BASE: "Knowledge Base",
         EMBEDDING_MODEL: "Embedding Model",
         INDEX_STATUS: "Index Status",
+        INDEXED_BOOKMARKS: "Indexed Bookmarks",
         DOCUMENTS: "documents",
         LAST_UPDATE: "Last Update",
         REBUILD_INDEX: "Rebuild Index",

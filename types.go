@@ -55,10 +55,11 @@ type EmbeddingConfig struct {
 
 // RAGStatus RAG 索引状态
 type RAGStatus struct {
-	Enabled       bool   `json:"enabled"`
-	IndexedDocs   int    `json:"indexedDocs"`
-	TotalDocs     int    `json:"totalDocs"`
-	LastIndexTime string `json:"lastIndexTime"`
+	Enabled          bool   `json:"enabled"`
+	IndexedDocs      int    `json:"indexedDocs"`
+	IndexedBookmarks int    `json:"indexedBookmarks"`
+	TotalDocs        int    `json:"totalDocs"`
+	LastIndexTime    string `json:"lastIndexTime"`
 }
 
 // TagInfo 标签信息（包含使用次数和颜色）
