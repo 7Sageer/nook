@@ -44,11 +44,17 @@ export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
 export function IndexBookmarkContent(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function IndexFileContent(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function LoadDocumentContent(arg1:string):Promise<string>;
 
 export function LoadExternalFile(arg1:string):Promise<string>;
 
 export function OpenExternalFile():Promise<handlers.ExternalFile>;
+
+export function OpenFileDialog():Promise<handlers.FileInfo>;
+
+export function OpenFileWithSystem(arg1:string):Promise<void>;
 
 export function PrintHTML(arg1:string,arg2:string):Promise<void>;
 
@@ -67,6 +73,8 @@ export function ReorderTagGroups(arg1:Array<string>):Promise<void>;
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
 export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;
+
+export function SaveFile(arg1:string,arg2:string):Promise<handlers.FileInfo>;
 
 export function SaveImage(arg1:string,arg2:string):Promise<string>;
 

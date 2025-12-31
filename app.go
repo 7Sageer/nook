@@ -251,6 +251,28 @@ func (a *App) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexBookmarkContent(url, sourceDocID, blockID)
 }
 
+// ========== FileBlock API (委托给 FileHandler/RAGHandler) ==========
+
+// SaveFile 保存文件到 ~/.Nook/files/
+func (a *App) SaveFile(base64Data string, originalName string) (*handlers.FileInfo, error) {
+	return a.fileHandler.SaveFile(base64Data, originalName)
+}
+
+// OpenFileDialog 打开文件选择对话框
+func (a *App) OpenFileDialog() (*handlers.FileInfo, error) {
+	return a.fileHandler.OpenFileDialog()
+}
+
+// OpenFileWithSystem 使用系统默认应用打开文件
+func (a *App) OpenFileWithSystem(relativePath string) error {
+	return a.fileHandler.OpenFileWithSystem(relativePath)
+}
+
+// IndexFileContent 索引文件内容
+func (a *App) IndexFileContent(filePath, sourceDocID, blockID string) error {
+	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID)
+}
+
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
 func (a *App) GetSettings() (handlers.Settings, error) {

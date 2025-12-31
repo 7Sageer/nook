@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"notion-lite/internal/constant"
+	"notion-lite/internal/fileextract"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/opengraph"
 
@@ -218,4 +220,93 @@ func sanitizeFilename(name string) string {
 		result = result[:50]
 	}
 	return result
+}
+
+// ========== FileBlock 相关方法 ==========
+
+// FileInfo 文件信息（返回给前端）
+type FileInfo struct {
+	FilePath string `json:"filePath"`
+	FileName string `json:"fileName"`
+	FileSize int64  `json:"fileSize"`
+	FileType string `json:"fileType"`
+	MimeType string `json:"mimeType"`
+}
+
+// SaveFile 保存文件到 ~/.Nook/files/ 并返回文件信息
+func (h *FileHandler) SaveFile(base64Data string, originalName string) (*FileInfo, error) {
+	filesDir := filepath.Join(h.dataPath, "files")
+	if err := os.MkdirAll(filesDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create files directory: %w", err)
+	}
+
+	// 解码 base64
+	fileData, err := base64.StdEncoding.DecodeString(base64Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode file: %w", err)
+	}
+
+	// 生成唯一文件名
+	ext := filepath.Ext(originalName)
+	filename := fmt.Sprintf("%d-%s%s", time.Now().UnixMilli(), randomString(6), ext)
+	filePath := filepath.Join(filesDir, filename)
+
+	// 写入文件
+	if err := os.WriteFile(filePath, fileData, 0644); err != nil {
+		return nil, fmt.Errorf("failed to save file: %w", err)
+	}
+
+	return &FileInfo{
+		FilePath: "/files/" + filename,
+		FileName: originalName,
+		FileSize: int64(len(fileData)),
+		FileType: fileextract.GetFileType(originalName),
+		MimeType: fileextract.GetMimeType(originalName),
+	}, nil
+}
+
+// OpenFileDialog 打开文件选择对话框（支持 MD/TXT）
+func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
+	filePath, err := runtime.OpenFileDialog(h.ctx, runtime.OpenDialogOptions{
+		Title: constant.DialogTitleSelectFile,
+		Filters: []runtime.FileFilter{
+			{DisplayName: constant.FilterSupportedFiles, Pattern: "*.md;*.txt"},
+			{DisplayName: constant.FilterMarkdown, Pattern: "*.md"},
+			{DisplayName: constant.FilterText, Pattern: "*.txt"},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if filePath == "" {
+		return nil, nil // 用户取消
+	}
+
+	// 读取文件并保存到 files 目录
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	base64Data := base64.StdEncoding.EncodeToString(data)
+	return h.SaveFile(base64Data, filepath.Base(filePath))
+}
+
+// OpenFileWithSystem 使用系统默认应用打开文件
+func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
+	// relativePath: /files/xxx.md
+	fullPath := filepath.Join(h.dataPath, strings.TrimPrefix(relativePath, "/"))
+
+	cmd := exec.Command("open", fullPath) // macOS
+	return cmd.Start()
+}
+
+// randomString 生成随机字符串
+func randomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

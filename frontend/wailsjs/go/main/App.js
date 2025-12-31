@@ -78,6 +78,10 @@ export function IndexBookmarkContent(arg1, arg2, arg3) {
   return window['go']['main']['App']['IndexBookmarkContent'](arg1, arg2, arg3);
 }
 
+export function IndexFileContent(arg1, arg2, arg3) {
+  return window['go']['main']['App']['IndexFileContent'](arg1, arg2, arg3);
+}
+
 export function LoadDocumentContent(arg1) {
   return window['go']['main']['App']['LoadDocumentContent'](arg1);
 }
@@ -88,6 +92,14 @@ export function LoadExternalFile(arg1) {
 
 export function OpenExternalFile() {
   return window['go']['main']['App']['OpenExternalFile']();
+}
+
+export function OpenFileDialog() {
+  return window['go']['main']['App']['OpenFileDialog']();
+}
+
+export function OpenFileWithSystem(arg1) {
+  return window['go']['main']['App']['OpenFileWithSystem'](arg1);
 }
 
 export function PrintHTML(arg1, arg2) {
@@ -124,6 +136,10 @@ export function SaveDocumentContent(arg1, arg2) {
 
 export function SaveExternalFile(arg1, arg2) {
   return window['go']['main']['App']['SaveExternalFile'](arg1, arg2);
+}
+
+export function SaveFile(arg1, arg2) {
+  return window['go']['main']['App']['SaveFile'](arg1, arg2);
 }
 
 export function SaveImage(arg1, arg2) {

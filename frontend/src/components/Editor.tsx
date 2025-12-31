@@ -15,15 +15,19 @@ import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import { isValidUrl, PasteLinkState } from "../plugins/pasteLink";
 import { PasteLinkMenu } from "./PasteLinkMenu";
 import "../plugins/smoothCaret.css";
-import { SaveImage } from "../../wailsjs/go/main/App";
+import { SaveImage, OpenFileDialog, SaveFile, IndexFileContent } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
+import { FileBlock } from "./blocks/FileBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
 import { EditorTagInput } from "./EditorTagInput";
 import {
   createChineseIMEPlugin,
   bookmarkAtomExtension,
   createBookmarkMenuItem,
+  createFileMenuItem,
   insertBookmarkWithUrl,
+  insertFileBlock,
+  fileToBase64,
 } from "../utils/editorExtensions";
 
 // Re-export getIsComposing for external use
@@ -86,6 +90,7 @@ export function Editor({
         blockSpecs: {
           ...defaultBlockSpecs,
           bookmark: BookmarkBlock(),
+          file: FileBlock(),
         },
       }),
     []
@@ -238,6 +243,47 @@ export function Editor({
     };
   }, [editor]);
 
+  // File drop event listener for FileBlock
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container || !editor) return;
+
+    const handleDrop = async (event: DragEvent) => {
+      const files = event.dataTransfer?.files;
+      if (!files || files.length === 0) return;
+
+      const file = files[0];
+      const ext = file.name.split('.').pop()?.toLowerCase();
+
+      // Only handle supported file types (md, txt)
+      if (!['md', 'txt'].includes(ext || '')) {
+        return; // Let default handler process (e.g., images)
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      try {
+        const base64 = await fileToBase64(file);
+        const fileInfo = await SaveFile(base64, file.name);
+
+        if (fileInfo) {
+          const block = insertFileBlock(editor, fileInfo);
+          // Trigger async indexing (don't await)
+          IndexFileContent(fileInfo.filePath, docId || '', block.id).catch(() => {
+            // Silently ignore indexing errors
+          });
+        }
+      } catch (err) {
+        console.error('Failed to handle file drop:', err);
+      }
+    };
+
+    // Use capture phase to intercept before BlockNote/TipTap processes
+    container.addEventListener('drop', handleDrop, { capture: true });
+    return () => container.removeEventListener('drop', handleDrop, { capture: true });
+  }, [editor, docId]);
+
   useEffect(() => {
     if (editorRef) {
       editorRef.current = editor;
@@ -270,12 +316,16 @@ export function Editor({
           getItems={async (query) => {
             const defaultItems = getDefaultReactSlashMenuItems(editor);
             const customBookmark = createBookmarkMenuItem(editor, STRINGS);
+            const customFile = createFileMenuItem(editor, STRINGS, async () => {
+              const fileInfo = await OpenFileDialog();
+              return fileInfo || null;
+            });
 
-            // Insert custom bookmark item right after other Media group items
+            // Insert custom items right after other Media group items
             const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");
             const allItems = lastMediaIndex >= 0
-              ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, ...defaultItems.slice(lastMediaIndex + 1)]
-              : [...defaultItems, customBookmark];
+              ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, customFile, ...defaultItems.slice(lastMediaIndex + 1)]
+              : [...defaultItems, customBookmark, customFile];
 
             if (!query) return allItems;
             const lowerQuery = query.toLowerCase();

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/fileextract"
 	"notion-lite/internal/opengraph"
 )
 
@@ -254,6 +256,84 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 			Content:        chunk.Content,
 			ContentHash:    contentHash,
 			BlockType:      "bookmark",
+			HeadingContext: chunk.HeadingContext,
+			Embedding:      embedding,
+		})
+	}
+
+	return nil
+}
+
+// IndexFileContent 索引文件内容（分块存储）
+func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error {
+	if err := s.init(); err != nil {
+		return err
+	}
+
+	// 1. 获取完整文件路径
+	fullPath := filepath.Join(s.dataPath, strings.TrimPrefix(filePath, "/"))
+
+	// 2. 提取文本内容
+	textContent, err := fileextract.ExtractText(fullPath)
+	if err != nil {
+		return fmt.Errorf("failed to extract text: %w", err)
+	}
+
+	if textContent == "" {
+		return fmt.Errorf("no text content extracted from file")
+	}
+
+	// 3. 构建上下文（使用文件名）
+	fileName := filepath.Base(fullPath)
+	headingContext := fileName
+
+	// 4. 生成基础 ID
+	baseID := fmt.Sprintf("%s_%s_file", sourceDocID, blockID)
+
+	// 5. 对内容进行分块
+	chunks := ChunkTextContent(textContent, headingContext, baseID, s.indexer.chunkConfig)
+
+	// 如果分块结果为空，创建一个单独的块
+	if len(chunks) == 0 {
+		chunks = []ExtractedBlock{{
+			ID:             baseID,
+			Type:           "file",
+			Content:        textContent,
+			HeadingContext: headingContext,
+		}}
+	}
+
+	// 调试输出
+	if debugChunks {
+		fmt.Printf("\n📄 [RAG] Indexing file: %s\n", fileName)
+		fmt.Printf("   Total chunks: %d\n", len(chunks))
+		fmt.Println("   ─────────────────────────────────────────────────")
+		for i, chunk := range chunks {
+			fmt.Printf("   [%d] ID: %s\n", i, chunk.ID)
+			fmt.Printf("       Content (%4d chars): %s\n",
+				len(chunk.Content), truncateContent(chunk.Content, 80))
+		}
+		fmt.Println("   ─────────────────────────────────────────────────")
+	}
+
+	// 6. 为每个 chunk 生成 embedding 并存储
+	for _, chunk := range chunks {
+		if chunk.Content == "" {
+			continue
+		}
+
+		embedding, err := s.embedder.Embed(chunk.Content)
+		if err != nil {
+			continue // 跳过失败的块
+		}
+
+		contentHash := HashContent(chunk.Content)
+		s.store.Upsert(&BlockVector{
+			ID:             chunk.ID,
+			DocID:          sourceDocID,
+			Content:        chunk.Content,
+			ContentHash:    contentHash,
+			BlockType:      "file",
 			HeadingContext: chunk.HeadingContext,
 			Embedding:      embedding,
 		})

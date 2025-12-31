@@ -54,6 +54,8 @@ export const EN = {
         SIDEBAR: "Sidebar Navigation",
         EXTERNAL_FILE: "External File",
         BOOKMARK: "Bookmark",
+        FILE: "File",
+        FILE_SUBTEXT: "Embed MD, TXT file",
         DOCUMENTS: "Documents",
         GROUPS: "Groups",
         UNCATEGORIZED: "Uncategorized",

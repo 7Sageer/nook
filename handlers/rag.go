@@ -82,3 +82,8 @@ func (h *RAGHandler) RebuildIndex() (int, error) {
 func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	return h.ragService.IndexBookmarkContent(url, sourceDocID, blockID)
 }
+
+// IndexFileContent 索引文件内容
+func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID string) error {
+	return h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
+}

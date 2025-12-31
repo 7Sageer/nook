@@ -14,6 +14,10 @@ const (
 	FilterHTML            = "HTML Files (*.html)"
 	FilterAll             = "All Files (*.*)"
 
+	// File Block Dialog
+	DialogTitleSelectFile = "Select File"
+	FilterSupportedFiles  = "Supported Files (*.md, *.txt)"
+
 	// Defaults
 	DefaultNewDocTitle = "Untitled"
 	DefaultExportName  = "document"

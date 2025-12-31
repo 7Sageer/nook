@@ -84,11 +84,11 @@ func (s *VectorStore) initSchema() error {
 	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
 	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
 
-	// 创建 sqlite-vec 虚拟表
+	// 创建 sqlite-vec 虚拟表（使用余弦距离，更适合文本相似度）
 	query := fmt.Sprintf(`
 		CREATE VIRTUAL TABLE IF NOT EXISTS vec_blocks USING vec0(
 			id TEXT PRIMARY KEY,
-			embedding FLOAT[%d]
+			embedding FLOAT[%d] distance_metric=cosine
 		);
 	`, s.dimension)
 	_, err = s.db.Exec(query)

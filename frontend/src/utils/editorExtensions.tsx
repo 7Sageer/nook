@@ -166,14 +166,14 @@ export function insertBookmarkWithUrl(editor: InternalEditor, url: string) {
 
     const newBlock = isEmpty
         ? editor.updateBlock(currentBlock, {
-              type: "bookmark" as const,
-              props: bookmarkProps,
-          })
+            type: "bookmark" as const,
+            props: bookmarkProps,
+        })
         : editor.insertBlocks(
-              [{ type: "bookmark" as const, props: bookmarkProps }],
-              currentBlock,
-              "after"
-          )[0];
+            [{ type: "bookmark" as const, props: bookmarkProps }],
+            currentBlock,
+            "after"
+        )[0];
 
     editor.setTextCursorPosition(newBlock);
     setSelectionToNextContentEditableBlock(editor);
@@ -200,4 +200,104 @@ export function createBookmarkMenuItem(editor: InternalEditor, strings: StringsT
         ),
         subtext: strings.TOOLTIPS.OPEN_FILE,
     };
+}
+
+// ========== FileBlock 相关函数 ==========
+
+/**
+ * FileInfo 类型定义（与后端 handlers.FileInfo 对应）
+ */
+export interface FileInfo {
+    filePath: string;
+    fileName: string;
+    fileSize: number;
+    fileType: string;
+    mimeType: string;
+}
+
+/**
+ * 插入 FileBlock
+ */
+export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
+    const currentBlock = editor.getTextCursorPosition().block;
+    const currentContent = currentBlock.content;
+
+    const isEmptyOrSlash =
+        Array.isArray(currentContent) &&
+        (currentContent.length === 0 ||
+            (currentContent.length === 1 &&
+                currentContent[0]?.type === "text" &&
+                currentContent[0]?.text === "/"));
+
+    const fileProps = {
+        filePath: fileInfo.filePath,
+        fileName: fileInfo.fileName,
+        fileSize: fileInfo.fileSize,
+        fileType: fileInfo.fileType,
+        mimeType: fileInfo.mimeType,
+        loading: false,
+        error: "",
+        indexed: false,
+        indexing: false,
+        indexError: "",
+    };
+
+    const newBlock = isEmptyOrSlash
+        ? editor.updateBlock(currentBlock, {
+            type: "file" as const,
+            props: fileProps,
+        })
+        : editor.insertBlocks(
+            [{ type: "file" as const, props: fileProps }],
+            currentBlock,
+            "after"
+        )[0];
+
+    editor.setTextCursorPosition(newBlock);
+    setSelectionToNextContentEditableBlock(editor);
+
+    return newBlock;
+}
+
+/**
+ * 创建 File slash menu 项
+ */
+export function createFileMenuItem(
+    editor: InternalEditor,
+    strings: StringsType,
+    onSelectFile: () => Promise<FileInfo | null>
+) {
+    return {
+        title: strings.LABELS.FILE || "File",
+        onItemClick: async () => {
+            const fileInfo = await onSelectFile();
+            if (fileInfo) {
+                insertFileBlock(editor, fileInfo);
+            }
+        },
+        aliases: ["file", "document", "attachment", "pdf", "txt", "md"],
+        group: "Media",
+        icon: (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+            </svg>
+        ),
+        subtext: strings.LABELS.FILE_SUBTEXT || "Embed MD, TXT file",
+    };
+}
+
+/**
+ * 文件转 base64
+ */
+export function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result.split(",")[1]);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }

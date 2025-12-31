@@ -135,6 +135,26 @@ export namespace handlers {
 	        this.content = source["content"];
 	    }
 	}
+	export class FileInfo {
+	    filePath: string;
+	    fileName: string;
+	    fileSize: number;
+	    fileType: string;
+	    mimeType: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.filePath = source["filePath"];
+	        this.fileName = source["fileName"];
+	        this.fileSize = source["fileSize"];
+	        this.fileType = source["fileType"];
+	        this.mimeType = source["mimeType"];
+	    }
+	}
 	export class RAGStatus {
 	    enabled: boolean;
 	    indexedDocs: number;
