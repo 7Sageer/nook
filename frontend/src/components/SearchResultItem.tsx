@@ -1,9 +1,10 @@
 
-import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 import { listItemVariants, durations, easings } from '../utils/animations';
+import type { ChunkMatch } from '../types/document';
 
 interface SearchResultItemProps {
     title: string;
@@ -14,6 +15,8 @@ interface SearchResultItemProps {
     variant?: 'semantic' | 'document';
     onClick: () => void;
     onDelete?: (e: React.MouseEvent) => void;
+    onChunkClick?: (blockId: string) => void;
+    allChunks?: ChunkMatch[];
     index: number;
 }
 
@@ -36,6 +39,20 @@ const semanticItemVariants = {
     },
 };
 
+const chunkListVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: {
+        opacity: 1,
+        height: 'auto',
+        transition: { duration: durations.normal, ease: easings.standard }
+    },
+    exit: {
+        opacity: 0,
+        height: 0,
+        transition: { duration: durations.fast }
+    },
+};
+
 export function SearchResultItem({
     title,
     snippet,
@@ -45,9 +62,13 @@ export function SearchResultItem({
     variant = 'document',
     onClick,
     onDelete,
+    onChunkClick,
+    allChunks,
     index,
 }: SearchResultItemProps) {
     const isSemantic = variant === 'semantic';
+    const [isExpanded, setIsExpanded] = useState(false);
+    const hasMultipleChunks = allChunks && allChunks.length > 1;
 
     // Base classes
     const containerClass = isSemantic
@@ -56,6 +77,16 @@ export function SearchResultItem({
 
     // Use different variants based on item type
     const variants = isSemantic ? semanticItemVariants : listItemVariants;
+
+    const handleExpandClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+    };
+
+    const handleChunkClick = (e: React.MouseEvent, blockId: string) => {
+        e.stopPropagation();
+        onChunkClick?.(blockId);
+    };
 
     return (
         <motion.li
@@ -79,11 +110,44 @@ export function SearchResultItem({
                     <>
                         <span className="semantic-doc-title">{title}</span>
                         <span className="semantic-snippet">{snippet}</span>
-                        {matchCount && matchCount > 1 && (
-                            <span className="semantic-more">
-                                +{matchCount - 1} more matches
-                            </span>
+                        {hasMultipleChunks && (
+                            <button
+                                className="semantic-expand-btn"
+                                onClick={handleExpandClick}
+                                aria-expanded={isExpanded}
+                            >
+                                {isExpanded ? (
+                                    <ChevronDown size={12} />
+                                ) : (
+                                    <ChevronRight size={12} />
+                                )}
+                                <span>+{allChunks.length - 1} more matches</span>
+                            </button>
                         )}
+                        <AnimatePresence>
+                            {isExpanded && hasMultipleChunks && (
+                                <motion.ul
+                                    className="semantic-chunks-list"
+                                    variants={chunkListVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="exit"
+                                >
+                                    {allChunks.slice(1).map((chunk, i) => (
+                                        <li
+                                            key={chunk.blockId || i}
+                                            className="semantic-chunk-item"
+                                            onClick={(e) => handleChunkClick(e, chunk.sourceBlockId || chunk.blockId)}
+                                        >
+                                            {chunk.headingContext && (
+                                                <span className="chunk-context">{chunk.headingContext}</span>
+                                            )}
+                                            <span className="chunk-content">{chunk.content}</span>
+                                        </li>
+                                    ))}
+                                </motion.ul>
+                            )}
+                        </AnimatePresence>
                     </>
                 ) : (
                     // Document Variant: Main Title + Optional Inline Snippet

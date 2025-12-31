@@ -7,6 +7,7 @@ import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext
 import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
+import { SearchProvider, useSearchContext } from "./contexts/SearchContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SettingsModal } from "./components/SettingsModal";
 import { useMenuEvents } from "./hooks/useMenuEvents";
@@ -128,6 +129,29 @@ function AppContent() {
   useEffect(() => {
     resetTitleSync();
   }, [activeId, resetTitleSync]);
+
+  // 搜索上下文 - 用于 Cmd+K 选中文本填充
+  const { setQueryWithFocus } = useSearchContext();
+
+  // 全局快捷键 Cmd+K - 聚焦搜索并填充选中文本
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+
+        // 获取编辑器选中文本
+        const editor = editorRef.current;
+        if (editor) {
+          const selectedText = editor.getSelectedText?.() || '';
+          setQueryWithFocus(selectedText.trim());
+        } else {
+          setQueryWithFocus('');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [editorRef, setQueryWithFocus]);
 
   const { handleImport } = useImport({
     editorRef,
@@ -284,7 +308,9 @@ function App() {
       <SettingsProvider>
         <DocumentProvider>
           <ExternalFileProvider>
-            <AppContent />
+            <SearchProvider>
+              <AppContent />
+            </SearchProvider>
           </ExternalFileProvider>
         </DocumentProvider>
       </SettingsProvider>

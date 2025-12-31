@@ -60,21 +60,6 @@ export function Sidebar({
   const searchRef = useRef<SidebarSearchRef>(null);
   const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
 
-  // Global Keyboard Shortcut for Search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchRef.current?.focus();
-        if (!query) {
-          clearSearch();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [clearSearch, query]);
-
   // Sort tag groups by order
   const sortedGroups = useMemo(() => {
     return [...tagGroups].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -213,7 +198,7 @@ export function Sidebar({
         role="complementary"
         aria-label={STRINGS.LABELS.SIDEBAR}
       >
-        <SidebarSearch ref={searchRef} query={query} onQueryChange={setQuery} />
+        <SidebarSearch ref={searchRef} onQueryChange={setQuery} />
 
         <SidebarExternalFiles
           externalFiles={externalFiles}

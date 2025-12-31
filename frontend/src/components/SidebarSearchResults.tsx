@@ -60,6 +60,8 @@ export function SidebarSearchResults({
                                     isActive={false}
                                     variant="semantic"
                                     onClick={() => onSelectSemantic(res.docId, res.matchedChunks[0]?.sourceBlockId || '')}
+                                    allChunks={res.matchedChunks}
+                                    onChunkClick={(blockId) => onSelectSemantic(res.docId, blockId)}
                                 />
                             ))}
                         </AnimatePresence>

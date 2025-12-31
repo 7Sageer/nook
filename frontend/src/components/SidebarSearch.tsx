@@ -1,9 +1,9 @@
-import { useRef, forwardRef, useImperativeHandle } from 'react';
+import { useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
+import { useSearchContext } from '../contexts/SearchContext';
 
 interface SidebarSearchProps {
-    query: string;
     onQueryChange: (query: string) => void;
 }
 
@@ -11,25 +11,45 @@ export interface SidebarSearchRef {
     focus: () => void;
 }
 
-export const SidebarSearch = forwardRef<SidebarSearchRef, SidebarSearchProps>(({ query, onQueryChange }, ref) => {
+export const SidebarSearch = forwardRef<SidebarSearchRef, SidebarSearchProps>(({ onQueryChange }, ref) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const { query, setQuery, registerSearchRef } = useSearchContext();
 
+    // 注册到 SearchContext
     useImperativeHandle(ref, () => ({
         focus: () => {
             inputRef.current?.focus();
         }
     }));
 
+    // 注册 ref 到 context
+    useEffect(() => {
+        const searchRef = {
+            focus: () => inputRef.current?.focus()
+        };
+        registerSearchRef(searchRef);
+        return () => registerSearchRef(null);
+    }, [registerSearchRef]);
+
+    // 同步 query 到父组件
+    useEffect(() => {
+        onQueryChange(query);
+    }, [query, onQueryChange]);
+
     const handleClear = () => {
-        onQueryChange('');
+        setQuery('');
         inputRef.current?.focus();
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Escape') {
-            onQueryChange('');
+            setQuery('');
             inputRef.current?.blur();
         }
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(e.target.value);
     };
 
     return (
@@ -41,7 +61,7 @@ export const SidebarSearch = forwardRef<SidebarSearchRef, SidebarSearchProps>(({
                 className="search-input"
                 placeholder={STRINGS.LABELS.SEARCH_PLACEHOLDER}
                 value={query}
-                onChange={(e) => onQueryChange(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 aria-label={STRINGS.LABELS.SEARCH_PLACEHOLDER}
             />
