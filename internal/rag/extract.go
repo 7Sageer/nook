@@ -28,6 +28,7 @@ var DefaultChunkConfig = ChunkConfig{
 // ExtractedBlock 提取的块信息
 type ExtractedBlock struct {
 	ID             string
+	SourceBlockID  string // 原始块 ID（用于定位，对于合并/聚合块，保存第一个原始块 ID）
 	Type           string
 	Content        string
 	HeadingContext string // 最近的 heading 文本
@@ -167,11 +168,16 @@ func extractNestedBlocks(children []interface{}, heading string, depth int) []Ex
 func aggregateListBlocks(blocks []ExtractedBlock, index *int, listType string, heading string) ExtractedBlock {
 	var contents []string
 	var ids []string
+	var firstBlockID string
 
 	for *index < len(blocks) && blocks[*index].Type == listType {
 		block := blocks[*index]
 		contents = append(contents, "• "+block.Content)
 		ids = append(ids, block.ID)
+		// 保存第一个原始块 ID 用于定位
+		if firstBlockID == "" {
+			firstBlockID = block.ID
+		}
 		*index++
 	}
 
@@ -180,6 +186,7 @@ func aggregateListBlocks(blocks []ExtractedBlock, index *int, listType string, h
 
 	return ExtractedBlock{
 		ID:             aggregatedID,
+		SourceBlockID:  firstBlockID,
 		Type:           "aggregated_" + listType,
 		Content:        strings.Join(contents, "\n"),
 		HeadingContext: heading,
@@ -290,6 +297,7 @@ func tryMergeConsecutiveShortBlocks(blocks []ExtractedBlock, startIndex int, con
 
 	var contents []string
 	var ids []string
+	var firstBlockID string
 	totalLength := 0
 	endIndex := startIndex
 
@@ -317,6 +325,15 @@ func tryMergeConsecutiveShortBlocks(blocks []ExtractedBlock, startIndex int, con
 
 		contents = append(contents, block.Content)
 		ids = append(ids, block.ID)
+		// 保存第一个原始块 ID 用于定位
+		if firstBlockID == "" {
+			// 优先使用原始块自身保存的 SourceBlockID（如果已经是合并块）
+			if block.SourceBlockID != "" {
+				firstBlockID = block.SourceBlockID
+			} else {
+				firstBlockID = block.ID
+			}
+		}
 		totalLength = newLength
 		endIndex = j + 1
 	}
@@ -329,6 +346,7 @@ func tryMergeConsecutiveShortBlocks(blocks []ExtractedBlock, startIndex int, con
 	// 创建合并后的块
 	return ExtractedBlock{
 		ID:             generateAggregatedID(ids),
+		SourceBlockID:  firstBlockID,
 		Type:           "merged_short_blocks",
 		Content:        strings.Join(contents, "\n"),
 		HeadingContext: currentHeading,

@@ -119,7 +119,7 @@ func (s *Searcher) SearchDocuments(query string, limit int) ([]DocumentSearchRes
 
 		chunk := ChunkMatch{
 			BlockID:        r.BlockID,
-			SourceBlockId:  parseSourceBlockId(r.BlockID),
+			SourceBlockId:  getSourceBlockId(r),
 			Content:        r.Content,
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,
@@ -168,8 +168,8 @@ func (s *Searcher) SearchDocuments(query string, limit int) ([]DocumentSearchRes
 	return output, nil
 }
 
-// uuidPattern 匹配 UUID 格式
-var uuidPattern = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
+// uuidPattern 匹配 UUID 格式（支持大小写）
+var uuidPattern = regexp.MustCompile(`(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
 
 // parseSourceBlockId 从存储的 blockId 解析出原始的 BlockNote block ID
 // 支持的格式：
@@ -205,4 +205,15 @@ func parseSourceBlockId(blockId string) string {
 	}
 
 	return ""
+}
+
+// getSourceBlockId 获取原始块 ID 用于定位
+// 优先使用数据库存储的 SourceBlockID，如果为空则回退到解析
+func getSourceBlockId(r SearchResult) string {
+	// 优先使用直接存储的 SourceBlockID
+	if r.SourceBlockID != "" {
+		return r.SourceBlockID
+	}
+	// 回退到解析（兼容旧数据）
+	return parseSourceBlockId(r.BlockID)
 }

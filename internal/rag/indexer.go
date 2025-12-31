@@ -106,8 +106,14 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		if err != nil {
 			continue
 		}
+		// 若 block 本身是聚合/合并块，使用其 SourceBlockID；否则使用 block.ID
+		sourceBlockID := block.SourceBlockID
+		if sourceBlockID == "" {
+			sourceBlockID = block.ID
+		}
 		idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
+			SourceBlockID:  sourceBlockID,
 			DocID:          docID,
 			Content:        block.Content,
 			ContentHash:    newHash,
@@ -184,9 +190,16 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 			continue
 		}
 
+		// 若 block 本身是聚合/合并块，使用其 SourceBlockID；否则使用 block.ID
+		sourceBlockID := block.SourceBlockID
+		if sourceBlockID == "" {
+			sourceBlockID = block.ID
+		}
+
 		newHash := HashContent(block.Content + block.HeadingContext)
 		idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
+			SourceBlockID:  sourceBlockID,
 			DocID:          docID,
 			Content:        block.Content,
 			ContentHash:    newHash,

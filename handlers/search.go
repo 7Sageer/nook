@@ -48,6 +48,7 @@ type SemanticSearchResult struct {
 // ChunkMatch 匹配的 chunk 信息
 type ChunkMatch struct {
 	BlockID        string  `json:"blockId"`
+	SourceBlockId  string  `json:"sourceBlockId,omitempty"` // 原始 BlockNote block ID（用于定位）
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
 	HeadingContext string  `json:"headingContext"`
@@ -130,6 +131,7 @@ func (h *SearchHandler) SemanticSearchDocuments(query string, limit int) ([]Docu
 		for j, c := range r.MatchedChunks {
 			chunks[j] = ChunkMatch{
 				BlockID:        c.BlockID,
+				SourceBlockId:  c.SourceBlockId,
 				Content:        c.Content,
 				BlockType:      c.BlockType,
 				HeadingContext: c.HeadingContext,

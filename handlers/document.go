@@ -96,6 +96,7 @@ func (h *DocumentHandler) RenameDocument(id string, newTitle string) error {
 
 // SetActiveDocument 设置当前活动文档
 func (h *DocumentHandler) SetActiveDocument(id string) error {
+	h.markIndexWrite()
 	return h.docRepo.SetActive(id)
 }
 
@@ -127,6 +128,7 @@ func (h *DocumentHandler) SaveDocumentContent(id string, content string) error {
 
 // ReorderDocuments 重新排序文档
 func (h *DocumentHandler) ReorderDocuments(ids []string) error {
+	h.markIndexWrite()
 	return h.docRepo.Reorder(ids)
 }
 

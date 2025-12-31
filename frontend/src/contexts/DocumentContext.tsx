@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
 import { DocumentMeta, TagInfo } from '../types/document';
 import { Block } from '@blocknote/core';
 import { getStrings } from '../constants/strings';
@@ -82,6 +82,11 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   const [tagGroups, setTagGroups] = useState<TagInfo[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [tagColors, setTagColors] = useState<Record<string, string>>({});
+
+  const tagGroupsRef = useRef<TagInfo[]>([]);
+  useEffect(() => {
+    tagGroupsRef.current = tagGroups;
+  }, [tagGroups]);
 
   // 初始化加载
   useEffect(() => {
@@ -226,15 +231,18 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleTagGroupCollapsed = useCallback(async (name: string): Promise<void> => {
-    let newCollapsed: boolean | null = null;
-    setTagGroups(prev => {
-      const group = prev.find(g => g.name === name);
-      if (!group) return prev;
-      newCollapsed = !group.collapsed;
-      return prev.map(g => g.name === name ? { ...g, collapsed: newCollapsed! } : g);
-    });
-    if (newCollapsed !== null) {
-      await SetTagGroupCollapsed(name, newCollapsed);
+    const currentGroup = tagGroupsRef.current.find(g => g.name === name);
+    if (!currentGroup) return;
+
+    const previousCollapsed = currentGroup.collapsed ?? false;
+    const nextCollapsed = !previousCollapsed;
+
+    setTagGroups(prev => prev.map(g => g.name === name ? { ...g, collapsed: nextCollapsed } : g));
+    try {
+      await SetTagGroupCollapsed(name, nextCollapsed);
+    } catch (e) {
+      console.error('设置标签组折叠状态失败:', e);
+      setTagGroups(prev => prev.map(g => g.name === name ? { ...g, collapsed: previousCollapsed } : g));
     }
   }, []);
 

@@ -166,6 +166,7 @@ export function Sidebar({
   }, [onSelectInternal, switchDoc]);
 
   const handleSelectSemantic = useCallback((docId: string, blockId: string) => {
+    console.log('[Sidebar] handleSelectSemantic called:', { docId, blockId, hasOnSelectInternal: !!onSelectInternal });
     if (onSelectInternal) {
       onSelectInternal(docId, blockId);
     } else {

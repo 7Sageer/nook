@@ -20,6 +20,7 @@ func init() {
 // BlockVector 块向量记录
 type BlockVector struct {
 	ID             string    // block_id
+	SourceBlockID  string    // 原始块 ID（用于定位，对于合并/聚合块，保存第一个原始块 ID）
 	DocID          string    // 所属文档 ID
 	Content        string    // 块的纯文本内容
 	ContentHash    string    // 内容哈希（用于去重）
@@ -31,6 +32,7 @@ type BlockVector struct {
 // SearchResult 搜索结果
 type SearchResult struct {
 	BlockID        string  `json:"blockId"`
+	SourceBlockID  string  `json:"sourceBlockId"` // 原始块 ID（用于定位）
 	DocID          string  `json:"docId"`
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
@@ -80,6 +82,7 @@ func (s *VectorStore) initSchema() error {
 	// 添加新列（如果不存在）
 	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
 	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
+	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
 
 	// 创建 sqlite-vec 虚拟表
 	query := fmt.Sprintf(`
@@ -100,11 +103,11 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 	}
 	defer tx.Rollback()
 
-	// 更新元数据（包含 content_hash 和 heading_context）
+	// 更新元数据（包含 content_hash, heading_context 和 source_block_id）
 	_, err = tx.Exec(`
-		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context)
-		VALUES (?, ?, ?, ?, ?, ?)
-	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext)
+		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context, source_block_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext, block.SourceBlockID)
 	if err != nil {
 		return err
 	}
@@ -203,7 +206,7 @@ func (s *VectorStore) DeleteByDocID(docID string) error {
 func (s *VectorStore) Search(queryVec []float32, limit int) ([]SearchResult, error) {
 	vecBytes := serializeVector(queryVec)
 	rows, err := s.db.Query(`
-		SELECT v.id, v.distance, b.doc_id, b.content, b.block_type, COALESCE(b.heading_context, '')
+		SELECT v.id, v.distance, b.doc_id, b.content, b.block_type, COALESCE(b.heading_context, ''), COALESCE(b.source_block_id, '')
 		FROM vec_blocks v
 		JOIN block_vectors b ON v.id = b.id
 		WHERE v.embedding MATCH ? AND k = ?
@@ -217,7 +220,7 @@ func (s *VectorStore) Search(queryVec []float32, limit int) ([]SearchResult, err
 	var results []SearchResult
 	for rows.Next() {
 		var r SearchResult
-		if err := rows.Scan(&r.BlockID, &r.Distance, &r.DocID, &r.Content, &r.BlockType, &r.HeadingContext); err != nil {
+		if err := rows.Scan(&r.BlockID, &r.Distance, &r.DocID, &r.Content, &r.BlockType, &r.HeadingContext, &r.SourceBlockID); err != nil {
 			return nil, err
 		}
 		results = append(results, r)

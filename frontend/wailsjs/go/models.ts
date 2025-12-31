@@ -63,6 +63,7 @@ export namespace handlers {
 	
 	export class ChunkMatch {
 	    blockId: string;
+	    sourceBlockId?: string;
 	    content: string;
 	    blockType: string;
 	    headingContext: string;
@@ -75,6 +76,7 @@ export namespace handlers {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.blockId = source["blockId"];
+	        this.sourceBlockId = source["sourceBlockId"];
 	        this.content = source["content"];
 	        this.blockType = source["blockType"];
 	        this.headingContext = source["headingContext"];

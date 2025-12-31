@@ -164,9 +164,10 @@ export const BookmarkBlock = createReactBlockSpec(
             const handleFetch = useCallback(async (urlToFetch: string) => {
                 if (!urlToFetch.trim()) return;
 
-                // Normalize URL
+                // Normalize URL (case-insensitive protocol check for auto-capitalize input methods)
                 let normalizedUrl = urlToFetch.trim();
-                if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+                const lowerUrl = normalizedUrl.toLowerCase();
+                if (!lowerUrl.startsWith("http://") && !lowerUrl.startsWith("https://")) {
                     normalizedUrl = "https://" + normalizedUrl;
                 }
 

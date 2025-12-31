@@ -124,7 +124,10 @@ export function useEditor({
 
     // 滚动到目标块
     useEffect(() => {
+        // 等待：有目标块ID、内容加载完成、动画结束、且编辑器已就绪
         if (!targetBlockId || contentLoading || editorAnimating) return;
+        // 确保编辑器已经加载了正确的文档（editorKey 匹配 activeId）
+        if (!editorKey || editorKey !== activeId) return;
 
         // 延迟执行，确保编辑器 DOM 已渲染
         const timer = setTimeout(() => {
@@ -141,14 +144,16 @@ export function useEditor({
                 setTimeout(() => {
                     blockElement.classList.remove('highlight-block');
                 }, 2000);
+            } else {
+                console.warn(`[useEditor] Target block not found: ${targetBlockId}`);
             }
 
             // 清除目标块 ID
             setTargetBlockId(null);
-        }, 100);
+        }, 150); // 稍微增加延迟以确保 DOM 完全渲染
 
         return () => clearTimeout(timer);
-    }, [targetBlockId, contentLoading, editorAnimating]);
+    }, [targetBlockId, contentLoading, editorAnimating, editorKey, activeId]);
 
     return {
         content,
