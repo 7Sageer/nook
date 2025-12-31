@@ -1,0 +1,172 @@
+# Release 流水线
+# 触发条件：推送 v* 格式的 tag
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  # ==================== macOS 构建 ====================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build application
+        run: ./scripts/build.sh
+
+      - name: Create DMG
+        run: |
+          brew install create-dmg
+          create-dmg \
+            --volname "Nook" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Nook.app" 150 185 \
+            --app-drop-link 450 185 \
+            "build/bin/Nook-${{ github.ref_name }}-macos.dmg" \
+            "build/bin/Nook.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nook-macos
+          path: build/bin/*.dmg
+
+  # ==================== Windows 构建 ====================
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build application
+        run: wails build
+
+      - name: Build MCP server
+        run: go build -o build/bin/nook-mcp.exe ./cmd/mcp-server
+
+      - name: Create ZIP
+        run: |
+          Compress-Archive -Path build/bin/Nook.exe, build/bin/nook-mcp.exe -DestinationPath build/bin/Nook-${{ github.ref_name }}-windows.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nook-windows
+          path: build/bin/*.zip
+
+  # ==================== Linux 构建 ====================
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Build application
+        run: wails build
+
+      - name: Build MCP server
+        run: go build -o build/bin/nook-mcp ./cmd/mcp-server
+
+      - name: Create tarball
+        run: |
+          cd build/bin
+          tar -czvf Nook-${{ github.ref_name }}-linux.tar.gz Nook nook-mcp
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nook-linux
+          path: build/bin/*.tar.gz
+
+  # ==================== 创建 Release ====================
+  create-release:
+    name: Create Release
+    needs: [build-macos, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display artifacts
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/Nook-macos/*
+            artifacts/Nook-windows/*
+            artifacts/Nook-linux/*
