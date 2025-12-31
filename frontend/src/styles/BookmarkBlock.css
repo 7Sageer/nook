@@ -14,6 +14,14 @@
     -webkit-user-select: none;
 }
 
+.ProseMirror .bookmark-card.ProseMirror-selectednode::selection,
+.ProseMirror .bookmark-card.ProseMirror-selectednode *::selection,
+.ProseMirror .ProseMirror-selectednode .bookmark-card::selection,
+.ProseMirror .ProseMirror-selectednode .bookmark-card *::selection {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
 /* Input State */
 .bookmark-input {
     background: var(--bn-colors-hovered-background, #f8f9fa);

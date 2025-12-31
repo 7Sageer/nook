@@ -54,6 +54,12 @@
     transition: background-color var(--transition-fast);
 }
 
+.ProseMirror .ProseMirror-selectednode::selection,
+.ProseMirror .ProseMirror-selectednode *::selection {
+    background-color: transparent;
+    color: inherit;
+}
+
 /* 块级元素选中效果 */
 .ProseMirror .bn-block-content {
     transition: background-color var(--transition-fast), box-shadow var(--transition-fast);

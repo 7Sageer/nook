@@ -8,6 +8,19 @@
     -webkit-user-select: none;
 }
 
+.file-block * {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.ProseMirror .file-card.ProseMirror-selectednode::selection,
+.ProseMirror .file-card.ProseMirror-selectednode *::selection,
+.ProseMirror .ProseMirror-selectednode .file-card::selection,
+.ProseMirror .ProseMirror-selectednode .file-card *::selection {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
 .file-loading {
     background: var(--bn-colors-hovered-background, #f8f9fa);
     border: 1px solid var(--bn-colors-menu-background, #e0e0e0);

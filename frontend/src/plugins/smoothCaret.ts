@@ -1,4 +1,4 @@
-import { Plugin } from 'prosemirror-state';
+import { Plugin, NodeSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 interface SmoothCaretState {
@@ -155,7 +155,7 @@ export function createSmoothCaretPlugin(options?: {
 
     function getSelectionRects(view: EditorView): DOMRect[] {
         const { selection } = view.state;
-        if (selection.empty) return [];
+        if (selection instanceof NodeSelection || selection.empty) return [];
 
         try {
             // Get DOM range from ProseMirror selection
@@ -273,6 +273,14 @@ export function createSmoothCaretPlugin(options?: {
         }
 
         const { selection } = view.state;
+        if (selection instanceof NodeSelection) {
+            state.selectionElements.forEach((elem) => {
+                elem.style.opacity = '0';
+            });
+            state.lastSelectionRects = [];
+            state.lastSelectionIsBackward = null;
+            return;
+        }
         const editorRect = view.dom.getBoundingClientRect();
         const scrollTop = view.dom.scrollTop || 0;
         const scrollLeft = view.dom.scrollLeft || 0;
