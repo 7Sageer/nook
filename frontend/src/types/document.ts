@@ -1,57 +1,15 @@
-export interface DocumentMeta {
-  id: string;
-  title: string;
-  tags?: string[];
-  order: number;
-  createdAt: number;
-  updatedAt: number;
-}
+import { document, handlers } from "../../wailsjs/go/models";
 
-export interface DocumentIndex {
-  documents: DocumentMeta[];
-  activeId: string;
-}
+export type DocumentMeta = document.Meta;
+export type DocumentIndex = document.Index;
 
-export interface SearchResult {
-  id: string;
-  title: string;
-  snippet: string;
-}
+export type SearchResult = handlers.SearchResult;
+export type SemanticSearchResult = handlers.SemanticSearchResult;
+export type ChunkMatch = handlers.ChunkMatch;
+export type DocumentSearchResult = handlers.DocumentSearchResult;
+export type TagInfo = handlers.TagInfo;
 
-export interface SemanticSearchResult {
-  docId: string;
-  docTitle: string;
-  blockId: string;
-  content: string;
-  blockType: string;
-  score: number;
-}
-
-export interface ChunkMatch {
-  blockId: string;
-  sourceBlockId?: string; // 原始 BlockNote block ID（用于定位）
-  content: string;
-  blockType: string;
-  headingContext: string;
-  score: number;
-}
-
-export interface DocumentSearchResult {
-  docId: string;
-  docTitle: string;
-  maxScore: number;
-  matchedChunks: ChunkMatch[];
-}
-
-export interface Settings {
+// Keep strict union type for frontend usage if needed, or alias it
+export interface Settings extends Omit<handlers.Settings, 'theme'> {
   theme: 'light' | 'dark' | 'system';
-}
-
-export interface TagInfo {
-  name: string;
-  count: number;
-  color?: string;
-  isGroup?: boolean;
-  collapsed?: boolean;
-  order?: number;
 }

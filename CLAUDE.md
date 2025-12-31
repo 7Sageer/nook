@@ -17,15 +17,16 @@ Nook is a local-first note-taking desktop application built with Wails (Go backe
 # Run in development mode with hot reload
 wails dev
 
-# Build production binary
-wails build
+# Build production binary (recommended)
+./scripts/build.sh              # 构建主程序 + MCP，自动打包到 .app
+
+# Build separately
+wails build                     # 仅构建主程序
+go build -o nook-mcp ./cmd/mcp-server  # 仅构建 MCP
 
 # Frontend only (from frontend/ directory)
 cd frontend && npm run dev      # Vite dev server
 cd frontend && npm run build    # Build frontend
-
-# Build MCP server (for Claude Code integration)
-go build -o nook-mcp ./cmd/mcp-server
 ```
 
 Note: No test suite is currently configured.

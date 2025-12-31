@@ -7,15 +7,14 @@ import {
   getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
 import { BlockNoteSchema, defaultBlockSpecs, Block } from "@blocknote/core";
-import { useEffect, useRef, useMemo, useState, useCallback } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { getStrings } from "../constants/strings";
 import { useSettings } from "../contexts/SettingsContext";
 import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
-import { isValidUrl, PasteLinkState } from "../plugins/pasteLink";
 import { PasteLinkMenu } from "./PasteLinkMenu";
 import "../plugins/smoothCaret.css";
-import { SaveImage, OpenFileDialog, SaveFile, IndexFileContent } from "../../wailsjs/go/main/App";
+import { OpenFileDialog } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { FileBlock } from "./blocks/FileBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
@@ -25,10 +24,10 @@ import {
   bookmarkAtomExtension,
   createBookmarkMenuItem,
   createFileMenuItem,
-  insertBookmarkWithUrl,
-  insertFileBlock,
-  fileToBase64,
 } from "../utils/editorExtensions";
+import { useImageUpload } from "../hooks/useImageUpload";
+import { usePasteHandler } from "../hooks/usePasteHandler";
+import { useFileDrop } from "../hooks/useFileDrop";
 
 // Re-export getIsComposing for external use
 export { getIsComposing } from "../utils/editorExtensions";
@@ -72,16 +71,11 @@ export function Editor({
   // Fix for drag preview in Wails WebView
   useDragPreviewFix();
 
-  // 粘贴链接菜单状态
-  const [pasteLinkState, setPasteLinkState] = useState<PasteLinkState | null>(null);
-
   // Ref for editor container to attach paste listener
   const editorContainerRef = useRef<HTMLDivElement>(null);
 
-  // 关闭菜单
-  const handleDismissPasteMenu = useCallback(() => {
-    setPasteLinkState(null);
-  }, []);
+  // Hook for image upload
+  const { uploadFile } = useImageUpload();
 
   // Create custom schema with bookmark block
   const schema = useMemo(
@@ -101,51 +95,26 @@ export function Editor({
     extensions: [bookmarkAtomExtension],
     initialContent:
       initialContent && initialContent.length > 0 ? initialContent : undefined,
-    uploadFile: async (file: File): Promise<string> => {
-      // Convert file to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remove data URL prefix (data:image/png;base64,)
-          const base64Data = result.split(",")[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      // Generate unique filename
-      const ext = file.name.split(".").pop() || "png";
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-      // Save via Go backend and get file:// URL
-      return await SaveImage(base64, filename);
-    },
+    uploadFile: uploadFile,
   });
 
-  // 粘贴为链接文本
-  const handlePasteAsLink = useCallback(() => {
-    if (!pasteLinkState || !editor) return;
+  // Hook for paste handling (Links, Bookmarks)
+  const {
+    pasteLinkState,
+    handleDismissPasteMenu,
+    handlePasteAsLink,
+    handleCreateBookmark
+  } = usePasteHandler({
+    editor,
+    containerRef: editorContainerRef,
+  });
 
-    editor.insertInlineContent([
-      {
-        type: "link",
-        href: pasteLinkState.url,
-        content: pasteLinkState.url,
-      },
-    ]);
-
-    setPasteLinkState(null);
-  }, [pasteLinkState, editor]);
-
-  // 创建书签
-  const handleCreateBookmark = useCallback(() => {
-    if (!pasteLinkState || !editor) return;
-
-    insertBookmarkWithUrl(editor, pasteLinkState.url);
-    setPasteLinkState(null);
-  }, [pasteLinkState, editor]);
+  // Hook for file drop handling
+  useFileDrop({
+    editor,
+    containerRef: editorContainerRef,
+    docId,
+  });
 
   // Inject plugins after editor is created (only once)
   useEffect(() => {
@@ -189,100 +158,6 @@ export function Editor({
       }
     }
   }, [editor]);
-
-  // DOM-level paste event listener to capture real clipboard data
-  // TipTap/BlockNote creates synthetic events without clipboardData, so we need to listen at DOM level
-  useEffect(() => {
-    const container = editorContainerRef.current;
-    if (!container || !editor) return;
-
-    const handlePaste = (event: ClipboardEvent) => {
-      // Skip if pasting into bookmark input field - let the URL paste directly
-      const target = event.target as HTMLElement;
-      if (target.tagName === 'INPUT' && target.closest('.bookmark-input')) {
-        return;
-      }
-
-      const clipboardData = event.clipboardData;
-      if (!clipboardData) return;
-
-      const text = clipboardData.getData('text/plain').trim();
-      if (!isValidUrl(text)) return;
-
-      // Prevent default paste behavior for URLs
-      event.preventDefault();
-      event.stopPropagation();
-
-      // Get cursor position from the editor
-      try {
-        const view = editor._tiptapEditor?.view;
-        if (view) {
-          const { from } = view.state.selection;
-          const coords = view.coordsAtPos(from);
-          setPasteLinkState({
-            url: text,
-            position: { x: coords.left, y: coords.bottom + 4 },
-            cursorPos: from,
-          });
-        }
-      } catch {
-        // Fallback: show menu at default position
-        setPasteLinkState({
-          url: text,
-          position: { x: 200, y: 200 },
-          cursorPos: 0,
-        });
-      }
-    };
-
-    // Use capture phase to intercept before TipTap processes
-    container.addEventListener('paste', handlePaste, { capture: true });
-
-    return () => {
-      container.removeEventListener('paste', handlePaste, { capture: true });
-    };
-  }, [editor]);
-
-  // File drop event listener for FileBlock
-  useEffect(() => {
-    const container = editorContainerRef.current;
-    if (!container || !editor) return;
-
-    const handleDrop = async (event: DragEvent) => {
-      const files = event.dataTransfer?.files;
-      if (!files || files.length === 0) return;
-
-      const file = files[0];
-      const ext = file.name.split('.').pop()?.toLowerCase();
-
-      // Only handle supported file types
-      if (!['md', 'txt', 'pdf', 'docx', 'html', 'htm'].includes(ext || '')) {
-        return; // Let default handler process (e.g., images)
-      }
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      try {
-        const base64 = await fileToBase64(file);
-        const fileInfo = await SaveFile(base64, file.name);
-
-        if (fileInfo) {
-          const block = insertFileBlock(editor, fileInfo);
-          // Trigger async indexing (don't await)
-          IndexFileContent(fileInfo.filePath, docId || '', block.id).catch(() => {
-            // Silently ignore indexing errors
-          });
-        }
-      } catch (err) {
-        console.error('Failed to handle file drop:', err);
-      }
-    };
-
-    // Use capture phase to intercept before BlockNote/TipTap processes
-    container.addEventListener('drop', handleDrop, { capture: true });
-    return () => container.removeEventListener('drop', handleDrop, { capture: true });
-  }, [editor, docId]);
 
   useEffect(() => {
     if (editorRef) {

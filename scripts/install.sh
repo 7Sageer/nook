@@ -4,12 +4,14 @@
 # This script installs the built app to /Applications
 # and the Claude skill to ~/.claude/skills
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 APP_NAME="Nook.app"
-BUILD_PATH="build/bin/$APP_NAME"
+BUILD_PATH="$SCRIPT_DIR/../build/bin/$APP_NAME"
 INSTALL_PATH="/Applications/$APP_NAME"
 
 SKILL_NAME="nook-jq"
-SKILL_SOURCE=".claude/skills/$SKILL_NAME"
+SKILL_SOURCE="$SCRIPT_DIR/../.claude/skills/$SKILL_NAME"
 SKILL_DEST="$HOME/.claude/skills/$SKILL_NAME"
 
 echo "🚀 Installing Nook..."
