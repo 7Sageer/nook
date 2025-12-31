@@ -112,6 +112,7 @@ export const FileBlock = createReactBlockSpec(
                 <div
                     className={`file-block file-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
                     contentEditable={false}
+                    onDoubleClick={handleOpenFile}
                 >
                     <div className="file-icon-wrapper">
                         <FileTypeIcon type={fileType} />
