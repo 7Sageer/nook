@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { getStrings } from "../constants/strings";
 import "../styles/PasteLinkMenu.css";
 
@@ -24,7 +24,15 @@ export function PasteLinkMenu({
   language = "en",
 }: PasteLinkMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
+  const pasteButtonRef = useRef<HTMLButtonElement>(null);
+  const bookmarkButtonRef = useRef<HTMLButtonElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
   const STRINGS = getStrings(language);
+
+  // 菜单打开时自动聚焦第一个选项
+  useEffect(() => {
+    pasteButtonRef.current?.focus();
+  }, []);
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -37,6 +45,18 @@ export function PasteLinkMenu({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onDismiss();
+        return;
+      }
+
+      // 键盘导航：ArrowDown/ArrowUp 在选项间移动
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusedIndex(1);
+        bookmarkButtonRef.current?.focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusedIndex(0);
+        pasteButtonRef.current?.focus();
       }
     };
 
@@ -80,6 +100,8 @@ export function PasteLinkMenu({
     <div
       ref={menuRef}
       className="paste-link-menu"
+      role="menu"
+      aria-label="Paste link options"
       style={{
         left: pos.x,
         top: pos.y,
@@ -92,17 +114,23 @@ export function PasteLinkMenu({
       </div>
       <div className="paste-link-menu-options">
         <button
+          ref={pasteButtonRef}
           className="paste-link-menu-option"
+          role="menuitem"
           onClick={onPasteAsText}
+          aria-label={STRINGS.PASTE_LINK?.AS_LINK || "Paste as link"}
         >
-          <LinkIcon />
+          <LinkIcon aria-hidden="true" />
           <span>{STRINGS.PASTE_LINK?.AS_LINK || "Paste as link"}</span>
         </button>
         <button
+          ref={bookmarkButtonRef}
           className="paste-link-menu-option"
+          role="menuitem"
           onClick={onCreateBookmark}
+          aria-label={STRINGS.PASTE_LINK?.AS_BOOKMARK || "Create bookmark"}
         >
-          <BookmarkIcon />
+          <BookmarkIcon aria-hidden="true" />
           <span>{STRINGS.PASTE_LINK?.AS_BOOKMARK || "Create bookmark"}</span>
         </button>
       </div>

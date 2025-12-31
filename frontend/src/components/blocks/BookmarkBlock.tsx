@@ -7,6 +7,10 @@ import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/BookmarkBlock.css";
 
+// 模块级别的状态管理：追踪正在 fetch 的 bookmark IDs
+// 使用 Set 而不是污染 window 对象
+const fetchingBookmarks = new Set<string>();
+
 // BookmarkBlock component
 export const BookmarkBlock = createReactBlockSpec(
     {
@@ -64,10 +68,10 @@ export const BookmarkBlock = createReactBlockSpec(
                 // Skip if no URL or not in loading state or already has title
                 if (!url || !loading || title) return;
 
-                // Use a global tracking mechanism since component may remount
-                const fetchKey = `bookmark-fetch-${block.id}`;
-                if ((window as unknown as Record<string, boolean>)[fetchKey]) return;
-                (window as unknown as Record<string, boolean>)[fetchKey] = true;
+                // 使用模块级别的 Set 追踪正在 fetch 的 block，避免重复请求
+                const blockId = block.id;
+                if (fetchingBookmarks.has(blockId)) return;
+                fetchingBookmarks.add(blockId);
 
                 (async () => {
                     try {
@@ -122,9 +126,9 @@ export const BookmarkBlock = createReactBlockSpec(
                             });
                         }
                     } finally {
-                        // Clean up the tracking key after a delay
+                        // 清理追踪状态，延迟5秒以防止快速重新挂载时重复请求
                         setTimeout(() => {
-                            delete (window as unknown as Record<string, boolean>)[fetchKey];
+                            fetchingBookmarks.delete(blockId);
                         }, 5000);
                     }
                 })();
