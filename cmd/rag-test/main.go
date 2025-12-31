@@ -63,7 +63,7 @@ func main() {
 					if len(content) > 80 {
 						content = content[:80] + "..."
 					}
-					fmt.Printf("       类型: %s\n", chunk.BlockType)
+					fmt.Printf("       类型: %s, 内容: %s\n", chunk.BlockType, content)
 				}
 			}
 		}

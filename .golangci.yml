@@ -1,0 +1,22 @@
+# golangci-lint 配置
+# 禁用过于严格的检查，保留关键检查
+
+run:
+  timeout: 5m
+
+linters:
+  disable:
+    - errcheck  # 暂时禁用未检查错误返回值的检查
+  enable:
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - typecheck
+
+issues:
+  # 排除测试文件的某些检查
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - unused

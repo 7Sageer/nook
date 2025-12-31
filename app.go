@@ -88,7 +88,7 @@ func NewApp() *App {
 	app.ragHandler = handlers.NewRAGHandler(dataPath, docRepo, ragService)
 	app.settingsHandler = handlers.NewSettingsHandler(settingsService)
 	app.tagHandler = handlers.NewTagHandler(dataPath, docRepo, tagStore, folderRepo, watcherService)
-	app.fileHandler = handlers.NewFileHandler(nil, dataPath, markdownService)
+	app.fileHandler = handlers.NewFileHandler(context.TODO(), dataPath, markdownService)
 
 	return app
 }

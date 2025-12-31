@@ -84,17 +84,6 @@ func (s *Service) isRecentWrite(filePath string) bool {
 	return true
 }
 
-// cleanupRecentWrites 定期清理过期的 recentWrites 记录
-func (s *Service) cleanupRecentWrites() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	for path, writeTime := range s.recentWrites {
-		if time.Since(writeTime) > s.ignoreWindow*2 {
-			delete(s.recentWrites, path)
-		}
-	}
-}
-
 // Start 启动文件监听
 func (s *Service) Start(ctx context.Context) error {
 	s.ctx = ctx
