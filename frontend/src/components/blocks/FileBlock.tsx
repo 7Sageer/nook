@@ -1,5 +1,5 @@
 import { createReactBlockSpec } from "@blocknote/react";
-import { defaultProps, Block, BlockNoteEditor } from "@blocknote/core";
+import { defaultProps } from "@blocknote/core";
 import { useCallback } from "react";
 import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { OpenFileWithSystem, IndexFileContent } from "../../../wailsjs/go/main/App";
@@ -26,7 +26,8 @@ const formatFileSize = (bytes: number): string => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const FileBlockComponent = (props: { block: Block, editor: BlockNoteEditor }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const FileBlockComponent = (props: { block: any, editor: any }) => {
     const { block, editor } = props;
     const { filePath, fileName, fileSize, fileType, loading, error, indexed, indexing, indexError } = block.props;
     const { activeId } = useDocumentContext();

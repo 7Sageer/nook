@@ -1,5 +1,5 @@
 import { createReactBlockSpec } from "@blocknote/react";
-import { defaultProps, Block, BlockNoteEditor } from "@blocknote/core";
+import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Pencil, ExternalLink, RefreshCw, Check, Loader2, AlertCircle } from "lucide-react";
 import { FetchLinkMetadata, IndexBookmarkContent } from "../../../wailsjs/go/main/App";
@@ -11,7 +11,8 @@ import "../../styles/BookmarkBlock.css";
 // 使用 Set 而不是污染 window 对象
 const fetchingBookmarks = new Set<string>();
 
-const BookmarkBlockComponent = (props: { block: Block, editor: BlockNoteEditor }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
     const { block, editor } = props;
     const { url, title, description, image, favicon, siteName, loading, error, indexed, indexing, indexError } = block.props;
     const { activeId } = useDocumentContext();
