@@ -1,7 +1,7 @@
-import { useCallback } from "react";
+
 import { Sidebar } from "./Sidebar";
 import { ExternalFileInfo } from "../contexts/ExternalFileContext";
-import { Block } from "@blocknote/core";
+
 
 interface SidebarContainerProps {
   // 外部文件

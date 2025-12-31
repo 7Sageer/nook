@@ -16,7 +16,7 @@ export function useH1Visibility(editorKey: string | null, activeId: string | nul
     const scrollContainer = document.querySelector('.main-content');
     if (!editorContainer || !scrollContainer) return { cleanup: () => { } };
 
-    const createIntersectionObserver = (h1Element: Element) => {
+    const createIntersectionObserver = (_h1Element: Element) => {
       // 使用 IntersectionObserver 监听 H1 可见性
       return new IntersectionObserver(
         (entries) => {

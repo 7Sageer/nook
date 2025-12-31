@@ -40,7 +40,7 @@ func main() {
 		"test",
 	}
 
-	fmt.Println("=== RAG 语义搜索测试 ===\n")
+	fmt.Println("=== RAG 语义搜索测试 ===")
 
 	for _, query := range queries {
 		fmt.Printf("🔍 查询: \"%s\"\n", query)

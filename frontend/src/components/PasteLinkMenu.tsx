@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { getStrings } from "../constants/strings";
 import "../styles/PasteLinkMenu.css";
 
@@ -26,7 +26,7 @@ export function PasteLinkMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const pasteButtonRef = useRef<HTMLButtonElement>(null);
   const bookmarkButtonRef = useRef<HTMLButtonElement>(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
+
   const STRINGS = getStrings(language);
 
   // 菜单打开时自动聚焦第一个选项
@@ -51,11 +51,11 @@ export function PasteLinkMenu({
       // 键盘导航：ArrowDown/ArrowUp 在选项间移动
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusedIndex(1);
+
         bookmarkButtonRef.current?.focus();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusedIndex(0);
+
         pasteButtonRef.current?.focus();
       }
     };

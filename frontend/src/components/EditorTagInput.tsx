@@ -62,10 +62,7 @@ export const EditorTagInput = memo(function EditorTagInput({
         setIsAdding(false);
     }, [docId, onAddTag, tags]);
 
-    const handleRemove = useCallback((e: React.MouseEvent, tag: string) => {
-        e.stopPropagation();
-        onRemoveTag(docId, tag);
-    }, [docId, onRemoveTag]);
+
 
     const handleTagClick = useCallback((e: React.MouseEvent, tag: string) => {
         e.stopPropagation();

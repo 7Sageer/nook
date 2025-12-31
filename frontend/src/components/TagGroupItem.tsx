@@ -27,9 +27,9 @@ interface TagGroupItemProps {
 
 export const TagGroupItem = memo(function TagGroupItem({
     group,
-    index,
+
     documents,
-    disabled,
+
     activeDocId,
     onToggle,
     onRename,

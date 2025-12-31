@@ -42,7 +42,7 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
     inFolder = false,
     showSnippet = false,
     hidden = false,
-}, ref) {
+}, _ref) {
     const {
         attributes,
         listeners,

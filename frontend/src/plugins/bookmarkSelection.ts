@@ -1,5 +1,4 @@
-import { Plugin, PluginKey, NodeSelection, TextSelection } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state';
 
 const bookmarkSelectionPluginKey = new PluginKey('bookmarkSelection');
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
-import { OpenExternalFile, SaveExternalFile, LoadExternalFile } from '../../wailsjs/go/main/App';
-import type { Block } from '@blocknote/core';
+import { OpenExternalFile, SaveExternalFile } from '../../wailsjs/go/main/App';
+
 
 // ========== Types ==========
 

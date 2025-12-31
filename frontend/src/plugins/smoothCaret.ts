@@ -227,7 +227,7 @@ export function createSmoothCaretPlugin(options?: {
 
             // Merge overlapping rectangles
             return mergeRects(allRects);
-        } catch (e) {
+        } catch {
             // Fallback: use simple bounding rect approach
             return [];
         }
@@ -334,7 +334,7 @@ export function createSmoothCaretPlugin(options?: {
                     elem.style.height = `${state.lastPos.height}px`;
                     elem.style.opacity = '1';
                     // Force reflow
-                    elem.offsetHeight;
+                    void elem.offsetHeight;
                     // Then animate to target position
                     elem.style.transition = `top ${transitionDuration}ms ease-out, left ${transitionDuration}ms ease-out, width ${transitionDuration}ms ease-out, height ${transitionDuration}ms ease-out, opacity 100ms ease`;
                     elem.style.top = `${top}px`;
@@ -345,7 +345,7 @@ export function createSmoothCaretPlugin(options?: {
                     // Skip animation for large jumps OR for expansion new elements
                     elem.style.transition = 'none';
                     // Force reflow
-                    elem.offsetHeight;
+                    void elem.offsetHeight;
                     elem.style.top = `${top}px`;
                     elem.style.left = `${left}px`;
                     elem.style.width = `${rect.width}px`;
@@ -415,7 +415,7 @@ export function createSmoothCaretPlugin(options?: {
             if (isLargeJump) {
                 state.cursorElement.style.transition = 'none';
                 // Force reflow
-                state.cursorElement.offsetHeight;
+                void state.cursorElement.offsetHeight;
             }
 
             state.cursorElement.style.top = `${top}px`;

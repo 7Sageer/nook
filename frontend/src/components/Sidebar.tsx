@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import type { DocumentMeta, TagInfo } from '../types/document';
+import { useMemo, useState, useCallback, useRef } from 'react';
+import type { DocumentMeta } from '../types/document';
 import type { ExternalFileInfo } from '../types/external-file';
 import { useSettings } from '../contexts/SettingsContext';
 import { useDocumentContext } from '../contexts/DocumentContext';
@@ -54,7 +54,7 @@ export function Sidebar({
   } = useDocumentContext();
   const { theme, language } = useSettings();
   const STRINGS = getStrings(language);
-  const { query, results, semanticResults, isSearching, isLoadingSemantic, setQuery, clearSearch } = useSearch();
+  const { query, results, semanticResults, isSearching, isLoadingSemantic, setQuery } = useSearch();
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
   const searchRef = useRef<SidebarSearchRef>(null);

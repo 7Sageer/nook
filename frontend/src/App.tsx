@@ -18,7 +18,7 @@ import { useAppEvents } from "./hooks/useAppEvents";
 import { useExternalLinks } from "./hooks/useExternalLinks";
 import { useFileWatcher } from "./hooks/useFileWatcher";
 import { useExternalFileHandler } from "./hooks/useExternalFileHandler";
-import { Block } from "@blocknote/core";
+
 import { getStrings } from "./constants/strings";
 import "./App.css";
 import "./styles/print.css";
@@ -31,9 +31,9 @@ function AppContent() {
     documents,
     activeId,
     isLoading,
-    tagGroups,
+
     createDoc,
-    deleteDoc,
+
     renameDoc,
     switchDoc,
     loadContent,
@@ -220,7 +220,7 @@ function AppContent() {
 
   const handleAbout = useCallback(() => {
     alert(STRINGS.ABOUT_INFO);
-  }, []);
+  }, [STRINGS.ABOUT_INFO]);
 
   const handleSettings = useCallback(() => {
     setSettingsOpen(true);

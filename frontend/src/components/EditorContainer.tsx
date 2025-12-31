@@ -44,7 +44,7 @@ export function EditorContainer({
   editorAnimating,
   contentLoading,
   isLoading,
-  documents,
+
   activeId,
   activeDoc,
   isExternalMode,

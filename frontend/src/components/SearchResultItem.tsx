@@ -57,7 +57,7 @@ export function SearchResultItem({
     title,
     snippet,
     icon,
-    matchCount,
+
     isActive,
     variant = 'document',
     onClick,

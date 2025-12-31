@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSettings, ThemeSetting } from '../contexts/SettingsContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { X, Database, Bot, Palette } from 'lucide-react';
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
 import { getStrings } from '../constants/strings';

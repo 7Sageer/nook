@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useDebounce } from './useDebounce';
 import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
 import { Block, BlockNoteEditor } from '@blocknote/core';
