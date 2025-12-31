@@ -89,6 +89,7 @@ export const EN = {
         EMBEDDING_MODEL: "Embedding Model",
         INDEX_STATUS: "Index Status",
         INDEXED_BOOKMARKS: "Indexed Bookmarks",
+        INDEXED_FILES: "Indexed Files",
         DOCUMENTS: "documents",
         LAST_UPDATE: "Last Update",
         REBUILD_INDEX: "Rebuild Index",

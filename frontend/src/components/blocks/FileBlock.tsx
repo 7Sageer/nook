@@ -1,7 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useCallback } from "react";
-import { FileText, File, Loader2, Check, AlertCircle, RefreshCw } from "lucide-react";
+import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { OpenFileWithSystem, IndexFileContent } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/FileBlock.css";
@@ -112,7 +112,6 @@ export const FileBlock = createReactBlockSpec(
                 <div
                     className={`file-block file-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
                     contentEditable={false}
-                    onClick={handleOpenFile}
                 >
                     <div className="file-icon-wrapper">
                         <FileTypeIcon type={fileType} />
@@ -127,9 +126,10 @@ export const FileBlock = createReactBlockSpec(
                     <div className="file-actions">
                         <button
                             className={`file-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
-                            title={indexing ? "Indexing..." : indexed ? "Re-index" : "Index content"}
+                            title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? "Indexing failed, retry?" : "Index content"}
                             disabled={indexing}
                             onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 handleIndex();
                             }}
@@ -143,6 +143,17 @@ export const FileBlock = createReactBlockSpec(
                             ) : (
                                 <RefreshCw size={14} />
                             )}
+                        </button>
+                        <button
+                            className="file-action-btn"
+                            title="Open file"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleOpenFile();
+                            }}
+                        >
+                            <ExternalLink size={14} />
                         </button>
                     </div>
                 </div>

@@ -114,6 +114,12 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                     {status.indexedBookmarks || 0}
                 </span>
             </div>
+            <div className="status-row">
+                <span className="status-label">{strings.SETTINGS.INDEXED_FILES || "Indexed Files"}</span>
+                <span className="status-value">
+                    {status.indexedFiles || 0}
+                </span>
+            </div>
             {status.lastIndexTime && (
                 <div className="status-row">
                     <span className="status-label">{strings.SETTINGS.LAST_UPDATE}</span>
@@ -223,6 +229,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         enabled: false,
         indexedDocs: 0,
         indexedBookmarks: 0,
+        indexedFiles: 0,
         totalDocs: 0,
         lastIndexTime: '',
     });

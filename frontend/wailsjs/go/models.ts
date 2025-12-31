@@ -159,6 +159,7 @@ export namespace handlers {
 	    enabled: boolean;
 	    indexedDocs: number;
 	    indexedBookmarks: number;
+	    indexedFiles: number;
 	    totalDocs: number;
 	    lastIndexTime: string;
 	
@@ -171,6 +172,7 @@ export namespace handlers {
 	        this.enabled = source["enabled"];
 	        this.indexedDocs = source["indexedDocs"];
 	        this.indexedBookmarks = source["indexedBookmarks"];
+	        this.indexedFiles = source["indexedFiles"];
 	        this.totalDocs = source["totalDocs"];
 	        this.lastIndexTime = source["lastIndexTime"];
 	    }

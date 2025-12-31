@@ -35,6 +35,7 @@ type RAGStatus struct {
 	Enabled          bool   `json:"enabled"`
 	IndexedDocs      int    `json:"indexedDocs"`
 	IndexedBookmarks int    `json:"indexedBookmarks"`
+	IndexedFiles     int    `json:"indexedFiles"`
 	TotalDocs        int    `json:"totalDocs"`
 	LastIndexTime    string `json:"lastIndexTime"`
 }
@@ -62,12 +63,13 @@ func (h *RAGHandler) GetRAGStatus() RAGStatus {
 	index, _ := h.docRepo.GetAll()
 	totalDocs := len(index.Documents)
 
-	indexedDocs, indexedBookmarks, _ := h.ragService.GetIndexedStats()
+	indexedDocs, indexedBookmarks, indexedFiles, _ := h.ragService.GetIndexedStats()
 
 	return RAGStatus{
 		Enabled:          true,
 		IndexedDocs:      indexedDocs,
 		IndexedBookmarks: indexedBookmarks,
+		IndexedFiles:     indexedFiles,
 		TotalDocs:        totalDocs,
 		LastIndexTime:    "",
 	}

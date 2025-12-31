@@ -16,7 +16,7 @@ const (
 
 	// File Block Dialog
 	DialogTitleSelectFile = "Select File"
-	FilterSupportedFiles  = "Supported Files (*.md, *.txt)"
+	FilterSupportedFiles  = "Supported Files (*.md, *.txt, *.pdf, *.docx, *.html)"
 
 	// Defaults
 	DefaultNewDocTitle = "Untitled"

@@ -91,7 +91,7 @@
 /* Card State */
 .bookmark-card {
     display: flex;
-    width: 100%;
+    width: 75%;
     position: relative;
     border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
     border-left: 3px solid var(--bn-colors-menu-background, #d0d0d0);

@@ -261,8 +261,6 @@ export const BookmarkBlock = createReactBlockSpec(
                 <div
                     className={`bookmark-block bookmark-card ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
                     contentEditable={false}
-                    onClick={() => BrowserOpenURL(url)}
-                    style={{ cursor: "pointer" }}
                 >
                     <div className="bookmark-content">
                         <div className="bookmark-title">{title || url}</div>

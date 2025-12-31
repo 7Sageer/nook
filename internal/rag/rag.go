@@ -118,13 +118,13 @@ func (s *Service) GetIndexedCount() (int, error) {
 	return s.store.GetIndexedDocCount()
 }
 
-// GetIndexedStats 获取索引统计信息
-func (s *Service) GetIndexedStats() (int, int, error) {
+// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
+func (s *Service) GetIndexedStats() (int, int, int, error) {
 	if s.store == nil {
 		dbPath := filepath.Join(s.dataPath, "vectors.db")
 		store, err := NewVectorStore(dbPath, 768) // 默认维度
 		if err != nil {
-			return 0, 0, nil // 数据库不存在，返回 0
+			return 0, 0, 0, nil // 数据库不存在，返回 0
 		}
 		s.store = store
 	}
@@ -211,7 +211,12 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	// 4. 生成基础 ID
 	baseID := fmt.Sprintf("%s_%s_bookmark", sourceDocID, blockID)
 
-	// 5. 对内容进行分块
+	// 5. 删除该 bookmark block 的旧 chunks（修复重新索引时的主键冲突）
+	if err := s.store.DeleteBlocksByPrefix(baseID); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete old bookmark chunks for %s: %v\n", baseID, err)
+	}
+
+	// 6. 对内容进行分块
 	chunks := ChunkTextContent(content.TextContent, headingContext, baseID, s.indexer.chunkConfig)
 
 	// 如果分块结果为空，创建一个单独的块
@@ -238,7 +243,7 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 		fmt.Println("   ─────────────────────────────────────────────────")
 	}
 
-	// 6. 为每个 chunk 生成 embedding 并存储
+	// 7. 为每个 chunk 生成 embedding 并存储
 	for _, chunk := range chunks {
 		if chunk.Content == "" {
 			continue
@@ -252,6 +257,7 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 		contentHash := HashContent(chunk.Content)
 		s.store.Upsert(&BlockVector{
 			ID:             chunk.ID,
+			SourceBlockID:  blockID, // BookmarkBlock 的 BlockNote ID，用于定位
 			DocID:          sourceDocID,
 			Content:        chunk.Content,
 			ContentHash:    contentHash,
@@ -290,7 +296,12 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 	// 4. 生成基础 ID
 	baseID := fmt.Sprintf("%s_%s_file", sourceDocID, blockID)
 
-	// 5. 对内容进行分块
+	// 5. 删除该 file block 的旧 chunks（修复重新索引时的主键冲突）
+	if err := s.store.DeleteBlocksByPrefix(baseID); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete old file chunks for %s: %v\n", baseID, err)
+	}
+
+	// 6. 对内容进行分块
 	chunks := ChunkTextContent(textContent, headingContext, baseID, s.indexer.chunkConfig)
 
 	// 如果分块结果为空，创建一个单独的块
@@ -316,7 +327,7 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 		fmt.Println("   ─────────────────────────────────────────────────")
 	}
 
-	// 6. 为每个 chunk 生成 embedding 并存储
+	// 7. 为每个 chunk 生成 embedding 并存储
 	for _, chunk := range chunks {
 		if chunk.Content == "" {
 			continue
@@ -324,19 +335,25 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 
 		embedding, err := s.embedder.Embed(chunk.Content)
 		if err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to embed file chunk %s: %v\n", chunk.ID, err)
 			continue // 跳过失败的块
 		}
 
 		contentHash := HashContent(chunk.Content)
-		s.store.Upsert(&BlockVector{
+		if err := s.store.Upsert(&BlockVector{
 			ID:             chunk.ID,
+			SourceBlockID:  blockID, // FileBlock 的 BlockNote ID，用于定位
 			DocID:          sourceDocID,
 			Content:        chunk.Content,
 			ContentHash:    contentHash,
 			BlockType:      "file",
 			HeadingContext: chunk.HeadingContext,
 			Embedding:      embedding,
-		})
+		}); err != nil {
+			fmt.Printf("❌ [RAG] Failed to upsert file chunk %s: %v\n", chunk.ID, err)
+		} else if debugChunks {
+			fmt.Printf("✅ [RAG] Stored file chunk: %s\n", chunk.ID)
+		}
 	}
 
 	return nil

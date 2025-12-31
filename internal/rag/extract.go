@@ -41,34 +41,55 @@ var listTypes = map[string]bool{
 	"checkListItem":    true,
 }
 
-// ExtractBookmarkBlockIDs 从文档 JSON 中提取所有 bookmark 块的 ID
-// 用于清理孤儿 bookmark 索引
-func ExtractBookmarkBlockIDs(content []byte) []string {
-	var blocks []interface{}
-	if err := json.Unmarshal(content, &blocks); err != nil {
-		return nil
-	}
-
-	var bookmarkIDs []string
-	extractBookmarkIDsRecursive(blocks, &bookmarkIDs)
-	return bookmarkIDs
+// ExternalBlockIDs 外部块（bookmark/file）的 ID 集合
+type ExternalBlockIDs struct {
+	BookmarkIDs []string
+	FileIDs     []string
 }
 
-// extractBookmarkIDsRecursive 递归提取 bookmark 块 ID
-func extractBookmarkIDsRecursive(blocks []interface{}, ids *[]string) {
+// ExtractExternalBlockIDs 一次解析提取所有外部块（bookmark/file）的 ID
+// 用于清理孤儿索引，避免多次解析 JSON
+func ExtractExternalBlockIDs(content []byte) ExternalBlockIDs {
+	var blocks []interface{}
+	if err := json.Unmarshal(content, &blocks); err != nil {
+		return ExternalBlockIDs{}
+	}
+
+	result := ExternalBlockIDs{}
+	extractExternalIDsRecursive(blocks, &result)
+	return result
+}
+
+// extractExternalIDsRecursive 递归提取外部块 ID
+func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs) {
 	for _, block := range blocks {
 		if blockMap, ok := block.(map[string]interface{}); ok {
-			if blockType, ok := blockMap["type"].(string); ok && blockType == "bookmark" {
+			if blockType, ok := blockMap["type"].(string); ok {
 				if id, ok := blockMap["id"].(string); ok {
-					*ids = append(*ids, id)
+					switch blockType {
+					case "bookmark":
+						result.BookmarkIDs = append(result.BookmarkIDs, id)
+					case "file":
+						result.FileIDs = append(result.FileIDs, id)
+					}
 				}
 			}
 			// 递归处理 children
 			if children, ok := blockMap["children"].([]interface{}); ok {
-				extractBookmarkIDsRecursive(children, ids)
+				extractExternalIDsRecursive(children, result)
 			}
 		}
 	}
+}
+
+// ExtractBookmarkBlockIDs 从文档 JSON 中提取所有 bookmark 块的 ID（兼容旧接口）
+func ExtractBookmarkBlockIDs(content []byte) []string {
+	return ExtractExternalBlockIDs(content).BookmarkIDs
+}
+
+// ExtractFileBlockIDs 从文档 JSON 中提取所有 file 块的 ID（兼容旧接口）
+func ExtractFileBlockIDs(content []byte) []string {
+	return ExtractExternalBlockIDs(content).FileIDs
 }
 
 // ExtractBlocks 从 BlockNote JSON 内容提取块（使用默认配置）

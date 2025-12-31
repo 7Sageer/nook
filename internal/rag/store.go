@@ -166,6 +166,36 @@ func (s *VectorStore) DeleteBlocks(ids []string) error {
 	return tx.Commit()
 }
 
+// DeleteBlocksByPrefix 删除指定前缀的所有块
+func (s *VectorStore) DeleteBlocksByPrefix(prefix string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 获取匹配前缀的所有块 ID
+	rows, err := tx.Query(`SELECT id FROM block_vectors WHERE id LIKE ?`, prefix+"%")
+	if err != nil {
+		return err
+	}
+	var ids []string
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	rows.Close()
+
+	// 删除向量和元数据
+	for _, id := range ids {
+		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+	}
+
+	return tx.Commit()
+}
+
 // HashContent 计算内容的 SHA256 哈希
 func HashContent(content string) string {
 	hash := sha256.Sum256([]byte(content))
@@ -243,12 +273,13 @@ func (s *VectorStore) GetIndexedDocCount() (int, error) {
 	return count, nil
 }
 
-// GetIndexedStats 获取索引统计信息 (文档数, 书签数)
-func (s *VectorStore) GetIndexedStats() (int, int, error) {
+// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
+func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
+	// Count unique docs that have non-bookmark and non-file blocks
 	var docCount int
-	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type != 'bookmark'`).Scan(&docCount)
+	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type NOT IN ('bookmark', 'file')`).Scan(&docCount)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	// For bookmarks, we need to count unique "base" bookmarks, not chunks.
@@ -256,7 +287,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, error) {
 	// ID format: {docID}_{blockID}_bookmark_chunk_{N} or {docID}_{blockID}_bookmark
 	rows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'bookmark'`)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 	defer rows.Close()
 
@@ -264,7 +295,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, error) {
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return 0, 0, err
+			return 0, 0, 0, err
 		}
 
 		baseID := id
@@ -275,7 +306,30 @@ func (s *VectorStore) GetIndexedStats() (int, int, error) {
 		uniqueBookmarks[baseID] = true
 	}
 
-	return docCount, len(uniqueBookmarks), nil
+	// For files, count unique base file blocks (similar logic to bookmarks)
+	// ID format: {docID}_{blockID}_file_chunk_{N} or {docID}_{blockID}_file
+	fileRows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'file'`)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	defer fileRows.Close()
+
+	uniqueFiles := make(map[string]bool)
+	for fileRows.Next() {
+		var id string
+		if err := fileRows.Scan(&id); err != nil {
+			return 0, 0, 0, err
+		}
+
+		baseID := id
+		// If it's a chunk, strip the suffix to get the base ID
+		if idx := strings.LastIndex(id, "_chunk_"); idx != -1 {
+			baseID = id[:idx]
+		}
+		uniqueFiles[baseID] = true
+	}
+
+	return docCount, len(uniqueBookmarks), len(uniqueFiles), nil
 }
 
 // GetBookmarkBlockIDs 获取文档的所有 bookmark 块 ID
@@ -335,7 +389,64 @@ func (s *VectorStore) DeleteOrphanBookmarks(docID string, keepBlockIDs []string)
 	return nil
 }
 
-// DeleteNonBookmarkByDocID 删除文档的所有非 bookmark 块
+// GetFileBlockIDs 获取文档的所有 file 块 ID
+func (s *VectorStore) GetFileBlockIDs(docID string) ([]string, error) {
+	rows, err := s.db.Query(`
+		SELECT id FROM block_vectors
+		WHERE doc_id = ? AND block_type = 'file'
+	`, docID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		rows.Scan(&id)
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+// DeleteOrphanFiles 删除不在 keepBlockIDs 列表中的 file 块
+// keepBlockIDs 是文档中当前存在的 file 块的 BlockNote ID
+func (s *VectorStore) DeleteOrphanFiles(docID string, keepBlockIDs []string) error {
+	// 构建保留的 file ID 前缀集合
+	keepPrefixes := make(map[string]bool)
+	for _, blockID := range keepBlockIDs {
+		prefix := fmt.Sprintf("%s_%s_file", docID, blockID)
+		keepPrefixes[prefix] = true
+	}
+
+	// 获取所有 file 块
+	allFiles, err := s.GetFileBlockIDs(docID)
+	if err != nil {
+		return err
+	}
+
+	// 找出需要删除的块（ID 不以任何保留前缀开头）
+	var toDelete []string
+	for _, fileID := range allFiles {
+		shouldKeep := false
+		for prefix := range keepPrefixes {
+			if strings.HasPrefix(fileID, prefix) {
+				shouldKeep = true
+				break
+			}
+		}
+		if !shouldKeep {
+			toDelete = append(toDelete, fileID)
+		}
+	}
+
+	if len(toDelete) > 0 {
+		return s.DeleteBlocks(toDelete)
+	}
+	return nil
+}
+
+// DeleteNonBookmarkByDocID 删除文档的所有非 bookmark/file 块（保留外部索引块）
 func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -343,10 +454,10 @@ func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	}
 	defer tx.Rollback()
 
-	// 获取要删除的非 bookmark block IDs
+	// 获取要删除的非 bookmark/file block IDs
 	rows, err := tx.Query(`
 		SELECT id FROM block_vectors 
-		WHERE doc_id = ? AND block_type != 'bookmark'
+		WHERE doc_id = ? AND block_type NOT IN ('bookmark', 'file')
 	`, docID)
 	if err != nil {
 		return err

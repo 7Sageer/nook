@@ -17,6 +17,7 @@ export interface RAGStatus {
     enabled: boolean;
     indexedDocs: number;
     indexedBookmarks: number;
+    indexedFiles: number;
     totalDocs: number;
     lastIndexTime: string;
 }

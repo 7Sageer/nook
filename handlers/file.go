@@ -270,9 +270,12 @@ func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
 	filePath, err := runtime.OpenFileDialog(h.ctx, runtime.OpenDialogOptions{
 		Title: constant.DialogTitleSelectFile,
 		Filters: []runtime.FileFilter{
-			{DisplayName: constant.FilterSupportedFiles, Pattern: "*.md;*.txt"},
+			{DisplayName: constant.FilterSupportedFiles, Pattern: "*.md;*.txt;*.pdf;*.docx;*.html;*.htm"},
 			{DisplayName: constant.FilterMarkdown, Pattern: "*.md"},
 			{DisplayName: constant.FilterText, Pattern: "*.txt"},
+			{DisplayName: "PDF Files (*.pdf)", Pattern: "*.pdf"},
+			{DisplayName: "Word Documents (*.docx)", Pattern: "*.docx"},
+			{DisplayName: constant.FilterHTML, Pattern: "*.html;*.htm"},
 		},
 	})
 	if err != nil {

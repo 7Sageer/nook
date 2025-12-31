@@ -123,11 +123,11 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		})
 	}
 
-	// 4. 删除已不存在的块
+	// 4. 删除已不存在的块（保护 bookmark 和 file 块）
 	var toDelete []string
 	for id := range existingHashes {
-		// 常规块：如果在新的块列表中不存在，且不是 bookmark，则删除
-		if !newBlockIDs[id] && !strings.Contains(id, "_bookmark") {
+		// 常规块：如果在新的块列表中不存在，且不是 bookmark 或 file，则删除
+		if !newBlockIDs[id] && !strings.Contains(id, "_bookmark") && !strings.Contains(id, "_file") {
 			toDelete = append(toDelete, id)
 		}
 	}
@@ -135,10 +135,13 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		idx.store.DeleteBlocks(toDelete)
 	}
 
-	// 5. 清理孤儿 bookmark（即在编辑器中已删除的 bookmark）
-	currentBookmarkBlockIDs := ExtractBookmarkBlockIDs([]byte(content))
-	if err := idx.store.DeleteOrphanBookmarks(docID, currentBookmarkBlockIDs); err != nil {
+	// 5. 清理孤儿外部块（bookmark/file）- 一次解析提取所有 ID
+	externalIDs := ExtractExternalBlockIDs([]byte(content))
+	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
+	}
+	if err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileIDs); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan files for doc %s: %v\n", docID, err)
 	}
 
 	return nil
@@ -156,10 +159,13 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 	// 删除该文档的所有非 bookmark 块
 	idx.store.DeleteNonBookmarkByDocID(docID)
 
-	// 清理孤儿 bookmark（保留当前存在的）
-	currentBookmarkBlockIDs := ExtractBookmarkBlockIDs([]byte(content))
-	if err := idx.store.DeleteOrphanBookmarks(docID, currentBookmarkBlockIDs); err != nil {
+	// 清理孤儿外部块（bookmark/file）- 一次解析提取所有 ID
+	externalIDs := ExtractExternalBlockIDs([]byte(content))
+	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
+	}
+	if err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileIDs); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan files for doc %s: %v\n", docID, err)
 	}
 
 	// 3. 使用新配置提取块

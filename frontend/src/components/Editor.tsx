@@ -255,8 +255,8 @@ export function Editor({
       const file = files[0];
       const ext = file.name.split('.').pop()?.toLowerCase();
 
-      // Only handle supported file types (md, txt)
-      if (!['md', 'txt'].includes(ext || '')) {
+      // Only handle supported file types
+      if (!['md', 'txt', 'pdf', 'docx', 'html', 'htm'].includes(ext || '')) {
         return; // Let default handler process (e.g., images)
       }
 

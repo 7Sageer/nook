@@ -175,6 +175,7 @@ var uuidPattern = regexp.MustCompile(`(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a
 // 支持的格式：
 // - 普通块：{blockId} 或 {blockId}_chunk_N
 // - Bookmark：{docId}_{blockId}_bookmark 或 {docId}_{blockId}_bookmark_chunk_N
+// - File：{docId}_{blockId}_file 或 {docId}_{blockId}_file_chunk_N
 // - 聚合块：agg_xxx（无法定位，返回空）
 func parseSourceBlockId(blockId string) string {
 	// 聚合块无法定位到原始块
@@ -191,6 +192,17 @@ func parseSourceBlockId(blockId string) string {
 	// 处理 bookmark 格式：{docId}_{blockId}_bookmark
 	if strings.HasSuffix(id, "_bookmark") {
 		id = strings.TrimSuffix(id, "_bookmark")
+		// 提取两个 UUID，第二个是原始 blockId
+		uuids := uuidPattern.FindAllString(id, -1)
+		if len(uuids) >= 2 {
+			return uuids[1]
+		}
+		return ""
+	}
+
+	// 处理 file 格式：{docId}_{blockId}_file
+	if strings.HasSuffix(id, "_file") {
+		id = strings.TrimSuffix(id, "_file")
 		// 提取两个 UUID，第二个是原始 blockId
 		uuids := uuidPattern.FindAllString(id, -1)
 		if len(uuids) >= 2 {
