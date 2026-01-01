@@ -1,10 +1,9 @@
 import { memo, useState, useCallback, useEffect } from 'react';
 import { Tag } from 'lucide-react';
 import type { TagInfo } from '../types/document';
-import { TagColorPicker } from './TagColorPicker';
+import { TagContextMenu } from './TagContextMenu';
 import { useDocumentContext } from '../contexts/DocumentContext';
 import './TagList.css';
-import './TagColorPicker.css';
 
 interface TagListProps {
     tags: TagInfo[];
@@ -19,8 +18,8 @@ export const TagList = memo(function TagList({
     onSelectTag,
     tagColors,
 }: TagListProps) {
-    const { setTagColor } = useDocumentContext();
-    const [colorPicker, setColorPicker] = useState<{
+    const { setTagColor, pinTag, unpinTag, pinnedTags } = useDocumentContext();
+    const [contextMenu, setContextMenu] = useState<{
         tagName: string;
         position: { x: number; y: number };
     } | null>(null);
@@ -28,7 +27,7 @@ export const TagList = memo(function TagList({
     const handleContextMenu = useCallback((e: React.MouseEvent, tagName: string) => {
         e.preventDefault();
         e.stopPropagation();
-        setColorPicker({
+        setContextMenu({
             tagName,
             position: { x: e.clientX, y: e.clientY },
         });
@@ -37,6 +36,14 @@ export const TagList = memo(function TagList({
     const handleColorSelect = useCallback(async (tagName: string, color: string) => {
         await setTagColor(tagName, color);
     }, [setTagColor]);
+
+    const handlePinTag = useCallback(async (tagName: string) => {
+        await pinTag(tagName);
+    }, [pinTag]);
+
+    const handleUnpinTag = useCallback(async (tagName: string) => {
+        await unpinTag(tagName);
+    }, [unpinTag]);
 
     // ESC 键取消选择标签
     useEffect(() => {
@@ -147,13 +154,16 @@ export const TagList = memo(function TagList({
 
             </div>
 
-            {colorPicker && (
-                <TagColorPicker
-                    tagName={colorPicker.tagName}
-                    currentColor={tagColors[colorPicker.tagName]}
-                    onSelectColor={handleColorSelect}
-                    onClose={() => setColorPicker(null)}
-                    position={colorPicker.position}
+            {contextMenu && (
+                <TagContextMenu
+                    tagName={contextMenu.tagName}
+                    currentColor={tagColors[contextMenu.tagName]}
+                    isPinned={pinnedTags.some(t => t.name === contextMenu.tagName)}
+                    position={contextMenu.position}
+                    onPin={handlePinTag}
+                    onUnpin={handleUnpinTag}
+                    onColorSelect={handleColorSelect}
+                    onClose={() => setContextMenu(null)}
                 />
             )}
         </>

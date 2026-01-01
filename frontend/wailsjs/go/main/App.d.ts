@@ -14,11 +14,9 @@ export function CopyImageToClipboard(arg1:string):Promise<void>;
 
 export function CreateDocument(arg1:string):Promise<document.Meta>;
 
-export function CreateTagGroup(arg1:string):Promise<void>;
-
 export function DeleteDocument(arg1:string):Promise<void>;
 
-export function DeleteTagGroup(arg1:string):Promise<void>;
+export function DeleteTag(arg1:string):Promise<void>;
 
 export function ExportHTMLFile(arg1:string,arg2:string):Promise<void>;
 
@@ -30,6 +28,8 @@ export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetDocumentList():Promise<document.Index>;
 
+export function GetPinnedTags():Promise<Array<handlers.TagInfo>>;
+
 export function GetRAGConfig():Promise<rag.EmbeddingConfig>;
 
 export function GetRAGStatus():Promise<handlers.RAGStatus>;
@@ -37,8 +37,6 @@ export function GetRAGStatus():Promise<handlers.RAGStatus>;
 export function GetSettings():Promise<handlers.Settings>;
 
 export function GetTagColors():Promise<Record<string, string>>;
-
-export function GetTagGroups():Promise<Array<handlers.TagInfo>>;
 
 export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
@@ -56,6 +54,8 @@ export function OpenFileDialog():Promise<handlers.FileInfo>;
 
 export function OpenFileWithSystem(arg1:string):Promise<void>;
 
+export function PinTag(arg1:string):Promise<void>;
+
 export function PrintHTML(arg1:string,arg2:string):Promise<void>;
 
 export function RebuildIndex():Promise<number>;
@@ -64,11 +64,11 @@ export function RemoveDocumentTag(arg1:string,arg2:string):Promise<void>;
 
 export function RenameDocument(arg1:string,arg2:string):Promise<void>;
 
-export function RenameTagGroup(arg1:string,arg2:string):Promise<void>;
+export function RenameTag(arg1:string,arg2:string):Promise<void>;
 
 export function ReorderDocuments(arg1:Array<string>):Promise<void>;
 
-export function ReorderTagGroups(arg1:Array<string>):Promise<void>;
+export function ReorderPinnedTags(arg1:Array<string>):Promise<void>;
 
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
@@ -92,6 +92,8 @@ export function SemanticSearchDocuments(arg1:string,arg2:number):Promise<Array<h
 
 export function SetActiveDocument(arg1:string):Promise<void>;
 
+export function SetPinnedTagCollapsed(arg1:string,arg2:boolean):Promise<void>;
+
 export function SetTagColor(arg1:string,arg2:string):Promise<void>;
 
-export function SetTagGroupCollapsed(arg1:string,arg2:boolean):Promise<void>;
+export function UnpinTag(arg1:string):Promise<void>;

@@ -39,7 +39,7 @@ function AppContent() {
     switchDoc,
     loadContent,
     saveContent,
-    createTagGroup,
+    pinTag,
     refreshDocuments,
     addTag,
     removeTag,
@@ -247,7 +247,7 @@ function AppContent() {
   // 监听菜单事件
   useMenuEvents({
     onNewDocument: handleCreateInternalDocument,
-    onNewFolder: createTagGroup,
+    onNewFolder: () => pinTag(STRINGS.DEFAULTS.NEW_PINNED_TAG),
     onImport: handleImport,
     onExport: handleExportMarkdown,
     onCopyImage: handleCopyImage,
@@ -278,7 +278,7 @@ function AppContent() {
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
         onCreateDocument={handleCreateInternalDocument}
-        onCreateFolder={() => createTagGroup()}
+        onCreateFolder={() => pinTag(STRINGS.DEFAULTS.NEW_PINNED_TAG)}
         onSettings={handleSettings}
         theme={theme}
       />

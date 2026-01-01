@@ -235,7 +235,7 @@ export namespace handlers {
 	    name: string;
 	    count: number;
 	    color?: string;
-	    isGroup?: boolean;
+	    isPinned?: boolean;
 	    collapsed?: boolean;
 	    order?: number;
 	
@@ -248,7 +248,7 @@ export namespace handlers {
 	        this.name = source["name"];
 	        this.count = source["count"];
 	        this.color = source["color"];
-	        this.isGroup = source["isGroup"];
+	        this.isPinned = source["isPinned"];
 	        this.collapsed = source["collapsed"];
 	        this.order = source["order"];
 	    }

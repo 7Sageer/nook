@@ -35,15 +35,17 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolAddTag(params.Arguments)
 	case "remove_tag":
 		result = s.toolRemoveTag(params.Arguments)
-	// Tag Group tools
-	case "list_tag_groups":
-		result = s.toolListTagGroups()
-	case "create_tag_group":
-		result = s.toolCreateTagGroup(params.Arguments)
-	case "rename_tag_group":
-		result = s.toolRenameTagGroup(params.Arguments)
-	case "delete_tag_group":
-		result = s.toolDeleteTagGroup(params.Arguments)
+	// Pinned Tag tools
+	case "list_pinned_tags":
+		result = s.toolListPinnedTags()
+	case "pin_tag":
+		result = s.toolPinTag(params.Arguments)
+	case "unpin_tag":
+		result = s.toolUnpinTag(params.Arguments)
+	case "rename_tag":
+		result = s.toolRenameTag(params.Arguments)
+	case "delete_tag":
+		result = s.toolDeleteTag(params.Arguments)
 	case "list_documents_by_tag":
 		result = s.toolListDocumentsByTag(params.Arguments)
 	// RAG tools

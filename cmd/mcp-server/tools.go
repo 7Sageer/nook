@@ -105,42 +105,53 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Required: []string{"doc_id", "tag"},
 			},
 		},
-		// Tag Group tools
+		// Pinned Tag tools
 		{
-			Name:        "list_tag_groups",
-			Description: "List all tag groups. Tag groups are special tags used to organize documents hierarchically (like folders).",
+			Name:        "list_pinned_tags",
+			Description: "List all pinned tags. Pinned tags are shown in the sidebar for quick access.",
 			InputSchema: InputSchema{Type: "object"},
 		},
 		{
-			Name:        "create_tag_group",
-			Description: "Create a new tag group. Documents can be organized by adding the group name as a tag to them.",
+			Name:        "pin_tag",
+			Description: "Pin a tag to the sidebar. Pinned tags are always visible for quick document organization.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"name": {Type: "string", Description: "Tag group name"},
+					"name": {Type: "string", Description: "Tag name to pin"},
 				},
 				Required: []string{"name"},
 			},
 		},
 		{
-			Name:        "rename_tag_group",
-			Description: "Rename a tag group. This also updates the tag in all documents that have it.",
+			Name:        "unpin_tag",
+			Description: "Unpin a tag from the sidebar.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"old_name": {Type: "string", Description: "Current tag group name"},
-					"new_name": {Type: "string", Description: "New tag group name"},
+					"name": {Type: "string", Description: "Tag name to unpin"},
+				},
+				Required: []string{"name"},
+			},
+		},
+		{
+			Name:        "rename_tag",
+			Description: "Rename a tag. This also updates the tag in all documents that have it.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"old_name": {Type: "string", Description: "Current tag name"},
+					"new_name": {Type: "string", Description: "New tag name"},
 				},
 				Required: []string{"old_name", "new_name"},
 			},
 		},
 		{
-			Name:        "delete_tag_group",
-			Description: "Delete a tag group. This also removes the tag from all documents that have it.",
+			Name:        "delete_tag",
+			Description: "Delete a tag. This removes the tag from all documents.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"name": {Type: "string", Description: "Tag group name to delete"},
+					"name": {Type: "string", Description: "Tag name to delete"},
 				},
 				Required: []string{"name"},
 			},

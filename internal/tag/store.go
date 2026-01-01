@@ -10,9 +10,11 @@ import (
 // TagMeta stores metadata for a tag
 type TagMeta struct {
 	Color     string `json:"color,omitempty"`
-	IsGroup   bool   `json:"isGroup,omitempty"`
+	IsPinned  bool   `json:"isPinned,omitempty"`
 	Collapsed bool   `json:"collapsed,omitempty"`
 	Order     int    `json:"order,omitempty"`
+	// 兼容旧数据，加载时自动迁移
+	IsGroup bool `json:"isGroup,omitempty"`
 }
 
 // Store manages tag metadata (colors)
@@ -27,7 +29,7 @@ type TagInfo struct {
 	Name      string `json:"name"`
 	Count     int    `json:"count"`
 	Color     string `json:"color,omitempty"`
-	IsGroup   bool   `json:"isGroup,omitempty"`
+	IsPinned  bool   `json:"isPinned,omitempty"`
 	Collapsed bool   `json:"collapsed,omitempty"`
 	Order     int    `json:"order,omitempty"`
 }
@@ -56,6 +58,24 @@ func (s *Store) load() {
 	}
 	if json.Unmarshal(data, &store) == nil && store.Tags != nil {
 		s.Tags = store.Tags
+		// 迁移旧数据：IsGroup -> IsPinned
+		s.migrateIsGroupToIsPinned()
+	}
+}
+
+// migrateIsGroupToIsPinned 将旧的 IsGroup 字段迁移到 IsPinned
+func (s *Store) migrateIsGroupToIsPinned() {
+	needSave := false
+	for name, meta := range s.Tags {
+		if meta.IsGroup && !meta.IsPinned {
+			meta.IsPinned = true
+			meta.IsGroup = false
+			s.Tags[name] = meta
+			needSave = true
+		}
+	}
+	if needSave {
+		_ = s.save()
 	}
 }
 
@@ -102,30 +122,30 @@ func (s *Store) GetAllColors() map[string]string {
 	return colors
 }
 
-// CreateGroup creates a new tag group
-func (s *Store) CreateGroup(name string) error {
+// PinTag 固定标签到侧边栏
+func (s *Store) PinTag(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	// Find max order
+	// Find max order among pinned tags
 	maxOrder := -1
 	for _, meta := range s.Tags {
-		if meta.IsGroup && meta.Order > maxOrder {
+		if meta.IsPinned && meta.Order > maxOrder {
 			maxOrder = meta.Order
 		}
 	}
-	s.Tags[name] = TagMeta{
-		IsGroup:   true,
-		Collapsed: false,
-		Order:     maxOrder + 1,
-	}
+	meta := s.Tags[name]
+	meta.IsPinned = true
+	meta.Collapsed = false
+	meta.Order = maxOrder + 1
+	s.Tags[name] = meta
 	return s.save()
 }
 
-// SetGroupCollapsed sets the collapsed state of a tag group
-func (s *Store) SetGroupCollapsed(name string, collapsed bool) error {
+// SetPinnedTagCollapsed 设置固定标签的折叠状态
+func (s *Store) SetPinnedTagCollapsed(name string, collapsed bool) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if meta, ok := s.Tags[name]; ok && meta.IsGroup {
+	if meta, ok := s.Tags[name]; ok && meta.IsPinned {
 		meta.Collapsed = collapsed
 		s.Tags[name] = meta
 		return s.save()
@@ -133,39 +153,39 @@ func (s *Store) SetGroupCollapsed(name string, collapsed bool) error {
 	return nil
 }
 
-// GetAllGroups returns all tag groups sorted by order
-func (s *Store) GetAllGroups() []TagInfo {
+// GetAllPinnedTags 获取所有固定标签，按 order 排序
+func (s *Store) GetAllPinnedTags() []TagInfo {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	groups := []TagInfo{}
+	pinned := []TagInfo{}
 	for name, meta := range s.Tags {
-		if meta.IsGroup {
-			groups = append(groups, TagInfo{
+		if meta.IsPinned {
+			pinned = append(pinned, TagInfo{
 				Name:      name,
 				Color:     meta.Color,
-				IsGroup:   true,
+				IsPinned:  true,
 				Collapsed: meta.Collapsed,
 				Order:     meta.Order,
 			})
 		}
 	}
 	// Sort by order
-	for i := 0; i < len(groups)-1; i++ {
-		for j := i + 1; j < len(groups); j++ {
-			if groups[i].Order > groups[j].Order {
-				groups[i], groups[j] = groups[j], groups[i]
+	for i := 0; i < len(pinned)-1; i++ {
+		for j := i + 1; j < len(pinned); j++ {
+			if pinned[i].Order > pinned[j].Order {
+				pinned[i], pinned[j] = pinned[j], pinned[i]
 			}
 		}
 	}
-	return groups
+	return pinned
 }
 
-// ReorderGroups reorders tag groups by the given names
-func (s *Store) ReorderGroups(names []string) error {
+// ReorderPinnedTags 重新排序固定标签
+func (s *Store) ReorderPinnedTags(names []string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	for i, name := range names {
-		if meta, ok := s.Tags[name]; ok && meta.IsGroup {
+		if meta, ok := s.Tags[name]; ok && meta.IsPinned {
 			meta.Order = i
 			s.Tags[name] = meta
 		}
@@ -173,11 +193,11 @@ func (s *Store) ReorderGroups(names []string) error {
 	return s.save()
 }
 
-// RenameGroup renames a tag group
-func (s *Store) RenameGroup(oldName, newName string) error {
+// RenameTag 重命名标签（保留元数据）
+func (s *Store) RenameTag(oldName, newName string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if meta, ok := s.Tags[oldName]; ok && meta.IsGroup {
+	if meta, ok := s.Tags[oldName]; ok {
 		delete(s.Tags, oldName)
 		s.Tags[newName] = meta
 		return s.save()
@@ -185,11 +205,25 @@ func (s *Store) RenameGroup(oldName, newName string) error {
 	return nil
 }
 
-// DeleteGroup deletes a tag group
-func (s *Store) DeleteGroup(name string) error {
+// UnpinTag 取消固定标签
+func (s *Store) UnpinTag(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if meta, ok := s.Tags[name]; ok && meta.IsGroup {
+	if meta, ok := s.Tags[name]; ok && meta.IsPinned {
+		meta.IsPinned = false
+		meta.Collapsed = false
+		meta.Order = 0
+		s.Tags[name] = meta
+		return s.save()
+	}
+	return nil
+}
+
+// DeleteTag 删除标签元数据
+func (s *Store) DeleteTag(name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, ok := s.Tags[name]; ok {
 		delete(s.Tags, name)
 		return s.save()
 	}

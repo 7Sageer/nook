@@ -1,0 +1,34 @@
+.tag-context-menu {
+    position: fixed;
+    z-index: 1000;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 4px;
+    min-width: 140px;
+}
+
+.tag-context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+    text-align: left;
+}
+
+.tag-context-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.tag-context-menu-item svg {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}

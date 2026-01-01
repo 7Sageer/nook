@@ -8,10 +8,10 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { docDndId } from '../utils/dnd';
 import { SortableDocItem } from './SortableDocItem';
-import './TagGroupItem.css';
+import './PinnedTagItem.css';
 
-interface TagGroupItemProps {
-    group: TagInfo;
+interface PinnedTagItemProps {
+    tag: TagInfo;
     index: number;
     documents: DocumentMeta[];
     disabled: boolean;
@@ -22,11 +22,11 @@ interface TagGroupItemProps {
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
     onEditingChange?: (name: string | null) => void;
-    onAddDocument?: (groupName: string) => void;
+    onAddDocument?: (tagName: string) => void;
 }
 
-export const TagGroupItem = memo(function TagGroupItem({
-    group,
+export const PinnedTagItem = memo(function PinnedTagItem({
+    tag,
 
     documents,
 
@@ -38,40 +38,39 @@ export const TagGroupItem = memo(function TagGroupItem({
     onDeleteDocument,
     onEditingChange,
     onAddDocument,
-}: TagGroupItemProps) {
+}: PinnedTagItemProps) {
     const { language } = useSettings();
     const STRINGS = getStrings(language);
     const [isEditing, setIsEditing] = useState(false);
-    const [editName, setEditName] = useState(group.name);
+    const [editName, setEditName] = useState(tag.name);
 
     const sortedDocs = useMemo(() => {
         return [...documents].sort((a, b) => a.order - b.order);
     }, [documents]);
 
-    const isCollapsed = group.collapsed ?? false;
+    const isCollapsed = tag.collapsed ?? false;
 
     // Droppable only on header to allow precise drop targeting
-    // This prevents accidental selection of collapsed groups when dragging over them
     const {
         setNodeRef: setHeaderDroppableRef,
         isOver,
     } = useDroppable({
-        id: `doc-container:${group.name}`,
-        data: { type: 'doc-container', containerId: group.name, collapsed: isCollapsed },
+        id: `doc-container:${tag.name}`,
+        data: { type: 'doc-container', containerId: tag.name, collapsed: isCollapsed },
     });
 
     const handleRenameSubmit = () => {
-        if (editName.trim() && editName !== group.name) {
-            onRename(group.name, editName.trim());
+        if (editName.trim() && editName !== tag.name) {
+            onRename(tag.name, editName.trim());
         }
         setIsEditing(false);
         onEditingChange?.(null);
     };
 
     const startEditing = () => {
-        setEditName(group.name);
+        setEditName(tag.name);
         setIsEditing(true);
-        onEditingChange?.(group.name);
+        onEditingChange?.(tag.name);
     };
 
     return (
@@ -85,27 +84,27 @@ export const TagGroupItem = memo(function TagGroupItem({
             <div
                 ref={setHeaderDroppableRef}
                 className="folder-header"
-                onClick={() => onToggle(group.name)}
+                onClick={() => onToggle(tag.name)}
                 role="treeitem"
                 aria-expanded={!isCollapsed}
                 tabIndex={0}
                 onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        onToggle(group.name);
+                        onToggle(tag.name);
                     } else if (e.key === 'ArrowRight' && isCollapsed) {
                         e.preventDefault();
-                        onToggle(group.name);
+                        onToggle(tag.name);
                     } else if (e.key === 'ArrowLeft' && !isCollapsed) {
                         e.preventDefault();
-                        onToggle(group.name);
+                        onToggle(tag.name);
                     }
                 }}
             >
                 <span className={`folder-chevron ${isCollapsed ? 'collapsed' : 'expanded'}`}>
                     <ChevronRight size={16} aria-hidden="true" />
                 </span>
-                <Tag size={16} className="folder-icon" aria-hidden="true" style={group.color ? { color: group.color } : undefined} />
+                <Tag size={16} className="folder-icon" aria-hidden="true" style={tag.color ? { color: tag.color } : undefined} />
                 {isEditing ? (
                     <input
                         type="text"
@@ -126,7 +125,7 @@ export const TagGroupItem = memo(function TagGroupItem({
                             e.stopPropagation();
                             startEditing();
                         }}
-                    >{group.name}</span>
+                    >{tag.name}</span>
                 )}
                 {!isEditing && (
                     <span className="folder-count">{documents.length}</span>
@@ -139,10 +138,10 @@ export const TagGroupItem = memo(function TagGroupItem({
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onAddDocument(group.name);
+                                    onAddDocument(tag.name);
                                 }}
-                                title={STRINGS.TOOLTIPS.GROUP_ADD_DOC}
-                                aria-label={STRINGS.TOOLTIPS.GROUP_ADD_DOC}
+                                title={STRINGS.TOOLTIPS.PINNED_TAG_ADD_DOC}
+                                aria-label={STRINGS.TOOLTIPS.PINNED_TAG_ADD_DOC}
                             >
                                 <Plus size={14} aria-hidden="true" />
                             </button>
@@ -154,8 +153,8 @@ export const TagGroupItem = memo(function TagGroupItem({
                                 e.stopPropagation();
                                 startEditing();
                             }}
-                            title={STRINGS.TOOLTIPS.GROUP_RENAME}
-                            aria-label={STRINGS.TOOLTIPS.GROUP_RENAME}
+                            title={STRINGS.TOOLTIPS.PINNED_TAG_RENAME}
+                            aria-label={STRINGS.TOOLTIPS.PINNED_TAG_RENAME}
                         >
                             <Pencil size={14} aria-hidden="true" />
                         </button>
@@ -164,10 +163,10 @@ export const TagGroupItem = memo(function TagGroupItem({
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onDelete(group.name);
+                                onDelete(tag.name);
                             }}
-                            title={STRINGS.TOOLTIPS.GROUP_DELETE}
-                            aria-label={STRINGS.TOOLTIPS.GROUP_DELETE}
+                            title={STRINGS.TOOLTIPS.PINNED_TAG_DELETE}
+                            aria-label={STRINGS.TOOLTIPS.PINNED_TAG_DELETE}
                         >
                             <Trash2 size={14} aria-hidden="true" />
                         </button>
@@ -177,7 +176,7 @@ export const TagGroupItem = memo(function TagGroupItem({
             <div
                 className={`folder-documents ${isCollapsed ? 'collapsed' : ''}`}
                 role="group"
-                aria-label={`${group.name} 中的文档`}
+                aria-label={`${tag.name} 中的文档`}
             >
                 <div className="folder-documents-inner">
                     <SortableContext items={sortedDocs.map(d => docDndId(d.id))} strategy={verticalListSortingStrategy}>
@@ -187,7 +186,7 @@ export const TagGroupItem = memo(function TagGroupItem({
                                     key={doc.id}
                                     item={doc}
                                     index={index}
-                                    containerId={group.name}
+                                    containerId={tag.name}
                                     activeId={activeDocId}
                                     onSelect={onSelectDocument}
                                     onDelete={onDeleteDocument}

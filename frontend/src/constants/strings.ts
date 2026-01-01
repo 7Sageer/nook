@@ -26,12 +26,12 @@ export const EN = {
 
     DEFAULTS: {
         UNTITLED: "Untitled",
-        NEW_GROUP: "New Group",
+        NEW_PINNED_TAG: "New Tag",
     },
 
     TOOLTIPS: {
         NEW_DOC: "New Document",
-        NEW_GROUP: "New Tag Group",
+        NEW_PINNED_TAG: "New Pinned Tag",
         OPEN_FILE: "Open File",
         IMPORT: "Import Markdown",
         EXPORT: "Export Markdown",
@@ -45,9 +45,11 @@ export const EN = {
         EXPAND: "Expand Sidebar",
         CLOSE_EXTERNAL: "Close External File",
         DELETE: "Delete",
-        GROUP_RENAME: "Rename Group",
-        GROUP_DELETE: "Delete Group",
-        GROUP_ADD_DOC: "Add Document to Group",
+        PINNED_TAG_RENAME: "Rename Tag",
+        PINNED_TAG_DELETE: "Delete Tag",
+        PINNED_TAG_ADD_DOC: "Add Document",
+        PIN_TAG: "Pin to Sidebar",
+        UNPIN_TAG: "Unpin from Sidebar",
     },
 
     LABELS: {
@@ -57,25 +59,24 @@ export const EN = {
         FILE: "File",
         FILE_SUBTEXT: "Embed MD, TXT file",
         DOCUMENTS: "Documents",
-        GROUPS: "Groups",
+        PINNED_TAGS: "Pinned Tags",
         UNCATEGORIZED: "Uncategorized",
         SEARCH_PLACEHOLDER: "Search documents...",
         NO_MATCH: "No matching documents found",
         EMPTY_LIST: "No documents yet, click + to create",
         EMPTY_APP: "No documents yet",
-        DEFAULT_GROUP_NAME: "New Group",
     },
 
     MODALS: {
         DELETE_TITLE: "Delete Document",
         DELETE_MESSAGE: "Are you sure you want to delete this document? This action cannot be undone.",
-        DELETE_GROUP_TITLE: "Delete Group",
-        DELETE_GROUP_MESSAGE: "Are you sure you want to delete this group? The tag will be removed from all documents.",
+        DELETE_TAG_TITLE: "Delete Tag",
+        DELETE_TAG_MESSAGE: "Are you sure you want to delete this tag? The tag will be removed from all documents.",
     },
 
     MENU: {
         NEW_DOC: "New Document",
-        NEW_GROUP: "New Group",
+        NEW_PINNED_TAG: "New Pinned Tag",
     },
 
     PASTE_LINK: {

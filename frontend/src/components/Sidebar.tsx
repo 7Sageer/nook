@@ -9,7 +9,7 @@ import { useSidebarDnD } from '../hooks/useSidebarDnD';
 import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch, SidebarSearchRef } from './SidebarSearch';
 import { SidebarSearchResults } from './SidebarSearchResults';
-import { SidebarTagGroups } from './SidebarTagGroups';
+import { SidebarPinnedTags } from './SidebarPinnedTags';
 import { TagList } from './TagList';
 import { FileText, GripVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
@@ -36,15 +36,15 @@ export function Sidebar({
   const {
     documents,
     activeId,
-    tagGroups,
+    pinnedTags,
     createDoc,
     deleteDoc,
     switchDoc,
     reorderDocuments,
-    createTagGroup,
-    deleteTagGroup,
-    renameTagGroup,
-    toggleTagGroupCollapsed,
+    pinTag,
+    deleteTag,
+    renameTag,
+    togglePinnedTagCollapsed,
     addTag,
     removeTag,
     allTags,
@@ -58,34 +58,34 @@ export function Sidebar({
   const { openModal, ConfirmModalComponent } = useConfirmModal();
 
   const searchRef = useRef<SidebarSearchRef>(null);
-  const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
+  const [editingTagName, setEditingTagName] = useState<string | null>(null);
 
-  // Sort tag groups by order
-  const sortedGroups = useMemo(() => {
-    return [...tagGroups].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [tagGroups]);
+  // Sort pinned tags by order
+  const sortedPinnedTags = useMemo(() => {
+    return [...pinnedTags].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, [pinnedTags]);
 
-  // Get group names set for quick lookup
-  const groupNameSet = useMemo(() => new Set(tagGroups.map(g => g.name)), [tagGroups]);
+  // Get pinned tag names set for quick lookup
+  const pinnedTagNameSet = useMemo(() => new Set(pinnedTags.map(t => t.name)), [pinnedTags]);
 
-  // Group documents by tag groups
-  const { docsByGroup, ungroupedDocs } = useMemo(() => {
-    const docsByGroup = new Map<string, DocumentMeta[]>();
+  // Group documents by pinned tags
+  const { docsByPinnedTag, ungroupedDocs } = useMemo(() => {
+    const docsByPinnedTag = new Map<string, DocumentMeta[]>();
     const ungroupedDocs: DocumentMeta[] = [];
 
-    // Initialize all groups
-    for (const group of sortedGroups) {
-      docsByGroup.set(group.name, []);
+    // Initialize all pinned tags
+    for (const tag of sortedPinnedTags) {
+      docsByPinnedTag.set(tag.name, []);
     }
 
-    // Categorize documents - a doc can appear in multiple groups
+    // Categorize documents - a doc can appear in multiple pinned tags
     for (const doc of documents) {
       const docTags = doc.tags || [];
-      const matchingGroups = docTags.filter(t => groupNameSet.has(t));
+      const matchingPinnedTags = docTags.filter(t => pinnedTagNameSet.has(t));
 
-      if (matchingGroups.length > 0) {
-        for (const groupName of matchingGroups) {
-          const list = docsByGroup.get(groupName);
+      if (matchingPinnedTags.length > 0) {
+        for (const tagName of matchingPinnedTags) {
+          const list = docsByPinnedTag.get(tagName);
           if (list) {
             list.push(doc);
           }
@@ -95,32 +95,32 @@ export function Sidebar({
       }
     }
 
-    // Sort documents in each group
-    for (const [, docs] of docsByGroup) {
+    // Sort documents in each pinned tag
+    for (const [, docs] of docsByPinnedTag) {
       docs.sort((a, b) => a.order - b.order);
     }
     ungroupedDocs.sort((a, b) => a.order - b.order);
 
-    return { docsByGroup, ungroupedDocs };
-  }, [documents, sortedGroups, groupNameSet]);
+    return { docsByPinnedTag, ungroupedDocs };
+  }, [documents, sortedPinnedTags, pinnedTagNameSet]);
 
   // Filter by selected tag
-  const filteredDocsByGroup = useMemo(() => {
-    if (!selectedTag) return docsByGroup;
+  const filteredDocsByTag = useMemo(() => {
+    if (!selectedTag) return docsByPinnedTag;
     const filtered = new Map<string, DocumentMeta[]>();
-    for (const [groupName, docs] of docsByGroup) {
-      filtered.set(groupName, docs.filter(doc => doc.tags?.includes(selectedTag)));
+    for (const [tagName, docs] of docsByPinnedTag) {
+      filtered.set(tagName, docs.filter(doc => doc.tags?.includes(selectedTag)));
     }
     return filtered;
-  }, [docsByGroup, selectedTag]);
+  }, [docsByPinnedTag, selectedTag]);
 
   const tagFilteredUngrouped = selectedTag
     ? ungroupedDocs.filter(doc => doc.tags?.includes(selectedTag))
     : ungroupedDocs;
 
-  // Filter allTags to show only non-group tags in Tag section
+  // Filter allTags to show only non-pinned tags in Tag section
   const regularTags = useMemo(() => {
-    return allTags.filter(t => !t.isGroup);
+    return allTags.filter(t => !t.isPinned);
   }, [allTags]);
 
   // Use extracted DnD hook
@@ -133,9 +133,9 @@ export function Sidebar({
     handleDragEnd,
     handleDragCancel,
   } = useSidebarDnD({
-    groupNameSet,
+    groupNameSet: pinnedTagNameSet,
     ungroupedDocs,
-    filteredDocsByGroup,
+    filteredDocsByGroup: filteredDocsByTag,
     addTag,
     removeTag,
     reorderDocuments,
@@ -163,13 +163,14 @@ export function Sidebar({
     createDoc();
   }, [createDoc]);
 
-  const handleCreateInGroup = useCallback(async (groupName: string) => {
-    await createDoc(STRINGS.DEFAULTS.UNTITLED, groupName);
+  const handleCreateInPinnedTag = useCallback(async (tagName: string) => {
+    await createDoc(STRINGS.DEFAULTS.UNTITLED, tagName);
   }, [createDoc, STRINGS.DEFAULTS.UNTITLED]);
 
-  const handleCreateGroup = useCallback(() => {
-    createTagGroup();
-  }, [createTagGroup]);
+  const handleCreatePinnedTag = useCallback(() => {
+    // 创建新的固定标签需要先输入名称，这里暂时使用默认名称
+    pinTag(STRINGS.DEFAULTS.NEW_PINNED_TAG);
+  }, [pinTag, STRINGS.DEFAULTS.NEW_PINNED_TAG]);
 
   const handleDeleteClick = useCallback((id: string) => {
     openModal(
@@ -181,15 +182,15 @@ export function Sidebar({
     );
   }, [openModal, STRINGS.MODALS, deleteDoc]);
 
-  const handleDeleteGroupClick = useCallback((name: string) => {
+  const handleDeleteTagClick = useCallback((name: string) => {
     openModal(
       {
-        title: STRINGS.MODALS.DELETE_GROUP_TITLE,
-        message: STRINGS.MODALS.DELETE_GROUP_MESSAGE,
+        title: STRINGS.MODALS.DELETE_TAG_TITLE,
+        message: STRINGS.MODALS.DELETE_TAG_MESSAGE,
       },
-      () => deleteTagGroup(name)
+      () => deleteTag(name)
     );
-  }, [openModal, STRINGS.MODALS, deleteTagGroup]);
+  }, [openModal, STRINGS.MODALS, deleteTag]);
 
   return (
     <>
@@ -239,23 +240,23 @@ export function Sidebar({
                   strings={STRINGS}
                 />
               ) : (
-                <SidebarTagGroups
-                  sortedGroups={sortedGroups}
-                  filteredDocsByGroup={filteredDocsByGroup}
+                <SidebarPinnedTags
+                  pinnedTags={sortedPinnedTags}
+                  filteredDocsByTag={filteredDocsByTag}
                   tagFilteredUngrouped={tagFilteredUngrouped}
                   activeDocId={activeId}
                   activeExternalPath={activeExternalPath ?? null}
                   isDragging={isDragging}
-                  editingGroupName={editingGroupName}
+                  editingTagName={editingTagName}
                   hasQuery={!!query}
-                  onToggleCollapsed={toggleTagGroupCollapsed}
-                  onRenameGroup={renameTagGroup}
-                  onDeleteGroup={handleDeleteGroupClick}
+                  onToggleCollapsed={togglePinnedTagCollapsed}
+                  onRenameTag={renameTag}
+                  onDeleteTag={handleDeleteTagClick}
                   onSelectDocument={handleSelect}
                   onDeleteDocument={handleDeleteClick}
-                  onEditingChange={setEditingGroupName}
-                  onAddDocumentToGroup={handleCreateInGroup}
-                  onCreateGroup={handleCreateGroup}
+                  onEditingChange={setEditingTagName}
+                  onAddDocumentToTag={handleCreateInPinnedTag}
+                  onCreatePinnedTag={handleCreatePinnedTag}
                   onCreateDocument={handleCreate}
                   strings={STRINGS}
                 />

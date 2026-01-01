@@ -305,28 +305,32 @@ func (a *App) SetTagColor(tagName string, color string) error {
 	return a.tagHandler.SetTagColor(tagName, color)
 }
 
-func (a *App) CreateTagGroup(name string) error {
-	return a.tagHandler.CreateTagGroup(name)
+func (a *App) PinTag(tagName string) error {
+	return a.tagHandler.PinTag(tagName)
 }
 
-func (a *App) SetTagGroupCollapsed(name string, collapsed bool) error {
-	return a.tagHandler.SetTagGroupCollapsed(name, collapsed)
+func (a *App) UnpinTag(tagName string) error {
+	return a.tagHandler.UnpinTag(tagName)
 }
 
-func (a *App) GetTagGroups() []handlers.TagInfo {
-	return a.tagHandler.GetTagGroups()
+func (a *App) SetPinnedTagCollapsed(name string, collapsed bool) error {
+	return a.tagHandler.SetPinnedTagCollapsed(name, collapsed)
 }
 
-func (a *App) ReorderTagGroups(names []string) error {
-	return a.tagHandler.ReorderTagGroups(names)
+func (a *App) GetPinnedTags() []handlers.TagInfo {
+	return a.tagHandler.GetPinnedTags()
 }
 
-func (a *App) RenameTagGroup(oldName, newName string) error {
-	return a.tagHandler.RenameTagGroup(oldName, newName)
+func (a *App) ReorderPinnedTags(names []string) error {
+	return a.tagHandler.ReorderPinnedTags(names)
 }
 
-func (a *App) DeleteTagGroup(name string) error {
-	return a.tagHandler.DeleteTagGroup(name)
+func (a *App) RenameTag(oldName, newName string) error {
+	return a.tagHandler.RenameTag(oldName, newName)
+}
+
+func (a *App) DeleteTag(name string) error {
+	return a.tagHandler.DeleteTag(name)
 }
 
 // ========== 文件 API (委托给 FileHandler) ==========

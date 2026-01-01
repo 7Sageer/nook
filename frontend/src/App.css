@@ -8,7 +8,8 @@
 @import './components/WindowToolbar.css';
 @import './components/Sidebar.css';
 @import './components/DocumentList.css';
-@import './components/TagGroupItem.css';
+@import './components/PinnedTagItem.css';
+@import './components/TagContextMenu.css';
 @import './components/Header.css';
 @import './components/Editor.css';
 @import './components/ConfirmModal.css';

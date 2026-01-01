@@ -36,15 +36,15 @@ func (s *MCPServer) toolRemoveTag(args json.RawMessage) ToolCallResult {
 	return textResult("Tag removed successfully")
 }
 
-// ========== Tag Group tools ==========
+// ========== Pinned Tag tools ==========
 
-func (s *MCPServer) toolListTagGroups() ToolCallResult {
-	groups := s.tagStore.GetAllGroups()
-	data, _ := json.MarshalIndent(groups, "", "  ")
+func (s *MCPServer) toolListPinnedTags() ToolCallResult {
+	pinned := s.tagStore.GetAllPinnedTags()
+	data, _ := json.MarshalIndent(pinned, "", "  ")
 	return textResult(string(data))
 }
 
-func (s *MCPServer) toolCreateTagGroup(args json.RawMessage) ToolCallResult {
+func (s *MCPServer) toolPinTag(args json.RawMessage) ToolCallResult {
 	var params struct {
 		Name string `json:"name"`
 	}
@@ -54,13 +54,13 @@ func (s *MCPServer) toolCreateTagGroup(args json.RawMessage) ToolCallResult {
 	if params.Name == "" {
 		return errorResult("name is required")
 	}
-	if err := s.tagStore.CreateGroup(params.Name); err != nil {
-		return errorResult("Failed to create tag group: " + err.Error())
+	if err := s.tagStore.PinTag(params.Name); err != nil {
+		return errorResult("Failed to pin tag: " + err.Error())
 	}
-	return textResult("Tag group created successfully")
+	return textResult("Tag pinned successfully")
 }
 
-func (s *MCPServer) toolRenameTagGroup(args json.RawMessage) ToolCallResult {
+func (s *MCPServer) toolRenameTag(args json.RawMessage) ToolCallResult {
 	var params struct {
 		OldName string `json:"old_name"`
 		NewName string `json:"new_name"`
@@ -76,19 +76,35 @@ func (s *MCPServer) toolRenameTagGroup(args json.RawMessage) ToolCallResult {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == params.OldName {
-				_ = s.docRepo.RemoveTag(doc.ID, params.OldName) // 忽略错误
-				_ = s.docRepo.AddTag(doc.ID, params.NewName)    // 忽略错误
+				_ = s.docRepo.RemoveTag(doc.ID, params.OldName)
+				_ = s.docRepo.AddTag(doc.ID, params.NewName)
 				break
 			}
 		}
 	}
-	if err := s.tagStore.RenameGroup(params.OldName, params.NewName); err != nil {
-		return errorResult("Failed to rename tag group: " + err.Error())
+	if err := s.tagStore.RenameTag(params.OldName, params.NewName); err != nil {
+		return errorResult("Failed to rename tag: " + err.Error())
 	}
-	return textResult("Tag group renamed successfully")
+	return textResult("Tag renamed successfully")
 }
 
-func (s *MCPServer) toolDeleteTagGroup(args json.RawMessage) ToolCallResult {
+func (s *MCPServer) toolUnpinTag(args json.RawMessage) ToolCallResult {
+	var params struct {
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(args, &params); err != nil {
+		return errorResult("Invalid arguments: " + err.Error())
+	}
+	if params.Name == "" {
+		return errorResult("name is required")
+	}
+	if err := s.tagStore.UnpinTag(params.Name); err != nil {
+		return errorResult("Failed to unpin tag: " + err.Error())
+	}
+	return textResult("Tag unpinned successfully")
+}
+
+func (s *MCPServer) toolDeleteTag(args json.RawMessage) ToolCallResult {
 	var params struct {
 		Name string `json:"name"`
 	}
@@ -103,15 +119,15 @@ func (s *MCPServer) toolDeleteTagGroup(args json.RawMessage) ToolCallResult {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == params.Name {
-				_ = s.docRepo.RemoveTag(doc.ID, params.Name) // 忽略错误
+				_ = s.docRepo.RemoveTag(doc.ID, params.Name)
 				break
 			}
 		}
 	}
-	if err := s.tagStore.DeleteGroup(params.Name); err != nil {
-		return errorResult("Failed to delete tag group: " + err.Error())
+	if err := s.tagStore.DeleteTag(params.Name); err != nil {
+		return errorResult("Failed to delete tag: " + err.Error())
 	}
-	return textResult("Tag group deleted successfully")
+	return textResult("Tag deleted successfully")
 }
 
 func (s *MCPServer) toolListDocumentsByTag(args json.RawMessage) ToolCallResult {

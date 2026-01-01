@@ -41,7 +41,7 @@ type TagInfo struct {
 	Name      string `json:"name"`
 	Count     int    `json:"count"`
 	Color     string `json:"color,omitempty"`
-	IsGroup   bool   `json:"isGroup,omitempty"`
+	IsPinned  bool   `json:"isPinned,omitempty"`
 	Collapsed bool   `json:"collapsed,omitempty"`
 	Order     int    `json:"order,omitempty"`
 }
@@ -89,7 +89,7 @@ func (h *TagHandler) GetAllTags() ([]TagInfo, error) {
 			Name:      name,
 			Count:     count,
 			Color:     meta.Color,
-			IsGroup:   meta.IsGroup,
+			IsPinned:  meta.IsPinned,
 			Collapsed: meta.Collapsed,
 			Order:     meta.Order,
 		})
@@ -108,70 +108,77 @@ func (h *TagHandler) SetTagColor(tagName string, color string) error {
 	return h.tagStore.SetColor(tagName, color)
 }
 
-// CreateTagGroup 创建新标签组
-func (h *TagHandler) CreateTagGroup(name string) error {
-	return h.tagStore.CreateGroup(name)
+// PinTag 固定标签到侧边栏
+func (h *TagHandler) PinTag(tagName string) error {
+	return h.tagStore.PinTag(tagName)
 }
 
-// SetTagGroupCollapsed 设置标签组折叠状态
-func (h *TagHandler) SetTagGroupCollapsed(name string, collapsed bool) error {
-	return h.tagStore.SetGroupCollapsed(name, collapsed)
+// SetPinnedTagCollapsed 设置固定标签折叠状态
+func (h *TagHandler) SetPinnedTagCollapsed(name string, collapsed bool) error {
+	return h.tagStore.SetPinnedTagCollapsed(name, collapsed)
 }
 
-// GetTagGroups 获取所有标签组
-func (h *TagHandler) GetTagGroups() []TagInfo {
-	groups := h.tagStore.GetAllGroups()
-	result := make([]TagInfo, len(groups))
-	for i, g := range groups {
+// GetPinnedTags 获取所有固定标签
+func (h *TagHandler) GetPinnedTags() []TagInfo {
+	pinned := h.tagStore.GetAllPinnedTags()
+	result := make([]TagInfo, len(pinned))
+	for i, p := range pinned {
 		result[i] = TagInfo{
-			Name:      g.Name,
-			Count:     g.Count,
-			Color:     g.Color,
-			IsGroup:   g.IsGroup,
-			Collapsed: g.Collapsed,
-			Order:     g.Order,
+			Name:      p.Name,
+			Count:     p.Count,
+			Color:     p.Color,
+			IsPinned:  p.IsPinned,
+			Collapsed: p.Collapsed,
+			Order:     p.Order,
 		}
 	}
 	return result
 }
 
-// ReorderTagGroups 重新排序标签组
-func (h *TagHandler) ReorderTagGroups(names []string) error {
-	return h.tagStore.ReorderGroups(names)
+// ReorderPinnedTags 重新排序固定标签
+func (h *TagHandler) ReorderPinnedTags(names []string) error {
+	return h.tagStore.ReorderPinnedTags(names)
 }
 
-// RenameTagGroup 重命名标签组
-func (h *TagHandler) RenameTagGroup(oldName, newName string) error {
+// RenameTag 重命名标签（同时更新所有文档）
+func (h *TagHandler) RenameTag(oldName, newName string) error {
 	// 同时更新所有文档中的标签名
+	h.markIndexWrite()
 	index, _ := h.docRepo.GetAll()
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == oldName {
-				_ = h.docRepo.RemoveTag(doc.ID, oldName) // 忽略错误
-				_ = h.docRepo.AddTag(doc.ID, newName)    // 忽略错误
+				_ = h.docRepo.RemoveTag(doc.ID, oldName)
+				_ = h.docRepo.AddTag(doc.ID, newName)
 				break
 			}
 		}
 	}
-	return h.tagStore.RenameGroup(oldName, newName)
+	return h.tagStore.RenameTag(oldName, newName)
 }
 
-// DeleteTagGroup 删除标签组
-func (h *TagHandler) DeleteTagGroup(name string) error {
+// UnpinTag 取消固定标签
+func (h *TagHandler) UnpinTag(name string) error {
+	return h.tagStore.UnpinTag(name)
+}
+
+// DeleteTag 删除标签（从所有文档中移除）
+func (h *TagHandler) DeleteTag(name string) error {
 	// 从所有文档中移除该标签
+	h.markIndexWrite()
 	index, _ := h.docRepo.GetAll()
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == name {
-				_ = h.docRepo.RemoveTag(doc.ID, name) // 忽略错误
+				_ = h.docRepo.RemoveTag(doc.ID, name)
 				break
 			}
 		}
 	}
-	return h.tagStore.DeleteGroup(name)
+	return h.tagStore.DeleteTag(name)
 }
 
-// MigrateFoldersToTagGroups 将文件夹迁移为标签组（一次性）
+// MigrateFoldersToTagGroups 将文件夹迁移为固定标签（一次性）
 func (h *TagHandler) MigrateFoldersToTagGroups() {
 	if h.folderRepo == nil {
 		return
@@ -196,17 +203,17 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 	folderNameByID := make(map[string]string)
 	for _, f := range folders {
 		folderNameByID[f.ID] = f.Name
-		_ = h.tagStore.CreateGroup(f.Name) // 忽略错误
+		_ = h.tagStore.PinTag(f.Name)
 		if f.Collapsed {
-			_ = h.tagStore.SetGroupCollapsed(f.Name, true) // 忽略错误
+			_ = h.tagStore.SetPinnedTagCollapsed(f.Name, true)
 		}
 	}
 
 	for _, doc := range index.Documents {
 		if doc.FolderId != "" {
 			if folderName, ok := folderNameByID[doc.FolderId]; ok {
-				_ = h.docRepo.AddTag(doc.ID, folderName) // 忽略错误
-				_ = h.docRepo.MoveToFolder(doc.ID, "")   // 忽略错误
+				_ = h.docRepo.AddTag(doc.ID, folderName)
+				_ = h.docRepo.MoveToFolder(doc.ID, "")
 			}
 		}
 	}
@@ -215,8 +222,8 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 	for i, f := range folders {
 		groupNames[i] = f.Name
 	}
-	_ = h.tagStore.ReorderGroups(groupNames) // 忽略错误
+	_ = h.tagStore.ReorderPinnedTags(groupNames)
 
 	backupPath := foldersPath + ".bak"
-	_ = os.Rename(foldersPath, backupPath) // 忽略错误
+	_ = os.Rename(foldersPath, backupPath)
 }

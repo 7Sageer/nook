@@ -18,16 +18,12 @@ export function CreateDocument(arg1) {
   return window['go']['main']['App']['CreateDocument'](arg1);
 }
 
-export function CreateTagGroup(arg1) {
-  return window['go']['main']['App']['CreateTagGroup'](arg1);
-}
-
 export function DeleteDocument(arg1) {
   return window['go']['main']['App']['DeleteDocument'](arg1);
 }
 
-export function DeleteTagGroup(arg1) {
-  return window['go']['main']['App']['DeleteTagGroup'](arg1);
+export function DeleteTag(arg1) {
+  return window['go']['main']['App']['DeleteTag'](arg1);
 }
 
 export function ExportHTMLFile(arg1, arg2) {
@@ -50,6 +46,10 @@ export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }
 
+export function GetPinnedTags() {
+  return window['go']['main']['App']['GetPinnedTags']();
+}
+
 export function GetRAGConfig() {
   return window['go']['main']['App']['GetRAGConfig']();
 }
@@ -64,10 +64,6 @@ export function GetSettings() {
 
 export function GetTagColors() {
   return window['go']['main']['App']['GetTagColors']();
-}
-
-export function GetTagGroups() {
-  return window['go']['main']['App']['GetTagGroups']();
 }
 
 export function ImportMarkdownFile() {
@@ -102,6 +98,10 @@ export function OpenFileWithSystem(arg1) {
   return window['go']['main']['App']['OpenFileWithSystem'](arg1);
 }
 
+export function PinTag(arg1) {
+  return window['go']['main']['App']['PinTag'](arg1);
+}
+
 export function PrintHTML(arg1, arg2) {
   return window['go']['main']['App']['PrintHTML'](arg1, arg2);
 }
@@ -118,16 +118,16 @@ export function RenameDocument(arg1, arg2) {
   return window['go']['main']['App']['RenameDocument'](arg1, arg2);
 }
 
-export function RenameTagGroup(arg1, arg2) {
-  return window['go']['main']['App']['RenameTagGroup'](arg1, arg2);
+export function RenameTag(arg1, arg2) {
+  return window['go']['main']['App']['RenameTag'](arg1, arg2);
 }
 
 export function ReorderDocuments(arg1) {
   return window['go']['main']['App']['ReorderDocuments'](arg1);
 }
 
-export function ReorderTagGroups(arg1) {
-  return window['go']['main']['App']['ReorderTagGroups'](arg1);
+export function ReorderPinnedTags(arg1) {
+  return window['go']['main']['App']['ReorderPinnedTags'](arg1);
 }
 
 export function SaveDocumentContent(arg1, arg2) {
@@ -174,10 +174,14 @@ export function SetActiveDocument(arg1) {
   return window['go']['main']['App']['SetActiveDocument'](arg1);
 }
 
+export function SetPinnedTagCollapsed(arg1, arg2) {
+  return window['go']['main']['App']['SetPinnedTagCollapsed'](arg1, arg2);
+}
+
 export function SetTagColor(arg1, arg2) {
   return window['go']['main']['App']['SetTagColor'](arg1, arg2);
 }
 
-export function SetTagGroupCollapsed(arg1, arg2) {
-  return window['go']['main']['App']['SetTagGroupCollapsed'](arg1, arg2);
+export function UnpinTag(arg1) {
+  return window['go']['main']['App']['UnpinTag'](arg1);
 }
