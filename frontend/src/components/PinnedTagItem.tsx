@@ -1,12 +1,12 @@
 import { memo, useMemo, useState } from 'react';
 import type { DocumentMeta, TagInfo } from '../types/document';
-import { ChevronRight, Tag, Pencil, Trash2, Plus } from 'lucide-react';
+import { ChevronRight, Tag, Pencil, Trash2, Plus, PinOff } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { docDndId } from '../utils/dnd';
+import { docInstanceDndId } from '../utils/dnd';
 import { SortableDocItem } from './SortableDocItem';
 import './PinnedTagItem.css';
 
@@ -19,6 +19,7 @@ interface PinnedTagItemProps {
     onToggle: (name: string) => void;
     onRename: (oldName: string, newName: string) => void;
     onDelete: (name: string) => void;
+    onUnpin?: (name: string) => void;
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
     onEditingChange?: (name: string | null) => void;
@@ -34,6 +35,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     onToggle,
     onRename,
     onDelete,
+    onUnpin,
     onSelectDocument,
     onDeleteDocument,
     onEditingChange,
@@ -146,6 +148,20 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                                 <Plus size={14} aria-hidden="true" />
                             </button>
                         )}
+                        {onUnpin && (
+                            <button
+                                className="action-btn"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUnpin(tag.name);
+                                }}
+                                title={STRINGS.TOOLTIPS.UNPIN_TAG}
+                                aria-label={STRINGS.TOOLTIPS.UNPIN_TAG}
+                            >
+                                <PinOff size={14} aria-hidden="true" />
+                            </button>
+                        )}
                         <button
                             className="action-btn"
                             onPointerDown={(e) => e.stopPropagation()}
@@ -179,7 +195,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                 aria-label={`${tag.name} 中的文档`}
             >
                 <div className="folder-documents-inner">
-                    <SortableContext items={sortedDocs.map(d => docDndId(d.id))} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={sortedDocs.map(d => docInstanceDndId(tag.name, d.id))} strategy={verticalListSortingStrategy}>
                         <AnimatePresence mode="popLayout">
                             {sortedDocs.map((doc, index) => (
                                 <SortableDocItem

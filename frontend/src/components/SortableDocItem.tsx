@@ -6,7 +6,7 @@ import { STRINGS } from '../constants/strings';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { docDndId } from '../utils/dnd';
+import { docInstanceDndId } from '../utils/dnd';
 import { listItemVariants } from '../utils/animations';
 
 export interface SortableDocItemProps {
@@ -51,8 +51,9 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
         transition,
         isDragging,
     } = useSortable({
-        id: docDndId(item.id),
+        id: docInstanceDndId(containerId, item.id),
         data: { type: 'document', containerId, docId: item.id },
+        disabled: hidden, // Prevent collapsed folder items from being droppable targets
     });
 
     const style: React.CSSProperties = {

@@ -31,6 +31,8 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 	case "get_blocknote_schema":
 		result = s.toolGetBlockNoteSchema()
 	// Tag tools
+	case "list_tags":
+		result = s.toolListTags()
 	case "add_tag":
 		result = s.toolAddTag(params.Arguments)
 	case "remove_tag":

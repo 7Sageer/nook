@@ -82,8 +82,13 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		},
 		// Tag tools
 		{
+			Name:        "list_tags",
+			Description: "List all existing tags with usage counts. IMPORTANT: Call this BEFORE using add_tag to check for existing tags with similar meaning (e.g., '项目管理' vs 'Project Management'). Always prefer reusing existing tags over creating new ones to maintain consistency.",
+			InputSchema: InputSchema{Type: "object"},
+		},
+		{
 			Name:        "add_tag",
-			Description: "Add a tag to a document. Tags help categorize and filter documents. Use tag groups to organize documents hierarchically.",
+			Description: "Add a tag to a document. ⚠️ BEFORE adding a new tag, call list_tags first to check existing tags - avoid creating semantically similar tags (e.g., don't create 'Project Management' if '项目管理' exists). Reuse existing tags whenever possible.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{

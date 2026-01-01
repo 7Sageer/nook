@@ -25,18 +25,29 @@ export const EditorTagInput = memo(function EditorTagInput({
     const [inputValue, setInputValue] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
+    const [removingTag, setRemovingTag] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
+    // Handle tag removal with animation
+    const handleRemoveTag = useCallback((tag: string) => {
+        setRemovingTag(tag);
+        setTimeout(() => {
+            onRemoveTag(docId, tag);
+            setRemovingTag(null);
+        }, 150); // Match CSS animation duration
+    }, [docId, onRemoveTag]);
+
     // Filter suggestions based on input
-    const suggestions = inputValue.trim()
-        ? allTags
-            .filter(t =>
-                t.name.toLowerCase().includes(inputValue.toLowerCase()) &&
-                !tags.includes(t.name)
-            )
-            .slice(0, 5)
-        : [];
+    const suggestions = allTags
+        .filter(t => {
+            const matchesInput = inputValue.trim()
+                ? t.name.toLowerCase().includes(inputValue.toLowerCase())
+                : true;
+            const notAlreadySelected = !tags.includes(t.name);
+            return matchesInput && notAlreadySelected;
+        })
+        .slice(0, 5);
 
     // Reset highlighted index when suggestions change
     useEffect(() => {
@@ -163,7 +174,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                 return (
                     <span
                         key={tag}
-                        className="editor-tag-badge"
+                        className={`editor-tag-badge ${removingTag === tag ? 'removing' : ''}`}
                         role="listitem"
                         title={tag}
                         style={color ? { '--tag-badge-color': color } as React.CSSProperties : undefined}
@@ -178,7 +189,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                         </button>
                         <Button
                             className="editor-tag-remove"
-                            onPress={() => onRemoveTag(docId, tag)}
+                            onPress={() => handleRemoveTag(tag)}
                             aria-label={`Remove tag ${tag}`}
                         >
                             <X size={10} aria-hidden="true" />

@@ -5,7 +5,7 @@ import { FileText, Trash2, FileSearch } from 'lucide-react';
 import { STRINGS } from '../constants/strings';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { docDndId } from '../utils/dnd';
+import { docInstanceDndId } from '../utils/dnd';
 import { listItemVariants } from '../utils/animations';
 import { SortableDocItem } from './SortableDocItem';
 import { SearchResultItem } from './SearchResultItem';
@@ -60,7 +60,7 @@ export function DocumentList({
         if (!containerId) {
             throw new Error('DocumentList: containerId is required when sortable=true');
         }
-        const sortableItems = sortedItems.map((item) => docDndId(item.id));
+        const sortableItems = sortedItems.map((item) => docInstanceDndId(containerId, item.id));
         return (
             <SortableContext items={sortableItems} strategy={verticalListSortingStrategy}>
                 <AnimatePresence mode="popLayout">
@@ -136,4 +136,3 @@ export function DocumentList({
         </AnimatePresence>
     );
 }
-

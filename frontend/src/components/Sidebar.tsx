@@ -42,6 +42,7 @@ export function Sidebar({
     switchDoc,
     reorderDocuments,
     pinTag,
+    unpinTag,
     deleteTag,
     renameTag,
     togglePinnedTagCollapsed,
@@ -60,10 +61,15 @@ export function Sidebar({
   const searchRef = useRef<SidebarSearchRef>(null);
   const [editingTagName, setEditingTagName] = useState<string | null>(null);
 
-  // Sort pinned tags by order
+  // Sort pinned tags by order and merge colors
   const sortedPinnedTags = useMemo(() => {
-    return [...pinnedTags].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-  }, [pinnedTags]);
+    return [...pinnedTags]
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map(tag => ({
+        ...tag,
+        color: tagColors[tag.name] || tag.color,
+      }));
+  }, [pinnedTags, tagColors]);
 
   // Get pinned tag names set for quick lookup
   const pinnedTagNameSet = useMemo(() => new Set(pinnedTags.map(t => t.name)), [pinnedTags]);
@@ -252,6 +258,7 @@ export function Sidebar({
                   onToggleCollapsed={togglePinnedTagCollapsed}
                   onRenameTag={renameTag}
                   onDeleteTag={handleDeleteTagClick}
+                  onUnpinTag={unpinTag}
                   onSelectDocument={handleSelect}
                   onDeleteDocument={handleDeleteClick}
                   onEditingChange={setEditingTagName}

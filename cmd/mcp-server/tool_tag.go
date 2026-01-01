@@ -36,6 +36,34 @@ func (s *MCPServer) toolRemoveTag(args json.RawMessage) ToolCallResult {
 	return textResult("Tag removed successfully")
 }
 
+func (s *MCPServer) toolListTags() ToolCallResult {
+	index, err := s.docRepo.GetAll()
+	if err != nil {
+		return errorResult("Failed to get documents: " + err.Error())
+	}
+
+	// Count tag usage
+	tagCounts := make(map[string]int)
+	for _, doc := range index.Documents {
+		for _, t := range doc.Tags {
+			tagCounts[t]++
+		}
+	}
+
+	// Build result
+	type tagInfo struct {
+		Name  string `json:"name"`
+		Count int    `json:"count"`
+	}
+	tags := make([]tagInfo, 0, len(tagCounts))
+	for name, count := range tagCounts {
+		tags = append(tags, tagInfo{Name: name, Count: count})
+	}
+
+	data, _ := json.MarshalIndent(tags, "", "  ")
+	return textResult(string(data))
+}
+
 // ========== Pinned Tag tools ==========
 
 func (s *MCPServer) toolListPinnedTags() ToolCallResult {

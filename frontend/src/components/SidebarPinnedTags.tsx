@@ -22,6 +22,7 @@ interface SidebarPinnedTagsProps {
     onToggleCollapsed: (name: string) => Promise<void>;
     onRenameTag: (oldName: string, newName: string) => Promise<void>;
     onDeleteTag: (name: string) => void;
+    onUnpinTag?: (name: string) => void;
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
     onEditingChange: (name: string | null) => void;
@@ -55,6 +56,7 @@ export function SidebarPinnedTags({
     onToggleCollapsed,
     onRenameTag,
     onDeleteTag,
+    onUnpinTag,
     onSelectDocument,
     onDeleteDocument,
     onEditingChange,
@@ -101,6 +103,7 @@ export function SidebarPinnedTags({
                                     onToggle={onToggleCollapsed}
                                     onRename={onRenameTag}
                                     onDelete={onDeleteTag}
+                                    onUnpin={onUnpinTag}
                                     onSelectDocument={onSelectDocument}
                                     onDeleteDocument={onDeleteDocument}
                                     onEditingChange={onEditingChange}

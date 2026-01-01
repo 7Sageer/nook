@@ -187,7 +187,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
   const pinTagFn = useCallback(async (name: string): Promise<void> => {
     await PinTag(name);
-    // 增量更新
+    // 增量更新 pinnedTags
     setPinnedTags(prev => [...prev, {
       name: name,
       count: 0,
@@ -195,11 +195,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
       collapsed: false,
       order: prev.length,
     }]);
+    // 同时更新 allTags 中的 isPinned 状态
+    setAllTags(prev => prev.map(t => t.name === name ? { ...t, isPinned: true } : t));
   }, []);
 
   const unpinTagFn = useCallback(async (name: string): Promise<void> => {
     await UnpinTag(name);
     setPinnedTags(prev => prev.filter(t => t.name !== name));
+    // 同时更新 allTags 中的 isPinned 状态
+    setAllTags(prev => prev.map(t => t.name === name ? { ...t, isPinned: false } : t));
   }, []);
 
   const deleteTagFn = useCallback(async (name: string): Promise<void> => {

@@ -65,7 +65,21 @@ export const TagContextMenu = memo(function TagContextMenu({
 
     const handleColorClick = (e: React.MouseEvent) => {
         const rect = (e.target as HTMLElement).getBoundingClientRect();
-        setColorPickerPosition({ x: rect.right + 4, y: rect.top });
+        const pickerWidth = 170;
+        const pickerHeight = 120;
+
+        // 计算位置，优先显示在右侧，空间不足则显示在左侧
+        let x = rect.right + 4;
+        let y = rect.top;
+
+        if (x + pickerWidth > window.innerWidth) {
+            x = rect.left - pickerWidth - 4;
+        }
+        if (y + pickerHeight > window.innerHeight) {
+            y = window.innerHeight - pickerHeight - 8;
+        }
+
+        setColorPickerPosition({ x, y });
         setShowColorPicker(true);
     };
 
