@@ -27,8 +27,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: "1.23"
 
       - name: Create frontend dist placeholder (for embed)
         run: mkdir -p frontend/dist && touch frontend/dist/.gitkeep
@@ -64,7 +64,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
-          version: latest
+          version: v2.7.2 # 使用 v2 版本以匹配配置文件
 
   # ==================== 构建测试 ====================
   build:
@@ -88,13 +88,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: "1.23"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Linux dependencies
