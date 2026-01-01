@@ -1,9 +1,9 @@
-import { memo, useMemo, useState, useCallback } from 'react';
+import { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import type { DocumentMeta, TagInfo } from '../types/document';
-import { ChevronRight, Tag, Plus, MoreHorizontal } from 'lucide-react';
+import { ChevronRight, Tag, Pencil, Trash2, Plus, PinOff, Palette, MoreVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
-import { TagContextMenu } from './TagContextMenu';
+import { TagColorPicker } from './TagColorPicker';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -48,9 +48,9 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     const STRINGS = getStrings(language);
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(tag.name);
-    const [contextMenu, setContextMenu] = useState<{
-        position: { x: number; y: number };
-    } | null>(null);
+    const [colorPickerPos, setColorPickerPos] = useState<{ x: number; y: number } | null>(null);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
 
     const sortedDocs = useMemo(() => {
         return [...documents].sort((a, b) => a.order - b.order);
@@ -58,33 +58,26 @@ export const PinnedTagItem = memo(function PinnedTagItem({
 
     const isCollapsed = tag.collapsed ?? false;
 
-    const handleContextMenu = useCallback((e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setContextMenu({
-            position: { x: e.clientX, y: e.clientY },
-        });
-    }, []);
-
-    const handleMoreClick = useCallback((e: React.MouseEvent) => {
+    const handleColorClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-        setContextMenu({
-            position: { x: rect.right + 4, y: rect.top },
-        });
+        const pickerWidth = 170;
+        const pickerHeight = 120;
+        let x = rect.right + 4;
+        let y = rect.top;
+        if (x + pickerWidth > window.innerWidth) {
+            x = rect.left - pickerWidth - 4;
+        }
+        if (y + pickerHeight > window.innerHeight) {
+            y = window.innerHeight - pickerHeight - 8;
+        }
+        setColorPickerPos({ x, y });
     }, []);
 
     const handleColorSelect = useCallback((name: string, color: string) => {
         onColorSelect?.(name, color);
+        setColorPickerPos(null);
     }, [onColorSelect]);
-
-    const handleUnpin = useCallback(() => {
-        onUnpin?.(tag.name);
-    }, [onUnpin, tag.name]);
-
-    const handleDelete = useCallback(() => {
-        onDelete(tag.name);
-    }, [onDelete, tag.name]);
 
     // Droppable only on header to allow precise drop targeting
     const {
@@ -109,6 +102,23 @@ export const PinnedTagItem = memo(function PinnedTagItem({
         onEditingChange?.(tag.name);
     };
 
+    // Close more menu when clicking outside
+    useEffect(() => {
+        if (!showMoreMenu) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+                setShowMoreMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showMoreMenu]);
+
+    const handleMoreMenuClick = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowMoreMenu(prev => !prev);
+    }, []);
+
     return (
         <>
             <motion.div
@@ -122,7 +132,6 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                     ref={setHeaderDroppableRef}
                     className="folder-header"
                     onClick={() => onToggle(tag.name)}
-                    onContextMenu={handleContextMenu}
                     role="treeitem"
                     aria-expanded={!isCollapsed}
                     tabIndex={0}
@@ -169,7 +178,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                         <span className="folder-count">{documents.length}</span>
                     )}
                     {!isEditing && (
-                        <div className="folder-actions">
+                        <div className="folder-actions" ref={moreMenuRef}>
                             {onAddDocument && (
                                 <button
                                     className="action-btn"
@@ -187,12 +196,64 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                             <button
                                 className="action-btn"
                                 onPointerDown={(e) => e.stopPropagation()}
-                                onClick={handleMoreClick}
-                                title={STRINGS.TOOLTIPS.PINNED_TAG_RENAME} // Reuse a generic tooltip or update later
+                                onClick={handleMoreMenuClick}
+                                title="More options"
                                 aria-label="More options"
+                                aria-expanded={showMoreMenu}
                             >
-                                <MoreHorizontal size={14} aria-hidden="true" />
+                                <MoreVertical size={14} aria-hidden="true" />
                             </button>
+                            {showMoreMenu && (
+                                <div className="folder-more-menu">
+                                    {onColorSelect && (
+                                        <button
+                                            className="folder-more-menu-item"
+                                            onClick={(e) => {
+                                                handleColorClick(e);
+                                                setShowMoreMenu(false);
+                                            }}
+                                        >
+                                            <Palette size={14} />
+                                            <span>Set Color</span>
+                                        </button>
+                                    )}
+                                    {onUnpin && (
+                                        <button
+                                            className="folder-more-menu-item"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowMoreMenu(false);
+                                                onUnpin(tag.name);
+                                            }}
+                                        >
+                                            <PinOff size={14} />
+                                            <span>{STRINGS.TOOLTIPS.UNPIN_TAG}</span>
+                                        </button>
+                                    )}
+                                    <button
+                                        className="folder-more-menu-item"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMoreMenu(false);
+                                            startEditing();
+                                        }}
+                                    >
+                                        <Pencil size={14} />
+                                        <span>{STRINGS.TOOLTIPS.PINNED_TAG_RENAME}</span>
+                                    </button>
+                                    <button
+                                        className="folder-more-menu-item danger"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMoreMenu(false);
+                                            onDelete(tag.name);
+                                        }}
+                                    >
+                                        <Trash2 size={14} />
+                                        <span>{STRINGS.TOOLTIPS.PINNED_TAG_DELETE}</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -222,20 +283,17 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                     </div>
                 </div>
             </motion.div>
-            {contextMenu && (
-                <TagContextMenu
-                    tagName={tag.name}
-                    currentColor={tag.color}
-                    isPinned={true}
-                    position={contextMenu.position}
-                    onPin={() => { }} // Already pinned
-                    onUnpin={handleUnpin}
-                    onColorSelect={handleColorSelect}
-                    onRename={startEditing}
-                    onDelete={handleDelete}
-                    onClose={() => setContextMenu(null)}
-                />
-            )}
+            {
+                colorPickerPos && onColorSelect && (
+                    <TagColorPicker
+                        tagName={tag.name}
+                        currentColor={tag.color}
+                        onSelectColor={handleColorSelect}
+                        onClose={() => setColorPickerPos(null)}
+                        position={colorPickerPos}
+                    />
+                )
+            }
         </>
     );
 });

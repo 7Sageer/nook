@@ -248,6 +248,9 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	}
 
 	// 7. 为每个 chunk 生成 embedding 并存储
+	successCount := 0
+	failedCount := 0
+	var lastError error
 	for _, chunk := range chunks {
 		if chunk.Content == "" {
 			continue
@@ -255,6 +258,9 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 
 		embedding, err := s.embedder.Embed(chunk.Content)
 		if err != nil {
+			failedCount++
+			lastError = err
+			fmt.Printf("⚠️ [RAG] Failed to embed bookmark chunk %s: %v\n", chunk.ID, err)
 			continue // 跳过失败的块
 		}
 
@@ -270,7 +276,15 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 			Embedding:      embedding,
 		}); err != nil {
 			fmt.Printf("⚠️ [RAG] Failed to upsert bookmark chunk %s: %v\n", chunk.ID, err)
+			failedCount++
+		} else {
+			successCount++
 		}
+	}
+
+	// 如果所有 chunks 都嵌入失败，返回错误
+	if successCount == 0 && failedCount > 0 {
+		return fmt.Errorf("embedding failed: %v", lastError)
 	}
 
 	return nil
@@ -334,6 +348,9 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 	}
 
 	// 7. 为每个 chunk 生成 embedding 并存储
+	successCount := 0
+	failedCount := 0
+	var lastError error
 	for _, chunk := range chunks {
 		if chunk.Content == "" {
 			continue
@@ -341,6 +358,8 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 
 		embedding, err := s.embedder.Embed(chunk.Content)
 		if err != nil {
+			failedCount++
+			lastError = err
 			fmt.Printf("⚠️ [RAG] Failed to embed file chunk %s: %v\n", chunk.ID, err)
 			continue // 跳过失败的块
 		}
@@ -358,9 +377,18 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 			Embedding:      embedding,
 		}); err != nil {
 			fmt.Printf("❌ [RAG] Failed to upsert file chunk %s: %v\n", chunk.ID, err)
-		} else if debugChunks {
-			fmt.Printf("✅ [RAG] Stored file chunk: %s\n", chunk.ID)
+			failedCount++
+		} else {
+			successCount++
+			if debugChunks {
+				fmt.Printf("✅ [RAG] Stored file chunk: %s\n", chunk.ID)
+			}
 		}
+	}
+
+	// 如果所有 chunks 都嵌入失败，返回错误
+	if successCount == 0 && failedCount > 0 {
+		return fmt.Errorf("embedding failed: %v", lastError)
 	}
 
 	return nil

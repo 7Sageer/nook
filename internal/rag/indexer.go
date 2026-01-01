@@ -125,6 +125,7 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		// 需要更新：生成新的 Embedding
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
 			continue
 		}
 		// 若 block 本身是聚合/合并块，使用其 SourceBlockID；否则使用 block.ID
@@ -219,6 +220,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 	}
 
 	// 4. 为每个块生成 embedding 并存储
+	successCount := 0
+	failedCount := 0
+	var lastError error
 	for _, block := range blocks {
 		if block.Content == "" {
 			continue
@@ -226,6 +230,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			failedCount++
+			lastError = err
+			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
 			continue
 		}
 
@@ -247,7 +254,15 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 			Embedding:      embedding,
 		}); err != nil {
 			fmt.Printf("⚠️ [RAG] Failed to upsert block %s: %v\n", block.ID, err)
+			failedCount++
+		} else {
+			successCount++
 		}
+	}
+
+	// 如果所有块都嵌入失败，返回错误
+	if successCount == 0 && failedCount > 0 {
+		return fmt.Errorf("embedding failed: %v", lastError)
 	}
 
 	return nil
@@ -283,11 +298,21 @@ func (idx *Indexer) ReindexAll() (int, error) {
 
 	// 重建索引
 	count := 0
+	failedCount := 0
+	var lastError error
 	for _, doc := range index.Documents {
 		if err := idx.ForceReindexDocument(doc.ID); err != nil {
+			failedCount++
+			lastError = err
 			continue // 跳过失败的文档
 		}
 		count++
 	}
+
+	// 如果所有文档都失败了，返回错误
+	if count == 0 && failedCount > 0 {
+		return 0, fmt.Errorf("all documents failed to index: %v", lastError)
+	}
+
 	return count, nil
 }

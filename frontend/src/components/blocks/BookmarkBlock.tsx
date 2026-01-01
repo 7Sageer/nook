@@ -88,8 +88,15 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
                                     props: { ...latestBlock.props, indexed: true, indexing: false, indexError: "" },
                                 });
                             }
-                        } catch {
-                            // Indexing failed, but metadata was saved successfully
+                        } catch (err) {
+                            // Indexing failed - update UI to show error
+                            console.error("[BookmarkBlock] Auto-index failed:", err);
+                            const errorBlock = editor.getBlock(block.id);
+                            if (errorBlock) {
+                                editor.updateBlock(errorBlock, {
+                                    props: { ...errorBlock.props, indexing: false, indexError: "Indexing failed" },
+                                });
+                            }
                         }
                     }
                 }
@@ -135,7 +142,8 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
                     props: { ...latestBlock.props, indexed: true, indexing: false, indexError: "" },
                 });
             }
-        } catch {
+        } catch (err) {
+            console.error("[BookmarkBlock] Index failed:", err);
             const latestBlock = editor.getBlock(block.id);
             if (latestBlock) {
                 editor.updateBlock(latestBlock, {
