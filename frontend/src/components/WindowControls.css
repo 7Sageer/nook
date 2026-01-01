@@ -1,0 +1,35 @@
+.window-controls {
+    position: fixed;
+    top: 0;
+    right: 0;
+    display: flex;
+    z-index: 9999;
+    -webkit-app-region: no-drag;
+}
+
+.control-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 46px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: default;
+    transition: background-color 0.1s;
+}
+
+.control-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.control-btn.close:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+.control-btn svg {
+    pointer-events: none;
+}

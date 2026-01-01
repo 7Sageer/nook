@@ -170,6 +170,7 @@ func main() {
 				app.handleExternalFileOpen(filePath)
 			},
 		},
+		Frameless: true,
 	})
 
 	if err != nil {
