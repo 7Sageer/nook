@@ -3,6 +3,9 @@ import { Tag } from 'lucide-react';
 import type { TagInfo } from '../types/document';
 import { TagContextMenu } from './TagContextMenu';
 import { useDocumentContext } from '../contexts/DocumentContext';
+import { useConfirmModal } from '../hooks/useConfirmModal';
+import { useSettings } from '../contexts/SettingsContext';
+import { getStrings } from '../constants/strings';
 import './TagList.css';
 
 interface TagListProps {
@@ -18,7 +21,10 @@ export const TagList = memo(function TagList({
     onSelectTag,
     tagColors,
 }: TagListProps) {
-    const { setTagColor, pinTag, unpinTag, pinnedTags } = useDocumentContext();
+    const { setTagColor, pinTag, unpinTag, pinnedTags, deleteTag, renameTag } = useDocumentContext();
+    const { openModal } = useConfirmModal();
+    const { language } = useSettings();
+    const STRINGS = getStrings(language);
     const [contextMenu, setContextMenu] = useState<{
         tagName: string;
         position: { x: number; y: number };
@@ -44,6 +50,31 @@ export const TagList = memo(function TagList({
     const handleUnpinTag = useCallback(async (tagName: string) => {
         await unpinTag(tagName);
     }, [unpinTag]);
+
+    const handleRenameTag = useCallback(async (tagName: string) => {
+        // TagList doesn't support inline renaming easily yet, strictly speaking we might want a modal or prompt.
+        // For now let's just use window.prompt as a quick solution or if possible use a modal.
+        // Given existing code doesn't seem to have a rename modal ready for generic use easily invoked here without UI state.
+        // Let's defer rename for TagList or implement a simple prompt.
+        // Actually Sidebar uses inline editing. TagList is separate.
+        // Let's use a simple prompt for now to ensure functionality, or better:
+        // PinnedTagItem has inline editing. TagList items are buttons.
+        // Maybe we should skip Rename for TagList for this iteration if it's too complex, OR use a prompt.
+        const newName = window.prompt(STRINGS.MODALS.RENAME_TAG_TITLE, tagName);
+        if (newName && newName !== tagName) {
+            await renameTag(tagName, newName);
+        }
+    }, [renameTag, STRINGS]);
+
+    const handleDeleteTag = useCallback((tagName: string) => {
+        openModal(
+            {
+                title: STRINGS.MODALS.DELETE_TAG_TITLE,
+                message: STRINGS.MODALS.DELETE_TAG_MESSAGE,
+            },
+            () => deleteTag(tagName)
+        );
+    }, [deleteTag, openModal, STRINGS]);
 
     // ESC 键取消选择标签
     useEffect(() => {
@@ -163,6 +194,8 @@ export const TagList = memo(function TagList({
                     onPin={handlePinTag}
                     onUnpin={handleUnpinTag}
                     onColorSelect={handleColorSelect}
+                    onRename={handleRenameTag}
+                    onDelete={handleDeleteTag}
                     onClose={() => setContextMenu(null)}
                 />
             )}

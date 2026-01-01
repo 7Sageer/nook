@@ -72,6 +72,7 @@ export const EN = {
         DELETE_MESSAGE: "Are you sure you want to delete this document? This action cannot be undone.",
         DELETE_TAG_TITLE: "Delete Tag",
         DELETE_TAG_MESSAGE: "Are you sure you want to delete this tag? The tag will be removed from all documents.",
+        RENAME_TAG_TITLE: "Rename Tag",
     },
 
     MENU: {

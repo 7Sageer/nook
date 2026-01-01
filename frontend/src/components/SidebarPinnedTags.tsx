@@ -23,6 +23,7 @@ interface SidebarPinnedTagsProps {
     onRenameTag: (oldName: string, newName: string) => Promise<void>;
     onDeleteTag: (name: string) => void;
     onUnpinTag?: (name: string) => void;
+    onColorSelect?: (tagName: string, color: string) => void;
     onSelectDocument: (id: string) => void;
     onDeleteDocument: (id: string) => void;
     onEditingChange: (name: string | null) => void;
@@ -57,6 +58,7 @@ export function SidebarPinnedTags({
     onRenameTag,
     onDeleteTag,
     onUnpinTag,
+    onColorSelect,
     onSelectDocument,
     onDeleteDocument,
     onEditingChange,
@@ -104,6 +106,7 @@ export function SidebarPinnedTags({
                                     onRename={onRenameTag}
                                     onDelete={onDeleteTag}
                                     onUnpin={onUnpinTag}
+                                    onColorSelect={onColorSelect}
                                     onSelectDocument={onSelectDocument}
                                     onDeleteDocument={onDeleteDocument}
                                     onEditingChange={onEditingChange}

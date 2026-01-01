@@ -1,4 +1,5 @@
 import { memo, useCallback, useRef, useEffect } from 'react';
+import './TagColorPicker.css';
 
 // Predefined tag color palette - soft, harmonious colors
 export const TAG_COLORS = [

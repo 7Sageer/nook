@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Pin, PinOff, Palette } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Pin, PinOff, Palette, Pencil, Trash2 } from 'lucide-react';
 import { TagColorPicker } from './TagColorPicker';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
@@ -13,6 +14,8 @@ interface TagContextMenuProps {
     onPin: (tagName: string) => void;
     onUnpin: (tagName: string) => void;
     onColorSelect: (tagName: string, color: string) => void;
+    onRename?: (tagName: string) => void;
+    onDelete?: (tagName: string) => void;
     onClose: () => void;
 }
 
@@ -24,6 +27,8 @@ export const TagContextMenu = memo(function TagContextMenu({
     onPin,
     onUnpin,
     onColorSelect,
+    onRename,
+    onDelete,
     onClose,
 }: TagContextMenuProps) {
     const { language } = useSettings();
@@ -88,11 +93,21 @@ export const TagContextMenu = memo(function TagContextMenu({
         onClose();
     };
 
+    const handleRenameClick = () => {
+        onRename?.(tagName);
+        onClose();
+    };
+
+    const handleDeleteClick = () => {
+        onDelete?.(tagName);
+        onClose();
+    };
+
     // 调整位置避免超出视口
     const adjustedPosition = { ...position };
     if (typeof window !== 'undefined') {
         const menuWidth = 160;
-        const menuHeight = 80;
+        const menuHeight = 160; // Increased height for more items
         if (position.x + menuWidth > window.innerWidth) {
             adjustedPosition.x = window.innerWidth - menuWidth - 8;
         }
@@ -101,7 +116,7 @@ export const TagContextMenu = memo(function TagContextMenu({
         }
     }
 
-    return (
+    return createPortal(
         <div
             ref={menuRef}
             className="tag-context-menu"
@@ -118,6 +133,18 @@ export const TagContextMenu = memo(function TagContextMenu({
                 <Palette size={14} />
                 <span>Set Color</span>
             </button>
+            {onRename && (
+                <button className="tag-context-menu-item" onClick={handleRenameClick}>
+                    <Pencil size={14} />
+                    <span>Rename</span>
+                </button>
+            )}
+            {onDelete && (
+                <button className="tag-context-menu-item danger" onClick={handleDeleteClick}>
+                    <Trash2 size={14} />
+                    <span>Delete</span>
+                </button>
+            )}
 
             {showColorPicker && (
                 <TagColorPicker
@@ -128,6 +155,7 @@ export const TagContextMenu = memo(function TagContextMenu({
                     position={colorPickerPosition}
                 />
             )}
-        </div>
+        </div>,
+        document.body
     );
 });
