@@ -109,7 +109,12 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
-      - name: Build application
+      - name: Build application (Windows)
+        if: matrix.platform == 'windows'
+        run: ./scripts/fix_and_build.ps1
+
+      - name: Build application (Unix)
+        if: matrix.platform != 'windows'
         run: wails build
 
       - name: Build MCP server
