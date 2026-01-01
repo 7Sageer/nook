@@ -45,6 +45,14 @@ export const SidebarSearch = forwardRef<SidebarSearchRef, SidebarSearchProps>(({
         if (e.key === 'Escape') {
             setQuery('');
             inputRef.current?.blur();
+        } else if (e.key === 'Tab' && !e.shiftKey) {
+            // macOS WebKit/Safari 默认只在表单元素间 Tab，不聚焦按钮
+            // 手动处理 Tab 以确保可以聚焦到 tag-list-item 按钮
+            const firstTag = document.querySelector('.tag-list-item') as HTMLElement;
+            if (firstTag) {
+                e.preventDefault();
+                firstTag.focus();
+            }
         }
     };
 

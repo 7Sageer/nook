@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { EditorContainer } from "./components/EditorContainer";
 import { SidebarContainer } from "./components/SidebarContainer";
 import { WindowToolbar } from "./components/WindowToolbar";
@@ -17,6 +17,7 @@ import { useH1Visibility } from "./hooks/useH1Visibility";
 import { useAppEvents } from "./hooks/useAppEvents";
 import { useExternalLinks } from "./hooks/useExternalLinks";
 import { useFileWatcher } from "./hooks/useFileWatcher";
+import { useKeyboardNavigation, useFocusZone } from "./hooks/useKeyboardNavigation";
 import { useExternalFileHandler } from "./hooks/useExternalFileHandler";
 
 import { getStrings } from "./constants/strings";
@@ -133,25 +134,58 @@ function AppContent() {
   // 搜索上下文 - 用于 Cmd+K 选中文本填充
   const { setQueryWithFocus } = useSearchContext();
 
-  // 全局快捷键 Cmd+K - 聚焦搜索并填充选中文本
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
+  // 区域 refs（用于焦点管理）
+  const sidebarRef = useRef<HTMLElement>(null);
+  const editorContainerRef = useRef<HTMLElement>(null);
 
-        // 获取编辑器选中文本
-        const editor = editorRef.current;
-        if (editor) {
-          const selectedText = editor.getSelectedText?.() || '';
-          setQueryWithFocus(selectedText.trim());
-        } else {
-          setQueryWithFocus('');
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+  // === 回调函数定义（必须在 hooks 之前定义） ===
+
+  // 菜单事件处理
+  const handleCreateInternalDocument = useCallback(() => {
+    deactivateExternal();
+    createDoc();
+  }, [createDoc, deactivateExternal]);
+
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarCollapsed((prev) => !prev);
+  }, []);
+
+  const handleAbout = useCallback(() => {
+    alert(STRINGS.ABOUT_INFO);
+  }, [STRINGS.ABOUT_INFO]);
+
+  const handleSettings = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
+  // 搜索快捷键回调
+  const handleSearch = useCallback(() => {
+    const editor = editorRef.current;
+    if (editor) {
+      const selectedText = editor.getSelectedText?.() || '';
+      setQueryWithFocus(selectedText.trim());
+    } else {
+      setQueryWithFocus('');
+    }
   }, [editorRef, setQueryWithFocus]);
+
+  // === Hooks 调用 ===
+
+  // 全局快捷键（Cmd+K, Cmd+N, Cmd+\, Cmd+,）
+  useKeyboardNavigation({
+    onSearch: handleSearch,
+    onNewDocument: handleCreateInternalDocument,
+    onToggleSidebar: handleToggleSidebar,
+    onSettings: handleSettings,
+    enabled: !settingsOpen, // 设置模态框打开时禁用
+  });
+
+  // 焦点区域管理（F6 切换, Escape 返回编辑器）
+  useFocusZone({
+    sidebarRef,
+    editorRef: editorContainerRef,
+    enabled: !settingsOpen,
+  });
 
   const { handleImport } = useImport({
     editorRef,
@@ -207,24 +241,6 @@ function AppContent() {
     setStatus,
     statusSavedText: STRINGS.STATUS.SAVED,
   });
-
-  // 菜单事件处理
-  const handleCreateInternalDocument = useCallback(() => {
-    deactivateExternal();
-    createDoc();
-  }, [createDoc, deactivateExternal]);
-
-  const handleToggleSidebar = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, []);
-
-  const handleAbout = useCallback(() => {
-    alert(STRINGS.ABOUT_INFO);
-  }, [STRINGS.ABOUT_INFO]);
-
-  const handleSettings = useCallback(() => {
-    setSettingsOpen(true);
-  }, []);
 
 
 

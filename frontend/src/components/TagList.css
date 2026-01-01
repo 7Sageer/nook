@@ -67,6 +67,12 @@
     background-color: var(--black-alpha-8);
 }
 
+.tag-list-item:focus,
+.tag-list-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
 .tag-list-item.active {
     background-color: var(--tag-color, var(--primary));
     color: #fff;

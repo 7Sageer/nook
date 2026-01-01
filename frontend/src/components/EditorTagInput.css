@@ -197,6 +197,7 @@
 
 .editor-tag-suggestion-item:hover,
 .editor-tag-suggestion-item.selected,
+.editor-tag-suggestion-item.highlighted,
 .editor-tag-suggestion-item[data-focused],
 .editor-tag-suggestion-item[data-selected] {
     background-color: var(--primary-alpha-8);

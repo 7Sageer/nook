@@ -88,6 +88,60 @@ export function SearchResultItem({
         onChunkClick?.(blockId);
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            // 如果已展开且有 chunks，进入 chunks 列表
+            if (isExpanded && hasMultipleChunks) {
+                const currentElement = e.currentTarget as HTMLElement;
+                const firstChunk = currentElement.querySelector('.semantic-chunk-item') as HTMLElement;
+                if (firstChunk) {
+                    firstChunk.focus();
+                    return;
+                }
+            }
+            // 否则导航到下一个结果项
+            const currentElement = e.currentTarget as HTMLElement;
+            const nextSibling = currentElement.nextElementSibling as HTMLElement;
+            if (nextSibling?.classList.contains('document-item')) {
+                nextSibling.focus();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            // 导航到上一个结果项
+            const currentElement = e.currentTarget as HTMLElement;
+            const prevSibling = currentElement.previousElementSibling as HTMLElement;
+            if (prevSibling?.classList.contains('document-item')) {
+                prevSibling.focus();
+            }
+        } else if (e.key === 'ArrowRight' && hasMultipleChunks) {
+            e.preventDefault();
+            if (!isExpanded) {
+                // 展开并聚焦第一个 chunk
+                setIsExpanded(true);
+                // 需要等待 DOM 更新后再聚焦
+                setTimeout(() => {
+                    const currentElement = e.currentTarget as HTMLElement;
+                    const firstChunk = currentElement.querySelector('.semantic-chunk-item') as HTMLElement;
+                    firstChunk?.focus();
+                }, 100);
+            } else {
+                // 已展开，直接聚焦第一个 chunk
+                const currentElement = e.currentTarget as HTMLElement;
+                const firstChunk = currentElement.querySelector('.semantic-chunk-item') as HTMLElement;
+                firstChunk?.focus();
+            }
+        } else if (e.key === 'ArrowLeft' && hasMultipleChunks) {
+            // 折叠语义搜索结果
+            e.preventDefault();
+            setIsExpanded(false);
+        }
+    };
+
+
     return (
         <motion.li
             variants={variants}
@@ -96,11 +150,13 @@ export function SearchResultItem({
             exit="exit"
             className={containerClass}
             onClick={onClick}
+            onKeyDown={handleKeyDown}
             role="option"
             aria-selected={isActive}
             tabIndex={0}
             custom={{ index, isActive }}
         >
+
             {/* Icon - Only for document variant typically, or if provided */}
             {icon && <div className="doc-icon">{icon}</div>}
 
@@ -132,12 +188,38 @@ export function SearchResultItem({
                                     initial="hidden"
                                     animate="visible"
                                     exit="exit"
+                                    role="list"
                                 >
                                     {allChunks.slice(1).map((chunk, i) => (
                                         <li
                                             key={chunk.blockId || i}
                                             className="semantic-chunk-item"
+                                            tabIndex={0}
+                                            role="option"
                                             onClick={(e) => handleChunkClick(e, chunk.sourceBlockId || chunk.blockId)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    onChunkClick?.(chunk.sourceBlockId || chunk.blockId);
+                                                } else if (e.key === 'ArrowDown') {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const nextSibling = (e.currentTarget as HTMLElement).nextElementSibling as HTMLElement;
+                                                    nextSibling?.focus();
+                                                } else if (e.key === 'ArrowUp') {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    const prevSibling = (e.currentTarget as HTMLElement).previousElementSibling as HTMLElement;
+                                                    prevSibling?.focus();
+                                                } else if (e.key === 'Escape') {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    // 返回到父级 semantic-item
+                                                    const parentItem = (e.currentTarget as HTMLElement).closest('.semantic-item') as HTMLElement;
+                                                    parentItem?.focus();
+                                                }
+                                            }}
                                         >
                                             {chunk.headingContext && (
                                                 <span className="chunk-context">{chunk.headingContext}</span>
@@ -148,6 +230,7 @@ export function SearchResultItem({
                                 </motion.ul>
                             )}
                         </AnimatePresence>
+
                     </>
                 ) : (
                     // Document Variant: Main Title + Optional Inline Snippet

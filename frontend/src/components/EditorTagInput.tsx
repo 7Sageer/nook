@@ -24,6 +24,7 @@ export const EditorTagInput = memo(function EditorTagInput({
     const [isAdding, setIsAdding] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const inputRef = useRef<HTMLInputElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +37,11 @@ export const EditorTagInput = memo(function EditorTagInput({
             )
             .slice(0, 5)
         : [];
+
+    // Reset highlighted index when suggestions change
+    useEffect(() => {
+        setHighlightedIndex(-1);
+    }, [suggestions.length, inputValue]);
 
     // Calculate dropdown position for portal
     useEffect(() => {
@@ -60,6 +66,7 @@ export const EditorTagInput = memo(function EditorTagInput({
         }
         setInputValue('');
         setIsAdding(false);
+        setHighlightedIndex(-1);
     }, [docId, onAddTag, tags]);
 
 
@@ -71,13 +78,40 @@ export const EditorTagInput = memo(function EditorTagInput({
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
         e.stopPropagation();
-        if (e.key === 'Enter' && inputValue.trim()) {
-            addTag(inputValue);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (suggestions.length > 0) {
+                setHighlightedIndex(prev =>
+                    prev < suggestions.length - 1 ? prev + 1 : 0
+                );
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (suggestions.length > 0) {
+                setHighlightedIndex(prev =>
+                    prev > 0 ? prev - 1 : suggestions.length - 1
+                );
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlightedIndex >= 0 && suggestions[highlightedIndex]) {
+                // 选择高亮的建议
+                addTag(suggestions[highlightedIndex].name);
+            } else if (inputValue.trim()) {
+                // 没有高亮项时，使用输入的文本
+                addTag(inputValue);
+            }
         } else if (e.key === 'Escape') {
             setInputValue('');
             setIsAdding(false);
+            setHighlightedIndex(-1);
+        } else if (e.key === 'Tab' && suggestions.length > 0 && highlightedIndex >= 0) {
+            // Tab 键选择当前高亮项
+            e.preventDefault();
+            addTag(suggestions[highlightedIndex].name);
         }
-    }, [inputValue, addTag]);
+    }, [inputValue, addTag, suggestions, highlightedIndex]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setInputValue(e.target.value);
@@ -92,6 +126,7 @@ export const EditorTagInput = memo(function EditorTagInput({
             }
             setInputValue('');
             setIsAdding(false);
+            setHighlightedIndex(-1);
         }, 150);
     }, [inputValue, docId, onAddTag, tags]);
 
@@ -101,6 +136,7 @@ export const EditorTagInput = memo(function EditorTagInput({
             inputRef.current.focus();
         }
     }, [isAdding]);
+
 
     return (
         <div
@@ -173,7 +209,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                             id="editor-tag-suggestions"
                             aria-label="Tag suggestions"
                             className="editor-tag-suggestions"
-                            items={suggestions}
+                            items={suggestions.map((item, index) => ({ ...item, index }))}
                             selectionMode="single"
                             style={{
                                 position: 'fixed',
@@ -186,7 +222,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                                     key={item.name}
                                     id={item.name}
                                     textValue={item.name}
-                                    className="editor-tag-suggestion-item"
+                                    className={`editor-tag-suggestion-item ${item.index === highlightedIndex ? 'highlighted' : ''}`}
                                     onAction={() => addTag(item.name)}
                                 >
                                     {item.color && (
@@ -205,6 +241,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                         </ListBox>,
                         document.body
                     )}
+
                 </div>
             ) : tags.length > 0 && (
                 <button

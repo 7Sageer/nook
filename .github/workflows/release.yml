@@ -80,11 +80,15 @@ jobs:
 
       - name: Install SQLite3 (for sqlite-vec)
         run: |
-          choco install sqlite -y
-          Invoke-WebRequest -Uri "https://www.sqlite.org/2024/sqlite-amalgamation-3450000.zip" -OutFile sqlite.zip
+          # 下载 SQLite amalgamation 源码（包含 sqlite3.h）
+          Invoke-WebRequest -Uri "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip" -OutFile sqlite.zip
           Expand-Archive -Path sqlite.zip -DestinationPath C:\sqlite
-          echo "CGO_CFLAGS=-IC:\sqlite\sqlite-amalgamation-3450000" >> $env:GITHUB_ENV
-          echo "CGO_LDFLAGS=-LC:\ProgramData\chocolatey\lib\SQLite\tools" >> $env:GITHUB_ENV
+          # 验证头文件存在
+          if (!(Test-Path "C:\sqlite\sqlite-amalgamation-3470200\sqlite3.h")) {
+            Write-Error "sqlite3.h not found!"
+            exit 1
+          }
+          Write-Host "sqlite3.h found at C:\sqlite\sqlite-amalgamation-3470200\"
 
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -94,9 +98,15 @@ jobs:
 
       - name: Build application
         run: wails build
+        env:
+          CGO_ENABLED: 1
+          CGO_CFLAGS: "-IC:\\sqlite\\sqlite-amalgamation-3470200"
 
       - name: Build MCP server
         run: go build -o build/bin/nook-mcp.exe ./cmd/mcp-server
+        env:
+          CGO_ENABLED: 1
+          CGO_CFLAGS: "-IC:\\sqlite\\sqlite-amalgamation-3470200"
 
       - name: Create ZIP
         run: |

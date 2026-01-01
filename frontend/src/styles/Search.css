@@ -158,6 +158,12 @@
     transform: translateX(4px) scale(0.98);
 }
 
+.semantic-item:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+
 .semantic-item .doc-content {
     display: flex;
     flex-direction: column;
@@ -239,6 +245,13 @@
 .semantic-chunk-item:active {
     transform: translateX(2px);
 }
+
+.semantic-chunk-item:focus-visible {
+    outline: none;
+    background-color: var(--primary-alpha-10);
+    box-shadow: inset 2px 0 0 var(--primary);
+}
+
 
 .chunk-context {
     display: block;

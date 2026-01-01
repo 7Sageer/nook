@@ -88,8 +88,31 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
         } else if (e.key === 'Delete' || e.key === 'Backspace') {
             e.preventDefault();
             onDelete(item.id);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            // 查找下一个可聚焦的文档项
+            const currentElement = e.currentTarget as HTMLElement;
+            const allItems = Array.from(
+                document.querySelectorAll('.document-item[tabindex="0"]')
+            ) as HTMLElement[];
+            const currentIndex = allItems.indexOf(currentElement);
+            if (currentIndex < allItems.length - 1) {
+                allItems[currentIndex + 1].focus();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            // 查找上一个可聚焦的文档项
+            const currentElement = e.currentTarget as HTMLElement;
+            const allItems = Array.from(
+                document.querySelectorAll('.document-item[tabindex="0"]')
+            ) as HTMLElement[];
+            const currentIndex = allItems.indexOf(currentElement);
+            if (currentIndex > 0) {
+                allItems[currentIndex - 1].focus();
+            }
         }
     };
+
 
     const baseClassName = inFolder ? 'document-item folder-doc sortable' : 'document-item sortable';
     const className = `${baseClassName} ${isActive ? 'active' : ''} ${isDragging ? 'is-dragging' : ''} ${dropClass} ${isJustDropped ? 'just-dropped' : ''}`;
