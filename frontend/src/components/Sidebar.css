@@ -25,8 +25,9 @@
 }
 
 /* 深色模式下侧边栏区域背景 */
-.app-container.dark .sidebar-wrapper {
-    background-color: #12161c;
+.app-container.dark .sidebar-wrapper,
+[data-theme="dark"] .sidebar-wrapper {
+    background-color: var(--bg-secondary);
 }
 
 /* ========== 侧边栏 ========== */

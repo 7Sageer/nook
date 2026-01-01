@@ -21,10 +21,17 @@ var listTypes = map[string]bool{
 	"checkListItem":    true,
 }
 
+// FileBlockInfo file 块信息（包含 ID 和文件路径）
+type FileBlockInfo struct {
+	BlockID  string // BlockNote 块 ID
+	FilePath string // 文件路径（如 /files/xxx.pdf）
+}
+
 // ExternalBlockIDs 外部块（bookmark/file）的 ID 集合
 type ExternalBlockIDs struct {
 	BookmarkIDs []string
-	FileIDs     []string
+	FileIDs     []string        // 兼容旧接口
+	FileBlocks  []FileBlockInfo // 包含文件路径的完整信息
 }
 
 // ExtractExternalBlockIDs 一次解析提取所有外部块（bookmark/file）的 ID
@@ -51,6 +58,17 @@ func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs)
 						result.BookmarkIDs = append(result.BookmarkIDs, id)
 					case "file":
 						result.FileIDs = append(result.FileIDs, id)
+						// 提取文件路径
+						filePath := ""
+						if props, ok := blockMap["props"].(map[string]interface{}); ok {
+							if fp, ok := props["filePath"].(string); ok {
+								filePath = fp
+							}
+						}
+						result.FileBlocks = append(result.FileBlocks, FileBlockInfo{
+							BlockID:  id,
+							FilePath: filePath,
+						})
 					}
 				}
 			}

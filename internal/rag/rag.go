@@ -59,7 +59,7 @@ func (s *Service) init() error {
 	s.store = store
 
 	// 创建索引器和搜索器
-	s.indexer = NewIndexer(store, embedder, s.docRepo, s.docStorage)
+	s.indexer = NewIndexer(store, embedder, s.docRepo, s.docStorage, s.dataPath)
 	s.searcher = NewSearcher(store, embedder, s.docRepo)
 
 	return nil
@@ -183,7 +183,7 @@ func (s *Service) Reinitialize() error {
 	}
 	s.store = store
 
-	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage)
+	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage, s.dataPath)
 	s.searcher = NewSearcher(store, s.embedder, s.docRepo)
 
 	return nil
@@ -354,6 +354,7 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 			ContentHash:    contentHash,
 			BlockType:      "file",
 			HeadingContext: chunk.HeadingContext,
+			FilePath:       filePath, // 存储文件路径，用于删除时清理物理文件
 			Embedding:      embedding,
 		}); err != nil {
 			fmt.Printf("❌ [RAG] Failed to upsert file chunk %s: %v\n", chunk.ID, err)

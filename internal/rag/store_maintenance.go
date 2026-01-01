@@ -86,41 +86,69 @@ func (s *VectorStore) GetFileBlockIDs(docID string) ([]string, error) {
 	return ids, nil
 }
 
-// DeleteOrphanFiles 删除不在 keepBlockIDs 列表中的 file 块
-// keepBlockIDs 是文档中当前存在的 file 块的 BlockNote ID
-func (s *VectorStore) DeleteOrphanFiles(docID string, keepBlockIDs []string) error {
+// DeleteOrphanFiles 删除不在 keepFileBlocks 列表中的 file 块
+// keepFileBlocks 是文档中当前存在的 file 块信息
+// 返回被删除的孤儿文件路径列表（用于删除物理文件）
+func (s *VectorStore) DeleteOrphanFiles(docID string, keepFileBlocks []FileBlockInfo) ([]string, error) {
 	// 构建保留的 file ID 前缀集合
 	keepPrefixes := make(map[string]bool)
-	for _, blockID := range keepBlockIDs {
-		prefix := fmt.Sprintf("%s_%s_file", docID, blockID)
+	for _, fb := range keepFileBlocks {
+		prefix := fmt.Sprintf("%s_%s_file", docID, fb.BlockID)
 		keepPrefixes[prefix] = true
 	}
 
-	// 获取所有 file 块
-	allFiles, err := s.GetFileBlockIDs(docID)
+	// 获取所有 file 块（包含文件路径）
+	rows, err := s.db.Query(`
+		SELECT id, file_path FROM block_vectors
+		WHERE doc_id = ? AND block_type = 'file'
+	`, docID)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	defer func() { _ = rows.Close() }()
 
-	// 找出需要删除的块（ID 不以任何保留前缀开头）
 	var toDelete []string
-	for _, fileID := range allFiles {
+	orphanFilePaths := make(map[string]bool) // 使用 map 去重
+
+	for rows.Next() {
+		var id string
+		var filePath *string
+		if err := rows.Scan(&id, &filePath); err != nil {
+			continue
+		}
+
+		// 检查是否应该保留
 		shouldKeep := false
 		for prefix := range keepPrefixes {
-			if strings.HasPrefix(fileID, prefix) {
+			if strings.HasPrefix(id, prefix) {
 				shouldKeep = true
 				break
 			}
 		}
+
 		if !shouldKeep {
-			toDelete = append(toDelete, fileID)
+			toDelete = append(toDelete, id)
+			// 收集孤儿文件路径
+			if filePath != nil && *filePath != "" {
+				orphanFilePaths[*filePath] = true
+			}
 		}
 	}
 
+	// 删除 RAG 索引
 	if len(toDelete) > 0 {
-		return s.DeleteBlocks(toDelete)
+		if err := s.DeleteBlocks(toDelete); err != nil {
+			return nil, err
+		}
 	}
-	return nil
+
+	// 转换为切片返回
+	var result []string
+	for path := range orphanFilePaths {
+		result = append(result, path)
+	}
+
+	return result, nil
 }
 
 // DeleteNonBookmarkByDocID 删除文档的所有非 bookmark/file 块（保留外部索引块）

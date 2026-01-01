@@ -1,6 +1,6 @@
 import { useEffect, RefObject } from "react";
-import { fileToBase64, insertFileBlock } from "../utils/editorExtensions";
-import { SaveFile, IndexFileContent } from "../../wailsjs/go/main/App";
+import { fileToBase64, insertFileBlock, indexFileBlock } from "../utils/editorExtensions";
+import { SaveFile } from "../../wailsjs/go/main/App";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EditorInstance = any;
@@ -37,10 +37,11 @@ export const useFileDrop = ({ editor, containerRef, docId }: UseFileDropProps) =
 
                 if (fileInfo) {
                     const block = insertFileBlock(editor, fileInfo);
-                    // Trigger async indexing (don't await)
-                    IndexFileContent(fileInfo.filePath, docId || '', block.id).catch(() => {
-                        // Silently ignore indexing errors
-                    });
+
+                    // 使用共享函数进行异步索引
+                    if (docId) {
+                        indexFileBlock(editor, block.id, fileInfo.filePath, docId);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to handle file drop:', err);

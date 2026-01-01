@@ -9,6 +9,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { createExtension } from "@blocknote/core";
 import { getStrings } from "../constants/strings";
+import { IndexFileContent } from "../../wailsjs/go/main/App";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type InternalEditor = any;
@@ -216,6 +217,42 @@ export interface FileInfo {
 }
 
 /**
+ * 索引文件内容（共享函数）
+ * 用于拖放上传和 slash menu 上传后自动索引
+ */
+export async function indexFileBlock(
+    editor: InternalEditor,
+    blockId: string,
+    filePath: string,
+    docId: string
+): Promise<void> {
+    // 设置索引中状态
+    const currentBlock = editor.getBlock(blockId);
+    if (!currentBlock) return;
+
+    editor.updateBlock(currentBlock, {
+        props: { ...currentBlock.props, indexing: true },
+    });
+
+    try {
+        await IndexFileContent(filePath, docId, blockId);
+        const latestBlock = editor.getBlock(blockId);
+        if (latestBlock) {
+            editor.updateBlock(latestBlock, {
+                props: { ...latestBlock.props, indexed: true, indexing: false },
+            });
+        }
+    } catch {
+        const latestBlock = editor.getBlock(blockId);
+        if (latestBlock) {
+            editor.updateBlock(latestBlock, {
+                props: { ...latestBlock.props, indexing: false, indexError: "Index failed" },
+            });
+        }
+    }
+}
+
+/**
  * 插入 FileBlock
  */
 export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
@@ -265,14 +302,19 @@ export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
 export function createFileMenuItem(
     editor: InternalEditor,
     strings: StringsType,
-    onSelectFile: () => Promise<FileInfo | null>
+    onSelectFile: () => Promise<FileInfo | null>,
+    getDocId: () => string | undefined
 ) {
     return {
         title: strings.LABELS.FILE || "File",
         onItemClick: async () => {
             const fileInfo = await onSelectFile();
             if (fileInfo) {
-                insertFileBlock(editor, fileInfo);
+                const block = insertFileBlock(editor, fileInfo);
+                const docId = getDocId();
+                if (docId) {
+                    indexFileBlock(editor, block.id, fileInfo.filePath, docId);
+                }
             }
         },
         aliases: ["file", "document", "attachment", "pdf", "txt", "md"],

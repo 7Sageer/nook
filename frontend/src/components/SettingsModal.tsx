@@ -170,47 +170,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         </button>
                     </nav>
 
-                    {/* 内容区 */}
-                    <div className="settings-content">
-                        {activeTab === 'appearance' && (
-                            <AppearancePanel
-                                themeSetting={themeSetting}
-                                sidebarWidth={sidebarWidth}
-                                onThemeChange={setThemeSetting}
-                                onSidebarWidthChange={setSidebarWidth}
-                                strings={STRINGS}
-                            />
-                        )}
-                        {activeTab === 'knowledge' && (
-                            <KnowledgePanel
-                                status={status}
-                                isRebuilding={isRebuilding}
-                                onRebuild={handleRebuild}
-                                strings={STRINGS}
-                            />
-                        )}
-                        {activeTab === 'embedding' && (
-                            <EmbeddingPanel
-                                config={config}
-                                onChange={handleConfigChange}
-                                strings={STRINGS}
-                            />
-                        )}
-                    </div>
-                </div>
+                    {/* 主内容区域 (包含内容和底部按钮) */}
+                    <div className="settings-main">
+                        {/* 内容区 */}
+                        <div className="settings-content">
+                            {activeTab === 'appearance' && (
+                                <AppearancePanel
+                                    themeSetting={themeSetting}
+                                    sidebarWidth={sidebarWidth}
+                                    onThemeChange={setThemeSetting}
+                                    onSidebarWidthChange={setSidebarWidth}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'knowledge' && (
+                                <KnowledgePanel
+                                    status={status}
+                                    isRebuilding={isRebuilding}
+                                    onRebuild={handleRebuild}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'embedding' && (
+                                <EmbeddingPanel
+                                    config={config}
+                                    onChange={handleConfigChange}
+                                    strings={STRINGS}
+                                />
+                            )}
+                        </div>
 
-                {/* 底部按钮 */}
-                <div className="settings-footer">
-                    <button className="settings-btn cancel" onClick={onClose}>
-                        {STRINGS.BUTTONS.CANCEL}
-                    </button>
-                    <button
-                        className="settings-btn save"
-                        onClick={handleSave}
-                        disabled={!hasChanges || isSaving}
-                    >
-                        {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
-                    </button>
+                        {/* 底部按钮 */}
+                        <div className="settings-footer">
+                            <button className="settings-btn cancel" onClick={onClose}>
+                                {STRINGS.BUTTONS.CANCEL}
+                            </button>
+                            <button
+                                className="settings-btn save"
+                                onClick={handleSave}
+                                disabled={!hasChanges || isSaving}
+                            >
+                                {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

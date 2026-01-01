@@ -10,11 +10,11 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// 更新元数据（包含 content_hash, heading_context 和 source_block_id）
+	// 更新元数据（包含 content_hash, heading_context, source_block_id 和 file_path）
 	_, err = tx.Exec(`
-		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context, source_block_id)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext, block.SourceBlockID)
+		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context, source_block_id, file_path)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext, block.SourceBlockID, block.FilePath)
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ type BlockVector struct {
 	ContentHash    string    // 内容哈希（用于去重）
 	BlockType      string    // paragraph, heading, list 等
 	HeadingContext string    // 最近的 heading 文本
+	FilePath       string    // 文件路径（仅 file 类型块使用）
 	Embedding      []float32 // 向量
 }
 
@@ -82,6 +83,7 @@ func (s *VectorStore) initSchema() error {
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
+	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN file_path TEXT`)
 
 	// 创建 sqlite-vec 虚拟表（使用余弦距离，更适合文本相似度）
 	query := fmt.Sprintf(`

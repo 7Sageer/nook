@@ -27,33 +27,54 @@ type Indexer struct {
 	docRepo     *document.Repository
 	docStorage  *document.Storage
 	chunkConfig ChunkConfig
+	dataPath    string // 数据目录路径，用于删除物理文件
 }
 
 // NewIndexer 创建索引器
-func NewIndexer(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage) *Indexer {
+func NewIndexer(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, dataPath string) *Indexer {
 	return &Indexer{
 		store:       store,
 		embedder:    embedder,
 		docRepo:     docRepo,
 		docStorage:  docStorage,
 		chunkConfig: DefaultChunkConfig,
+		dataPath:    dataPath,
 	}
 }
 
 // NewIndexerWithConfig 创建带配置的索引器
-func NewIndexerWithConfig(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, config ChunkConfig) *Indexer {
+func NewIndexerWithConfig(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, config ChunkConfig, dataPath string) *Indexer {
 	return &Indexer{
 		store:       store,
 		embedder:    embedder,
 		docRepo:     docRepo,
 		docStorage:  docStorage,
 		chunkConfig: config,
+		dataPath:    dataPath,
 	}
 }
 
 // SetChunkConfig 更新分块配置
 func (idx *Indexer) SetChunkConfig(config ChunkConfig) {
 	idx.chunkConfig = config
+}
+
+// deletePhysicalFiles 删除物理文件
+func (idx *Indexer) deletePhysicalFiles(filePaths []string) {
+	for _, filePath := range filePaths {
+		if filePath == "" {
+			continue
+		}
+		// filePath 格式: /files/xxx.pdf
+		fullPath := idx.dataPath + filePath
+		if err := os.Remove(fullPath); err != nil {
+			if !os.IsNotExist(err) {
+				fmt.Printf("⚠️ [RAG] Failed to delete file %s: %v\n", fullPath, err)
+			}
+		} else {
+			fmt.Printf("🗑️ [RAG] Deleted orphan file: %s\n", filePath)
+		}
+	}
 }
 
 // IndexDocument 索引单个文档（增量更新）
@@ -144,9 +165,12 @@ func (idx *Indexer) IndexDocument(docID string) error {
 	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
 	}
-	if err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileIDs); err != nil {
+	orphanFilePaths, err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileBlocks)
+	if err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan files for doc %s: %v\n", docID, err)
 	}
+	// 删除孤儿物理文件
+	idx.deletePhysicalFiles(orphanFilePaths)
 
 	return nil
 }
@@ -170,9 +194,12 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
 	}
-	if err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileIDs); err != nil {
+	orphanFilePaths, err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileBlocks)
+	if err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan files for doc %s: %v\n", docID, err)
 	}
+	// 删除孤儿物理文件
+	idx.deletePhysicalFiles(orphanFilePaths)
 
 	// 3. 使用新配置提取块
 	blocks := ExtractBlocksWithConfig([]byte(content), idx.chunkConfig)

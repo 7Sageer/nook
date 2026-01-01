@@ -194,7 +194,7 @@ export function Editor({
             const customFile = createFileMenuItem(editor, STRINGS, async () => {
               const fileInfo = await OpenFileDialog();
               return fileInfo || null;
-            });
+            }, () => docId);
 
             // Insert custom items right after other Media group items
             const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");
