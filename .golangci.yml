@@ -1,7 +1,7 @@
-# golangci-lint 配置
+# golangci-lint v2 配置
 # 保留关键检查，包括错误返回值检查
 
-version: 2
+version: "2"
 
 run:
   timeout: 5m
@@ -14,19 +14,19 @@ linters:
     - unused
     - ineffassign
 
-linters-settings:
-  errcheck:
-    # 排除某些已知安全的函数调用
-    exclude-functions:
-      - (io.Closer).Close
-      - (*database/sql.Rows).Close
-      - fmt.Println
-      - fmt.Printf
-      - fmt.Fprintf
+  settings:
+    errcheck:
+      # 排除某些已知安全的函数调用
+      exclude-functions:
+        - (io.Closer).Close
+        - (*database/sql.Rows).Close
+        - fmt.Println
+        - fmt.Printf
+        - fmt.Fprintf
 
-issues:
-  # 排除测试文件的某些检查
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - unused
+  exclusions:
+    # 排除测试文件的某些检查
+    rules:
+      - path: _test\.go
+        linters:
+          - unused
