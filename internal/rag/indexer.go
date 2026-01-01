@@ -111,7 +111,7 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		if sourceBlockID == "" {
 			sourceBlockID = block.ID
 		}
-		idx.store.Upsert(&BlockVector{
+		if err := idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
 			SourceBlockID:  sourceBlockID,
 			DocID:          docID,
@@ -120,7 +120,9 @@ func (idx *Indexer) IndexDocument(docID string) error {
 			BlockType:      block.Type,
 			HeadingContext: block.HeadingContext,
 			Embedding:      embedding,
-		})
+		}); err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to upsert block %s: %v\n", block.ID, err)
+		}
 	}
 
 	// 4. 删除已不存在的块（保护 bookmark 和 file 块）
@@ -132,7 +134,9 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		}
 	}
 	if len(toDelete) > 0 {
-		idx.store.DeleteBlocks(toDelete)
+		if err := idx.store.DeleteBlocks(toDelete); err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to delete blocks: %v\n", err)
+		}
 	}
 
 	// 5. 清理孤儿外部块（bookmark/file）- 一次解析提取所有 ID
@@ -157,7 +161,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 
 	// 2. 清理旧索引
 	// 删除该文档的所有非 bookmark 块
-	idx.store.DeleteNonBookmarkByDocID(docID)
+	if err := idx.store.DeleteNonBookmarkByDocID(docID); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete non-bookmark blocks for doc %s: %v\n", docID, err)
+	}
 
 	// 清理孤儿外部块（bookmark/file）- 一次解析提取所有 ID
 	externalIDs := ExtractExternalBlockIDs([]byte(content))
@@ -203,7 +209,7 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 		}
 
 		newHash := HashContent(block.Content + block.HeadingContext)
-		idx.store.Upsert(&BlockVector{
+		if err := idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
 			SourceBlockID:  sourceBlockID,
 			DocID:          docID,
@@ -212,7 +218,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 			BlockType:      block.Type,
 			HeadingContext: block.HeadingContext,
 			Embedding:      embedding,
-		})
+		}); err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to upsert block %s: %v\n", block.ID, err)
+		}
 	}
 
 	return nil
@@ -239,7 +247,9 @@ func (idx *Indexer) ReindexAll() (int, error) {
 				if debugChunks {
 					fmt.Printf("🗑️ [RAG] Cleaning orphan blocks for deleted document: %s\n", docID)
 				}
-				idx.store.DeleteByDocID(docID)
+				if err := idx.store.DeleteByDocID(docID); err != nil {
+					fmt.Printf("⚠️ [RAG] Failed to delete blocks for doc %s: %v\n", docID, err)
+				}
 			}
 		}
 	}

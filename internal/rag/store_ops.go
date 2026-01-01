@@ -8,7 +8,7 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// 更新元数据（包含 content_hash, heading_context 和 source_block_id）
 	_, err = tx.Exec(`
@@ -38,7 +38,7 @@ func (s *VectorStore) GetBlockHashes(docID string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	hashes := make(map[string]string)
 	for rows.Next() {
@@ -63,11 +63,11 @@ func (s *VectorStore) DeleteBlocks(ids []string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	for _, id := range ids {
-		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
-		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
 	}
 
 	return tx.Commit()
@@ -79,7 +79,7 @@ func (s *VectorStore) DeleteBlocksByPrefix(prefix string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// 获取匹配前缀的所有块 ID
 	rows, err := tx.Query(`SELECT id FROM block_vectors WHERE id LIKE ?`, prefix+"%")
@@ -89,15 +89,20 @@ func (s *VectorStore) DeleteBlocksByPrefix(prefix string) error {
 	var ids []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
 		ids = append(ids, id)
 	}
-	rows.Close()
+	if err := rows.Close(); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	// 删除向量和元数据
 	for _, id := range ids {
-		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
-		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
 	}
 
 	return tx.Commit()
@@ -109,7 +114,7 @@ func (s *VectorStore) DeleteByDocID(docID string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// 获取要删除的 block IDs
 	rows, err := tx.Query("SELECT id FROM block_vectors WHERE doc_id = ?", docID)
@@ -119,15 +124,20 @@ func (s *VectorStore) DeleteByDocID(docID string) error {
 	var ids []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
 		ids = append(ids, id)
 	}
-	rows.Close()
+	if err := rows.Close(); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	// 删除向量和元数据
 	for _, id := range ids {
-		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
-		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
 	}
 
 	return tx.Commit()
@@ -139,7 +149,7 @@ func (s *VectorStore) GetAllDocIDs() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var docIDs []string
 	for rows.Next() {

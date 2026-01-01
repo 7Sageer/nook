@@ -76,8 +76,8 @@ func (s *MCPServer) toolRenameTagGroup(args json.RawMessage) ToolCallResult {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == params.OldName {
-				s.docRepo.RemoveTag(doc.ID, params.OldName)
-				s.docRepo.AddTag(doc.ID, params.NewName)
+				_ = s.docRepo.RemoveTag(doc.ID, params.OldName) // 忽略错误
+				_ = s.docRepo.AddTag(doc.ID, params.NewName)    // 忽略错误
 				break
 			}
 		}
@@ -103,7 +103,7 @@ func (s *MCPServer) toolDeleteTagGroup(args json.RawMessage) ToolCallResult {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == params.Name {
-				s.docRepo.RemoveTag(doc.ID, params.Name)
+				_ = s.docRepo.RemoveTag(doc.ID, params.Name) // 忽略错误
 				break
 			}
 		}

@@ -142,7 +142,9 @@ func (s *Service) Reinitialize() error {
 
 	// 关闭旧的存储
 	if s.store != nil {
-		s.store.Close()
+		if err := s.store.Close(); err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to close store: %v\n", err)
+		}
 	}
 
 	// 重置所有组件
@@ -166,7 +168,9 @@ func (s *Service) Reinitialize() error {
 	// 如果维度变化，删除旧的向量数据库
 	if oldDimension > 0 && oldDimension != newDimension {
 		dbPath := filepath.Join(s.dataPath, "vectors.db")
-		os.Remove(dbPath) // 忽略错误，可能文件不存在
+		if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
+			fmt.Printf("⚠️ [RAG] Failed to remove old database: %v\n", err)
+		}
 	}
 
 	// 重新初始化
@@ -255,7 +259,7 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 		}
 
 		contentHash := HashContent(chunk.Content)
-		s.store.Upsert(&BlockVector{
+		if err := s.store.Upsert(&BlockVector{
 			ID:             chunk.ID,
 			SourceBlockID:  blockID, // BookmarkBlock 的 BlockNote ID，用于定位
 			DocID:          sourceDocID,
@@ -264,7 +268,9 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 			BlockType:      "bookmark",
 			HeadingContext: chunk.HeadingContext,
 			Embedding:      embedding,
-		})
+		}); err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to upsert bookmark chunk %s: %v\n", chunk.ID, err)
+		}
 	}
 
 	return nil

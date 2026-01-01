@@ -15,10 +15,16 @@ func TestIndexBookmarkContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Logf("Failed to remove temp dir: %v", err)
+		}
+	}()
 
 	// 创建必要的子目录
-	os.MkdirAll(filepath.Join(tmpDir, "documents"), 0755)
+	if err := os.MkdirAll(filepath.Join(tmpDir, "documents"), 0755); err != nil {
+		t.Fatalf("Failed to create documents dir: %v", err)
+	}
 
 	// 创建 document repo 和 storage
 	docRepo := document.NewRepository(tmpDir)

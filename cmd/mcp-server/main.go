@@ -47,8 +47,8 @@ type MCPServer struct {
 func NewMCPServer() *MCPServer {
 	homeDir, _ := os.UserHomeDir()
 	dataPath := filepath.Join(homeDir, ".Nook")
-	os.MkdirAll(dataPath, 0755)
-	os.MkdirAll(filepath.Join(dataPath, "documents"), 0755)
+	_ = os.MkdirAll(dataPath, 0755)                             // 忽略错误
+	_ = os.MkdirAll(filepath.Join(dataPath, "documents"), 0755) // 忽略错误
 
 	docRepo := document.NewRepository(dataPath)
 	docStorage := document.NewStorage(dataPath)

@@ -14,12 +14,14 @@ func (s *VectorStore) GetBookmarkBlockIDs(docID string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var ids []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
 		ids = append(ids, id)
 	}
 	return ids, nil
@@ -71,12 +73,14 @@ func (s *VectorStore) GetFileBlockIDs(docID string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var ids []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
 		ids = append(ids, id)
 	}
 	return ids, nil
@@ -125,7 +129,7 @@ func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// 获取要删除的非 bookmark/file block IDs
 	rows, err := tx.Query(`
@@ -138,15 +142,20 @@ func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	var ids []string
 	for rows.Next() {
 		var id string
-		rows.Scan(&id)
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
 		ids = append(ids, id)
 	}
-	rows.Close()
+	if err := rows.Close(); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
 
 	// 删除向量和元数据
 	for _, id := range ids {
-		tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
-		tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM vec_blocks WHERE id = ?", id)
+		_, _ = tx.Exec("DELETE FROM block_vectors WHERE id = ?", id)
 	}
 
 	return tx.Commit()

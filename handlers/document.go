@@ -78,7 +78,7 @@ func (h *DocumentHandler) DeleteDocument(id string, cleanupImages func()) error 
 		h.searchService.RemoveIndex(id)
 		// 删除 RAG 向量索引
 		if h.ragService != nil {
-			go h.ragService.DeleteDocument(id)
+			go func() { _ = h.ragService.DeleteDocument(id) }()
 		}
 		// 异步清理未使用的图像
 		if cleanupImages != nil {
@@ -115,7 +115,7 @@ func (h *DocumentHandler) SaveDocumentContent(id string, content string) error {
 		indexPath := filepath.Join(h.dataPath, "index.json")
 		h.watcherService.MarkWrite(indexPath)
 	}
-	h.docRepo.UpdateTimestamp(id)
+	_ = h.docRepo.UpdateTimestamp(id) // 忽略时间戳更新失败
 	err := h.docStorage.Save(id, content)
 	if err == nil {
 		// 更新搜索索引
@@ -150,7 +150,7 @@ func (h *DocumentHandler) scheduleIndex(docID string) {
 
 		// 异步执行索引
 		if h.ragService != nil {
-			h.ragService.IndexDocument(docID)
+			_ = h.ragService.IndexDocument(docID) // 忽略索引错误
 		}
 	})
 }

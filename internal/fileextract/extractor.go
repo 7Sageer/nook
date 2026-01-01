@@ -44,7 +44,7 @@ func extractPDF(filePath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open PDF: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	var buf bytes.Buffer
 	totalPages := r.NumPage()
@@ -76,7 +76,7 @@ func extractDOCX(filePath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to open DOCX: %w", err)
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	doc := r.Editable()
 	content := doc.GetContent()

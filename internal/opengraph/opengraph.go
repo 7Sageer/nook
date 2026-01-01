@@ -102,7 +102,7 @@ func FetchContent(targetURL string) (*LinkContent, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// 解析 URL
 	parsedURL, err := url.Parse(targetURL)

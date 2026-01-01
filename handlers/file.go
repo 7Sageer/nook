@@ -133,7 +133,9 @@ func (h *FileHandler) CopyImageToClipboard(base64Data string) error {
 // SaveImage 保存图片到本地并返回文件路径
 func (h *FileHandler) SaveImage(base64Data string, filename string) (string, error) {
 	imagesDir := filepath.Join(h.dataPath, "images")
-	os.MkdirAll(imagesDir, 0755)
+	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create images directory: %w", err)
+	}
 
 	imgPath := filepath.Join(imagesDir, filename)
 
@@ -186,7 +188,9 @@ func (h *FileHandler) SaveImageFile(base64Data string, defaultName string) error
 func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 	// 创建临时目录
 	tempDir := filepath.Join(h.dataPath, "temp")
-	os.MkdirAll(tempDir, 0755)
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		return fmt.Errorf("failed to create temp directory: %w", err)
+	}
 
 	// 生成唯一文件名
 	filename := fmt.Sprintf("print_%s_%d.html", sanitizeFilename(title), time.Now().UnixMilli())

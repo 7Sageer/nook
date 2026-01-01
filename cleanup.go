@@ -58,7 +58,8 @@ func (a *App) cleanupUnusedImages() {
 			continue
 		}
 		if !referencedImages[entry.Name()] {
-			os.Remove(filepath.Join(imagesDir, entry.Name()))
+			filePath := filepath.Join(imagesDir, entry.Name())
+			_ = os.Remove(filePath) // 忽略错误
 		}
 	}
 }
@@ -83,7 +84,8 @@ func (a *App) cleanupTempFiles() {
 			continue
 		}
 		if info.ModTime().Before(cutoff) {
-			os.Remove(filepath.Join(tempDir, entry.Name()))
+			filePath := filepath.Join(tempDir, entry.Name())
+			_ = os.Remove(filePath) // 忽略错误
 		}
 	}
 }

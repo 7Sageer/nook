@@ -54,7 +54,7 @@ func NewVectorStore(dbPath string, dimension int) (*VectorStore, error) {
 
 	store := &VectorStore{db: db, dimension: dimension}
 	if err := store.initSchema(); err != nil {
-		db.Close()
+		_ = db.Close() // 忽略 Close 错误
 		return nil, fmt.Errorf("failed to init schema: %w", err)
 	}
 	return store, nil
@@ -78,10 +78,10 @@ func (s *VectorStore) initSchema() error {
 		return err
 	}
 
-	// 添加新列（如果不存在）
-	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
-	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
-	s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
+	// 添加新列（如果不存在，忽略错误）
+	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
+	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
+	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
 
 	// 创建 sqlite-vec 虚拟表（使用余弦距离，更适合文本相似度）
 	query := fmt.Sprintf(`

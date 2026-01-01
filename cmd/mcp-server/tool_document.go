@@ -30,7 +30,9 @@ func (s *MCPServer) toolCreateDocument(args json.RawMessage) ToolCallResult {
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
-	json.Unmarshal(args, &params)
+	if err := json.Unmarshal(args, &params); err != nil {
+		return errorResult("Invalid arguments: " + err.Error())
+	}
 
 	// Validate BlockNote format if content provided
 	if err := validateBlockNoteContent(params.Content); err != nil {
@@ -48,7 +50,7 @@ func (s *MCPServer) toolCreateDocument(args json.RawMessage) ToolCallResult {
 		}
 		// 触发 RAG 索引
 		if s.ragService != nil {
-			go s.ragService.IndexDocument(doc.ID)
+			go func() { _ = s.ragService.IndexDocument(doc.ID) }()
 		}
 	}
 
@@ -75,10 +77,10 @@ func (s *MCPServer) toolUpdateDocument(args json.RawMessage) ToolCallResult {
 	if err := s.docStorage.Save(params.ID, params.Content); err != nil {
 		return errorResult("Failed to update: " + err.Error())
 	}
-	s.docRepo.UpdateTimestamp(params.ID)
+	_ = s.docRepo.UpdateTimestamp(params.ID) // 忽略错误
 	// 触发 RAG 索引
 	if s.ragService != nil {
-		go s.ragService.IndexDocument(params.ID)
+		go func() { _ = s.ragService.IndexDocument(params.ID) }()
 	}
 	return textResult("Document updated successfully")
 }
@@ -95,7 +97,7 @@ func (s *MCPServer) toolDeleteDocument(args json.RawMessage) ToolCallResult {
 	}
 	// 删除 RAG 向量索引
 	if s.ragService != nil {
-		go s.ragService.DeleteDocument(params.ID)
+		go func() { _ = s.ragService.DeleteDocument(params.ID) }()
 	}
 	return textResult("Document deleted successfully")
 }

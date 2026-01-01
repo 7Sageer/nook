@@ -147,8 +147,8 @@ func (h *TagHandler) RenameTagGroup(oldName, newName string) error {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == oldName {
-				h.docRepo.RemoveTag(doc.ID, oldName)
-				h.docRepo.AddTag(doc.ID, newName)
+				_ = h.docRepo.RemoveTag(doc.ID, oldName) // 忽略错误
+				_ = h.docRepo.AddTag(doc.ID, newName)    // 忽略错误
 				break
 			}
 		}
@@ -163,7 +163,7 @@ func (h *TagHandler) DeleteTagGroup(name string) error {
 	for _, doc := range index.Documents {
 		for _, t := range doc.Tags {
 			if t == name {
-				h.docRepo.RemoveTag(doc.ID, name)
+				_ = h.docRepo.RemoveTag(doc.ID, name) // 忽略错误
 				break
 			}
 		}
@@ -196,17 +196,17 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 	folderNameByID := make(map[string]string)
 	for _, f := range folders {
 		folderNameByID[f.ID] = f.Name
-		h.tagStore.CreateGroup(f.Name)
+		_ = h.tagStore.CreateGroup(f.Name) // 忽略错误
 		if f.Collapsed {
-			h.tagStore.SetGroupCollapsed(f.Name, true)
+			_ = h.tagStore.SetGroupCollapsed(f.Name, true) // 忽略错误
 		}
 	}
 
 	for _, doc := range index.Documents {
 		if doc.FolderId != "" {
 			if folderName, ok := folderNameByID[doc.FolderId]; ok {
-				h.docRepo.AddTag(doc.ID, folderName)
-				h.docRepo.MoveToFolder(doc.ID, "")
+				_ = h.docRepo.AddTag(doc.ID, folderName) // 忽略错误
+				_ = h.docRepo.MoveToFolder(doc.ID, "")   // 忽略错误
 			}
 		}
 	}
@@ -215,8 +215,8 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 	for i, f := range folders {
 		groupNames[i] = f.Name
 	}
-	h.tagStore.ReorderGroups(groupNames)
+	_ = h.tagStore.ReorderGroups(groupNames) // 忽略错误
 
 	backupPath := foldersPath + ".bak"
-	os.Rename(foldersPath, backupPath)
+	_ = os.Rename(foldersPath, backupPath) // 忽略错误
 }

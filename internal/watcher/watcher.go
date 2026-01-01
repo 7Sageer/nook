@@ -119,7 +119,12 @@ func (s *Service) Stop() {
 		s.cancel()
 	}
 	if s.watcher != nil {
-		s.watcher.Close()
+		if err := s.watcher.Close(); err != nil {
+			// 记录错误但不中断
+			if s.ctx != nil {
+				runtime.LogWarning(s.ctx, "Failed to close watcher: "+err.Error())
+			}
+		}
 	}
 }
 

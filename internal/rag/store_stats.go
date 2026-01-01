@@ -28,7 +28,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	if err != nil {
 		return 0, 0, 0, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	uniqueBookmarks := make(map[string]bool)
 	for rows.Next() {
@@ -51,7 +51,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	if err != nil {
 		return 0, 0, 0, err
 	}
-	defer fileRows.Close()
+	defer func() { _ = fileRows.Close() }()
 
 	uniqueFiles := make(map[string]bool)
 	for fileRows.Next() {
