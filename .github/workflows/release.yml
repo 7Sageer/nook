@@ -78,38 +78,8 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install SQLite3 headers (for sqlite-vec)
-        run: |
-          # 下载 SQLite amalgamation 源码
-          Invoke-WebRequest -Uri "https://www.sqlite.org/2024/sqlite-amalgamation-3470200.zip" -OutFile sqlite.zip
-          Expand-Archive -Path sqlite.zip -DestinationPath C:\sqlite
-
-          # 下载 sqlite-vec 模块到缓存
-          go mod download github.com/asg017/sqlite-vec-go-bindings
-
-          # 将 sqlite3.h 复制到 sqlite-vec 的 cgo 目录
-          $goModCache = go env GOMODCACHE
-          $vecCgoPath = Join-Path $goModCache "github.com\asg017\sqlite-vec-go-bindings@v0.1.6\cgo"
-
-          Write-Host "Copying sqlite3.h to $vecCgoPath"
-          Copy-Item "C:\sqlite\sqlite-amalgamation-3470200\sqlite3.h" -Destination $vecCgoPath
-
-          # 验证复制成功
-          if (Test-Path (Join-Path $vecCgoPath "sqlite3.h")) {
-            Write-Host "sqlite3.h successfully copied"
-          } else {
-            Write-Error "Failed to copy sqlite3.h"
-            exit 1
-          }
-
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Install frontend dependencies
-        run: cd frontend && npm ci
-
       - name: Build application
-        run: wails build
+        run: ./scripts/fix_and_build.ps1
         env:
           CGO_ENABLED: 1
 
