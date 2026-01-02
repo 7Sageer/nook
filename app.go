@@ -269,6 +269,11 @@ func (a *App) OpenFileWithSystem(relativePath string) error {
 	return a.fileHandler.OpenFileWithSystem(relativePath)
 }
 
+// RevealInFinder 在文件管理器中显示文件
+func (a *App) RevealInFinder(relativePath string) error {
+	return a.fileHandler.RevealInFinder(relativePath)
+}
+
 // IndexFileContent 索引文件内容
 func (a *App) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID)

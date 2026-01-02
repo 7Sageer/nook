@@ -72,6 +72,8 @@ export function ReorderDocuments(arg1:Array<string>):Promise<void>;
 
 export function ReorderPinnedTags(arg1:Array<string>):Promise<void>;
 
+export function RevealInFinder(arg1:string):Promise<void>;
+
 export function SaveDocumentContent(arg1:string,arg2:string):Promise<void>;
 
 export function SaveExternalFile(arg1:string,arg2:string):Promise<void>;

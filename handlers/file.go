@@ -307,6 +307,33 @@ func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 	return openWithSystemApp(fullPath)
 }
 
+// RevealInFinder 在文件管理器中显示文件
+func (h *FileHandler) RevealInFinder(relativePath string) error {
+	// relativePath: /files/xxx.md
+	fullPath := filepath.Join(h.dataPath, strings.TrimPrefix(relativePath, "/"))
+
+	return revealInFileManager(fullPath)
+}
+
+// revealInFileManager 在系统文件管理器中显示文件（跨平台）
+func revealInFileManager(filePath string) error {
+	var cmd *exec.Cmd
+
+	switch goruntime.GOOS {
+	case "darwin":
+		// macOS: open -R 会在 Finder 中显示并选中文件
+		cmd = exec.Command("open", "-R", filePath)
+	case "windows":
+		// Windows: explorer /select, 会在资源管理器中显示并选中文件
+		cmd = exec.Command("explorer", "/select,", filePath)
+	default: // linux and others
+		// Linux: 打开文件所在目录
+		cmd = exec.Command("xdg-open", filepath.Dir(filePath))
+	}
+
+	return cmd.Start()
+}
+
 // randomString 生成随机字符串
 func randomString(n int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyz0123456789"

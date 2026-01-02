@@ -134,6 +134,10 @@ export function ReorderPinnedTags(arg1) {
   return window['go']['main']['App']['ReorderPinnedTags'](arg1);
 }
 
+export function RevealInFinder(arg1) {
+  return window['go']['main']['App']['RevealInFinder'](arg1);
+}
+
 export function SaveDocumentContent(arg1, arg2) {
   return window['go']['main']['App']['SaveDocumentContent'](arg1, arg2);
 }

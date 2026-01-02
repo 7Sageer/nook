@@ -28,6 +28,13 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
     const [contentError, setContentError] = useState("");
     const [extractedContent, setExtractedContent] = useState("");
 
+    // 当 URL 被外部清空时（例如通过编辑菜单），自动进入编辑模式
+    useEffect(() => {
+        if (!url && !isEditing) {
+            setIsEditing(true);
+        }
+    }, [url, isEditing]);
+
     useEffect(() => {
         if (!isEditing) return;
         // Hide virtual caret when input is active
