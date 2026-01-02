@@ -32,3 +32,34 @@
     color: var(--text-secondary);
     flex-shrink: 0;
 }
+
+.tag-context-menu-item.danger {
+    color: var(--danger-color, #dc3545);
+}
+
+.tag-context-menu-item.danger:hover {
+    background: var(--danger-bg, rgba(220, 53, 69, 0.1));
+}
+
+.tag-context-menu-item.danger svg {
+    color: var(--danger-color, #dc3545);
+}
+
+.tag-context-menu-item.rename-input-container {
+    cursor: default;
+}
+
+.tag-context-menu-item .tag-rename-input {
+    flex: 1;
+    padding: 2px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+}
+
+.tag-context-menu-item .tag-rename-input:focus {
+    border-color: var(--accent-color);
+}

@@ -18,7 +18,7 @@ export const TagList = memo(function TagList({
     onSelectTag,
     tagColors,
 }: TagListProps) {
-    const { setTagColor, pinTag, unpinTag, pinnedTags } = useDocumentContext();
+    const { setTagColor, pinTag, unpinTag, pinnedTags, renameTag, deleteTag } = useDocumentContext();
     const [contextMenu, setContextMenu] = useState<{
         tagName: string;
         position: { x: number; y: number };
@@ -54,6 +54,14 @@ export const TagList = memo(function TagList({
     const handleUnpinTag = useCallback(async (tagName: string) => {
         await unpinTag(tagName);
     }, [unpinTag]);
+
+    const handleRenameTag = useCallback(async (oldName: string, newName: string) => {
+        await renameTag(oldName, newName);
+    }, [renameTag]);
+
+    const handleDeleteTag = useCallback(async (tagName: string) => {
+        await deleteTag(tagName);
+    }, [deleteTag]);
 
     // ESC 键取消选择标签
     useEffect(() => {
@@ -178,6 +186,8 @@ export const TagList = memo(function TagList({
                     onPin={handlePinTag}
                     onUnpin={handleUnpinTag}
                     onColorSelect={handleColorSelect}
+                    onRename={handleRenameTag}
+                    onDelete={handleDeleteTag}
                     onClose={() => setContextMenu(null)}
                 />
             )}

@@ -135,3 +135,11 @@ func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) erro
 func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	return h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
 }
+
+// ExternalBlockContent 外部块完整内容（前端用）
+type ExternalBlockContent = rag.ExternalBlockContent
+
+// GetExternalBlockContent 获取外部块的完整提取内容
+func (h *RAGHandler) GetExternalBlockContent(docID, blockID string) (*ExternalBlockContent, error) {
+	return h.ragService.GetExternalBlockContent(docID, blockID)
+}

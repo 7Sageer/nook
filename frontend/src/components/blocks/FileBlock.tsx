@@ -1,9 +1,10 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
-import { useCallback } from "react";
-import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink } from "lucide-react";
-import { OpenFileWithSystem, IndexFileContent } from "../../../wailsjs/go/main/App";
+import { useCallback, useState } from "react";
+import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye } from "lucide-react";
+import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
+import { ContentViewerModal } from "../ContentViewerModal";
 import "../../styles/FileBlock.css";
 
 // 文件类型图标
@@ -31,6 +32,12 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     const { block, editor } = props;
     const { filePath, fileName, fileSize, fileType, loading, error, indexed, indexing, indexError } = block.props;
     const { activeId } = useDocumentContext();
+
+    // 查看内容 Modal 状态
+    const [showContentModal, setShowContentModal] = useState(false);
+    const [contentLoading, setContentLoading] = useState(false);
+    const [contentError, setContentError] = useState("");
+    const [extractedContent, setExtractedContent] = useState("");
 
     // 索引文件内容
     const handleIndex = useCallback(async () => {
@@ -67,6 +74,22 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
             OpenFileWithSystem(filePath);
         }
     }, [filePath]);
+
+    // 查看提取的内容
+    const handleViewContent = useCallback(async () => {
+        if (!activeId) return;
+        setShowContentModal(true);
+        setContentLoading(true);
+        setContentError("");
+        try {
+            const result = await GetExternalBlockContent(activeId, block.id);
+            setExtractedContent(result?.content || "");
+        } catch (err) {
+            setContentError(err instanceof Error ? err.message : "Failed to load content");
+        } finally {
+            setContentLoading(false);
+        }
+    }, [activeId, block.id]);
 
     // 加载状态
     if (loading) {
@@ -126,6 +149,19 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         <RefreshCw size={14} />
                     )}
                 </button>
+                {indexed && (
+                    <button
+                        className="file-action-btn"
+                        title="View extracted content"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleViewContent();
+                        }}
+                    >
+                        <Eye size={14} />
+                    </button>
+                )}
                 <button
                     className="file-action-btn"
                     title="Open file"
@@ -138,6 +174,15 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                     <ExternalLink size={14} />
                 </button>
             </div>
+            <ContentViewerModal
+                isOpen={showContentModal}
+                onClose={() => setShowContentModal(false)}
+                title={fileName || "File Content"}
+                content={extractedContent}
+                blockType="file"
+                loading={contentLoading}
+                error={contentError}
+            />
         </div>
     );
 };

@@ -274,6 +274,11 @@ func (a *App) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID)
 }
 
+// GetExternalBlockContent 获取外部块的完整提取内容
+func (a *App) GetExternalBlockContent(docID, blockID string) (*handlers.ExternalBlockContent, error) {
+	return a.ragHandler.GetExternalBlockContent(docID, blockID)
+}
+
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
 func (a *App) GetSettings() (handlers.Settings, error) {

@@ -53,6 +53,8 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 	// RAG tools
 	case "semantic_search":
 		result = s.toolSemanticSearch(params.Arguments)
+	case "get_block_content":
+		result = s.toolGetBlockContent(params.Arguments)
 
 	default:
 		result = ToolCallResult{

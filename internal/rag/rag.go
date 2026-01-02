@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/fileextract"
@@ -378,6 +379,20 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 		fmt.Printf("⚠️ [RAG] Failed to delete old bookmark chunks for %s: %v\n", baseID, err)
 	}
 
+	// 5.1 保存完整提取内容（供 MCP 工具读取）
+	if err := s.store.SaveExternalContent(&ExternalBlockContent{
+		ID:          fmt.Sprintf("%s_%s", sourceDocID, blockID),
+		DocID:       sourceDocID,
+		BlockID:     blockID,
+		BlockType:   "bookmark",
+		URL:         url,
+		Title:       content.Title,
+		RawContent:  content.TextContent,
+		ExtractedAt: time.Now().Unix(),
+	}); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to save bookmark content for %s: %v\n", baseID, err)
+	}
+
 	// 6. 对内容进行分块
 	chunks := ChunkTextContent(content.TextContent, headingContext, baseID, s.indexer.chunkConfig)
 
@@ -479,6 +494,20 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 		fmt.Printf("⚠️ [RAG] Failed to delete old file chunks for %s: %v\n", baseID, err)
 	}
 
+	// 5.1 保存完整提取内容（供 MCP 工具读取）
+	if err := s.store.SaveExternalContent(&ExternalBlockContent{
+		ID:          fmt.Sprintf("%s_%s", sourceDocID, blockID),
+		DocID:       sourceDocID,
+		BlockID:     blockID,
+		BlockType:   "file",
+		FilePath:    filePath,
+		Title:       fileName,
+		RawContent:  textContent,
+		ExtractedAt: time.Now().Unix(),
+	}); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to save file content for %s: %v\n", baseID, err)
+	}
+
 	// 6. 对内容进行分块
 	chunks := ChunkTextContent(textContent, headingContext, baseID, s.indexer.chunkConfig)
 
@@ -550,4 +579,12 @@ func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error 
 	}
 
 	return nil
+}
+
+// GetExternalBlockContent 获取外部块的完整提取内容
+func (s *Service) GetExternalBlockContent(docID, blockID string) (*ExternalBlockContent, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+	return s.store.GetExternalContent(docID, blockID)
 }

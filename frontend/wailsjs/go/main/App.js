@@ -46,6 +46,10 @@ export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }
 
+export function GetExternalBlockContent(arg1, arg2) {
+  return window['go']['main']['App']['GetExternalBlockContent'](arg1, arg2);
+}
+
 export function GetPinnedTags() {
   return window['go']['main']['App']['GetPinnedTags']();
 }

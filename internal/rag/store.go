@@ -40,6 +40,19 @@ type SearchResult struct {
 	Distance       float32 `json:"distance"`
 }
 
+// ExternalBlockContent 外部块完整内容（bookmark/file 的提取文本）
+type ExternalBlockContent struct {
+	ID          string `json:"id"`          // {doc_id}_{block_id}
+	DocID       string `json:"docId"`       // 所属文档 ID
+	BlockID     string `json:"blockId"`     // BlockNote block ID
+	BlockType   string `json:"blockType"`   // "bookmark" | "file"
+	URL         string `json:"url"`         // bookmark URL（仅 bookmark）
+	FilePath    string `json:"filePath"`    // 文件路径（仅 file）
+	Title       string `json:"title"`       // 网页标题 / 文件名
+	RawContent  string `json:"content"`     // 完整提取文本
+	ExtractedAt int64  `json:"extractedAt"` // 提取时间戳
+}
+
 // VectorStore 向量存储接口
 type VectorStore struct {
 	db        *sql.DB
@@ -85,6 +98,26 @@ func (s *VectorStore) initSchema() error {
 			key TEXT PRIMARY KEY,
 			value TEXT
 		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// 创建外部块内容表（存储 bookmark/file 的完整提取文本）
+	_, err = s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS external_block_content (
+			id TEXT PRIMARY KEY,
+			doc_id TEXT NOT NULL,
+			block_id TEXT NOT NULL,
+			block_type TEXT NOT NULL,
+			url TEXT,
+			file_path TEXT,
+			title TEXT,
+			raw_content TEXT NOT NULL,
+			extracted_at INTEGER DEFAULT (strftime('%s', 'now')),
+			UNIQUE(doc_id, block_id)
+		);
+		CREATE INDEX IF NOT EXISTS idx_ebc_doc_id ON external_block_content(doc_id);
 	`)
 	if err != nil {
 		return err
@@ -145,4 +178,58 @@ func serializeVector(vec []float32) []byte {
 		binary.LittleEndian.PutUint32(buf[i*4:], math.Float32bits(v))
 	}
 	return buf
+}
+
+// ========== 外部块内容 CRUD ==========
+
+// SaveExternalContent 保存外部块完整内容
+func (s *VectorStore) SaveExternalContent(content *ExternalBlockContent) error {
+	_, err := s.db.Exec(`
+		INSERT OR REPLACE INTO external_block_content
+		(id, doc_id, block_id, block_type, url, file_path, title, raw_content, extracted_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, content.ID, content.DocID, content.BlockID, content.BlockType,
+		content.URL, content.FilePath, content.Title, content.RawContent, content.ExtractedAt)
+	return err
+}
+
+// GetExternalContent 获取外部块完整内容
+func (s *VectorStore) GetExternalContent(docID, blockID string) (*ExternalBlockContent, error) {
+	row := s.db.QueryRow(`
+		SELECT id, doc_id, block_id, block_type, url, file_path, title, raw_content, extracted_at
+		FROM external_block_content
+		WHERE doc_id = ? AND block_id = ?
+	`, docID, blockID)
+
+	var content ExternalBlockContent
+	var url, filePath, title sql.NullString
+	err := row.Scan(
+		&content.ID, &content.DocID, &content.BlockID, &content.BlockType,
+		&url, &filePath, &title, &content.RawContent, &content.ExtractedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	content.URL = url.String
+	content.FilePath = filePath.String
+	content.Title = title.String
+	return &content, nil
+}
+
+// DeleteExternalContent 删除外部块内容
+func (s *VectorStore) DeleteExternalContent(docID, blockID string) error {
+	_, err := s.db.Exec(`
+		DELETE FROM external_block_content
+		WHERE doc_id = ? AND block_id = ?
+	`, docID, blockID)
+	return err
+}
+
+// DeleteExternalContentByDoc 删除文档的所有外部块内容
+func (s *VectorStore) DeleteExternalContentByDoc(docID string) error {
+	_, err := s.db.Exec(`
+		DELETE FROM external_block_content
+		WHERE doc_id = ?
+	`, docID)
+	return err
 }

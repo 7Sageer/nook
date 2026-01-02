@@ -186,6 +186,18 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Required: []string{"query"},
 			},
 		},
+		{
+			Name:        "get_block_content",
+			Description: "Get the extracted text content of a bookmark or file block. Returns the full readable content that was indexed for RAG search. Use this to read the actual content of bookmarked webpages or uploaded files.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id":   {Type: "string", Description: "Document ID containing the block"},
+					"block_id": {Type: "string", Description: "Block ID (the BlockNote block ID of the bookmark or file block)"},
+				},
+				Required: []string{"doc_id", "block_id"},
+			},
+		},
 	}
 
 	return &JSONRPCResponse{

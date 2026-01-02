@@ -1,10 +1,11 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Pencil, ExternalLink, RefreshCw, Check, Loader2, AlertCircle } from "lucide-react";
-import { FetchLinkMetadata, IndexBookmarkContent } from "../../../wailsjs/go/main/App";
+import { Pencil, ExternalLink, RefreshCw, Check, Loader2, AlertCircle, Eye } from "lucide-react";
+import { FetchLinkMetadata, IndexBookmarkContent, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
 import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 import { useDocumentContext } from "../../contexts/DocumentContext";
+import { ContentViewerModal } from "../ContentViewerModal";
 import "../../styles/BookmarkBlock.css";
 
 // 模块级别的状态管理：追踪正在 fetch 的 bookmark IDs
@@ -20,6 +21,12 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
     const [inputValue, setInputValue] = useState(url || "");
     const [isEditing, setIsEditing] = useState(!url);
     const inputRef = useRef<HTMLInputElement | null>(null);
+
+    // 查看内容 Modal 状态
+    const [showContentModal, setShowContentModal] = useState(false);
+    const [contentLoading, setContentLoading] = useState(false);
+    const [contentError, setContentError] = useState("");
+    const [extractedContent, setExtractedContent] = useState("");
 
     useEffect(() => {
         if (!isEditing) return;
@@ -152,6 +159,22 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
             }
         }
     }, [block.id, editor, activeId]);
+
+    // 查看提取的内容
+    const handleViewContent = useCallback(async () => {
+        if (!activeId) return;
+        setShowContentModal(true);
+        setContentLoading(true);
+        setContentError("");
+        try {
+            const result = await GetExternalBlockContent(activeId, block.id);
+            setExtractedContent(result?.content || "");
+        } catch (err) {
+            setContentError(err instanceof Error ? err.message : "Failed to load content");
+        } finally {
+            setContentLoading(false);
+        }
+    }, [activeId, block.id]);
 
     const handleFetch = useCallback(async (urlToFetch: string) => {
         if (!urlToFetch.trim()) return;
@@ -307,6 +330,19 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
                         <RefreshCw size={14} />
                     )}
                 </button>
+                {indexed && (
+                    <button
+                        className="bookmark-action-btn"
+                        title="View extracted content"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleViewContent();
+                        }}
+                    >
+                        <Eye size={14} />
+                    </button>
+                )}
                 <button
                     className="bookmark-action-btn"
                     title="Edit"
@@ -331,6 +367,16 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
                     <ExternalLink size={14} />
                 </button>
             </div>
+            <ContentViewerModal
+                isOpen={showContentModal}
+                onClose={() => setShowContentModal(false)}
+                title={title || "Bookmark Content"}
+                content={extractedContent}
+                blockType="bookmark"
+                url={url}
+                loading={contentLoading}
+                error={contentError}
+            />
         </div>
     );
 };
