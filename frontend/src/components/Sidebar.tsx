@@ -10,19 +10,11 @@ import { SidebarExternalFiles } from './SidebarExternalFiles';
 import { SidebarSearch, SidebarSearchRef } from './SidebarSearch';
 import { SidebarSearchResults } from './SidebarSearchResults';
 import { SidebarPinnedTags } from './SidebarPinnedTags';
-import { RelatedDocumentsView } from './RelatedDocumentsView';
-import type { DocumentSearchResult } from '../types/document';
 import { TagList } from './TagList';
 import { FileText, GripVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { LayoutGroup } from 'framer-motion';
 import { DndContext, DragOverlay } from '@dnd-kit/core';
-
-interface RelatedViewState {
-  sourceContent: string;
-  results: DocumentSearchResult[];
-  isLoading: boolean;
-}
 
 interface SidebarProps {
   externalFiles?: ExternalFileInfo[];
@@ -31,8 +23,6 @@ interface SidebarProps {
   onCloseExternal?: (path: string) => void;
   collapsed?: boolean;
   onSelectInternal?: (id: string, blockId?: string) => void;
-  relatedView?: RelatedViewState | null;
-  onExitRelatedView?: () => void;
 }
 
 export function Sidebar({
@@ -42,8 +32,6 @@ export function Sidebar({
   onCloseExternal,
   collapsed = false,
   onSelectInternal,
-  relatedView,
-  onExitRelatedView,
 }: SidebarProps) {
   const {
     documents,
@@ -245,15 +233,7 @@ export function Sidebar({
         >
           <LayoutGroup>
             <div className={`sidebar-content ${isDragging ? 'is-dragging' : ''}`}>
-              {relatedView ? (
-                <RelatedDocumentsView
-                  sourceContent={relatedView.sourceContent}
-                  results={relatedView.results}
-                  isLoading={relatedView.isLoading}
-                  onSelectDocument={handleSelectSemantic}
-                  onBack={onExitRelatedView || (() => { })}
-                />
-              ) : query ? (
+              {query ? (
                 <SidebarSearchResults
                   query={query}
                   semanticResults={semanticResults}

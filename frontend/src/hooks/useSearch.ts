@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
-import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
+import { SearchDocuments, SemanticSearchDocuments, FindRelatedDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
+import { useDocumentContext } from '../contexts/DocumentContext';
 
 interface UseSearchReturn {
     query: string;
@@ -14,7 +15,8 @@ interface UseSearchReturn {
 }
 
 export function useSearch(): UseSearchReturn {
-    const { query, setQuery: setContextQuery } = useSearchContext();
+    const { query, setQuery: setContextQuery, excludeCurrentDoc } = useSearchContext();
+    const { activeId } = useDocumentContext();
     const [results, setResults] = useState<SearchResult[]>([]);
     const [semanticResults, setSemanticResults] = useState<DocumentSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -36,7 +38,14 @@ export function useSearch(): UseSearchReturn {
 
             // 1. Instant Keyword Search
             SearchDocuments(query)
-                .then(searchResults => setResults(searchResults))
+                .then(searchResults => {
+                    // 如果启用排除当前文档，过滤掉当前文档
+                    if (excludeCurrentDoc && activeId) {
+                        setResults(searchResults.filter(r => r.id !== activeId));
+                    } else {
+                        setResults(searchResults);
+                    }
+                })
                 .catch(error => {
                     console.error('Keyword search failed:', error);
                     setResults([]);
@@ -46,7 +55,13 @@ export function useSearch(): UseSearchReturn {
             // 2. Debounced Semantic Search (Document-level)
             debounceRef.current = setTimeout(async () => {
                 try {
-                    const semResults = await SemanticSearchDocuments(query, 5);
+                    let semResults: DocumentSearchResult[];
+                    if (excludeCurrentDoc && activeId) {
+                        // 使用 FindRelatedDocuments 来排除当前文档
+                        semResults = await FindRelatedDocuments(query, 5, activeId);
+                    } else {
+                        semResults = await SemanticSearchDocuments(query, 5);
+                    }
                     setSemanticResults(semResults || []);
                 } catch (error) {
                     console.error('Semantic search failed:', error);
@@ -67,7 +82,7 @@ export function useSearch(): UseSearchReturn {
                 clearTimeout(debounceRef.current);
             }
         };
-    }, [query]);
+    }, [query, excludeCurrentDoc, activeId]);
 
     const clearSearch = useCallback(() => {
         setContextQuery('');

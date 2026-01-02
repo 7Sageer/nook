@@ -11,6 +11,7 @@ interface SearchResultItemProps {
     snippet?: string;
     icon?: ReactNode;
     matchCount?: number;
+    score?: number;  // 相似度分数 (0-1)
     isActive: boolean;
     variant?: 'semantic' | 'document';
     onClick: () => void;
@@ -57,7 +58,7 @@ export function SearchResultItem({
     title,
     snippet,
     icon,
-
+    score,
     isActive,
     variant = 'document',
     onClick,
@@ -162,9 +163,14 @@ export function SearchResultItem({
 
             <div className="doc-content">
                 {isSemantic ? (
-                    // Semantic Variant: Small Title + Content Snippet
+                    // Semantic Variant: Small Title + Content Snippet + Score
                     <>
-                        <span className="semantic-doc-title">{title}</span>
+                        <div className="semantic-header">
+                            <span className="semantic-doc-title">{title}</span>
+                            {score !== undefined && (
+                                <span className="semantic-score">{Math.round(score * 100)}%</span>
+                            )}
+                        </div>
                         <span className="semantic-snippet">{snippet}</span>
                         {hasMultipleChunks && (
                             <button

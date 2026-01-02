@@ -11,12 +11,18 @@ interface SearchContextValue {
     setQueryWithFocus: (query: string) => void;
     focusSearch: () => void;
     registerSearchRef: (ref: SearchInputRef | null) => void;
+    // 排除当前文档
+    excludeCurrentDoc: boolean;
+    setExcludeCurrentDoc: (exclude: boolean) => void;
+    // 设置查询并聚焦，同时启用排除当前文档
+    setQueryWithExclude: (query: string) => void;
 }
 
 const SearchContext = createContext<SearchContextValue | null>(null);
 
 export function SearchProvider({ children }: { children: ReactNode }) {
     const [query, setQueryState] = useState('');
+    const [excludeCurrentDoc, setExcludeCurrentDoc] = useState(false);
     const searchRef = useRef<SearchInputRef | null>(null);
 
     const setQuery = useCallback((newQuery: string) => {
@@ -39,6 +45,15 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         searchRef.current = ref;
     }, []);
 
+    // 设置查询并聚焦，同时启用排除当前文档
+    const setQueryWithExclude = useCallback((newQuery: string) => {
+        setQueryState(newQuery);
+        setExcludeCurrentDoc(true);
+        requestAnimationFrame(() => {
+            searchRef.current?.focus();
+        });
+    }, []);
+
     return (
         <SearchContext.Provider
             value={{
@@ -47,6 +62,9 @@ export function SearchProvider({ children }: { children: ReactNode }) {
                 setQueryWithFocus,
                 focusSearch,
                 registerSearchRef,
+                excludeCurrentDoc,
+                setExcludeCurrentDoc,
+                setQueryWithExclude,
             }}
         >
             {children}

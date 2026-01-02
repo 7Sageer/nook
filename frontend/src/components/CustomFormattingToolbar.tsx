@@ -21,27 +21,26 @@ import {
     GetExternalBlockContent,
 } from "../../wailsjs/go/main/App";
 import { useDocumentContext } from "../contexts/DocumentContext";
-import { useRelatedDocuments } from "../contexts/RelatedDocumentsContext";
+import { useSearchContext } from "../contexts/SearchContext";
 import { useState } from "react";
 import { ContentViewerModal } from "./ContentViewerModal";
 
 // ========== 通用按钮组件（使用 BlockNote 原生 Button 组件） ==========
 
-// 查找相关文档按钮
+// 查找相关文档按钮 - 触发搜索并排除当前文档
 function FindRelatedButton() {
     const editor = useBlockNoteEditor();
     const selectedBlocks = useSelectedBlocks();
     const Components = useComponentsContext()!;
-    const { activeId } = useDocumentContext();
-    const { findRelated } = useRelatedDocuments();
+    const { setQueryWithExclude } = useSearchContext();
 
     const handleClick = () => {
         // 获取当前选中的文本或当前块的内容
         const selectedText = editor.getSelectedText?.() || '';
 
         if (selectedText.trim()) {
-            // 如果有选中文本，使用选中的文本
-            findRelated(selectedText.trim(), activeId || '');
+            // 如果有选中文本，使用选中的文本触发搜索
+            setQueryWithExclude(selectedText.trim());
             return;
         }
 
@@ -59,12 +58,12 @@ function FindRelatedButton() {
                     .join(' ')
                     .trim();
                 if (searchContent) {
-                    findRelated(searchContent, activeId || '');
+                    setQueryWithExclude(searchContent);
                     return;
                 }
                 // 如果没有 title/description，使用 url
                 if (props.url) {
-                    findRelated(props.url, activeId || '');
+                    setQueryWithExclude(props.url);
                     return;
                 }
             }
@@ -74,7 +73,7 @@ function FindRelatedButton() {
                 const props = block.props as any;
                 // 使用 fileName 作为搜索内容
                 if (props.fileName) {
-                    findRelated(props.fileName, activeId || '');
+                    setQueryWithExclude(props.fileName);
                     return;
                 }
             }
@@ -89,7 +88,7 @@ function FindRelatedButton() {
                     .join('')
                     .trim();
                 if (text) {
-                    findRelated(text, activeId || '');
+                    setQueryWithExclude(text);
                 }
             }
         }

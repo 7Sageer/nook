@@ -57,6 +57,7 @@ export function SidebarSearchResults({
                                     title={res.docTitle}
                                     snippet={res.matchedChunks[0]?.content || ''}
                                     matchCount={res.matchedChunks.length}
+                                    score={res.maxScore}
                                     isActive={false}
                                     variant="semantic"
                                     onClick={() => onSelectSemantic(res.docId, res.matchedChunks[0]?.sourceBlockId || '')}
