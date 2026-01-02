@@ -22,12 +22,12 @@ import (
 // 外部工具可用性缓存
 var (
 	pdftotextAvailable bool
-	pdftotextChecked   bool
-	pdftotextMu        sync.Once
+
+	pdftotextMu sync.Once
 
 	pandocAvailable bool
-	pandocChecked   bool
-	pandocMu        sync.Once
+
+	pandocMu sync.Once
 
 	// 是否已显示过安装提示
 	pdftotextHintShown bool
@@ -98,7 +98,7 @@ func checkPdftotextAvailable() bool {
 	pdftotextMu.Do(func() {
 		_, err := exec.LookPath("pdftotext")
 		pdftotextAvailable = err == nil
-		pdftotextChecked = true
+
 		if pdftotextAvailable {
 			fmt.Println("📄 [PDF] pdftotext detected, using enhanced extraction")
 		} else if !pdftotextHintShown {
@@ -182,7 +182,7 @@ func checkPandocAvailable() bool {
 	pandocMu.Do(func() {
 		_, err := exec.LookPath("pandoc")
 		pandocAvailable = err == nil
-		pandocChecked = true
+
 		if pandocAvailable {
 			fmt.Println("📝 [DOCX] pandoc detected, using enhanced extraction")
 		} else if !pandocHintShown {

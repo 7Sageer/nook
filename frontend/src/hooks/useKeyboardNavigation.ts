@@ -227,9 +227,9 @@ export function useFocusZone({
     searchRef,
     enabled = true,
 }: UseFocusZoneOptions) {
-    const zones: FocusZone[] = ['sidebar', 'editor'];
-
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        const zones: FocusZone[] = ['sidebar', 'editor'];
+
         if (!enabled) return;
 
         // F6 - 区域切换
@@ -290,7 +290,7 @@ export function useFocusZone({
                 onZoneChange?.('editor');
             }
         }
-    }, [enabled, sidebarRef, editorRef, searchRef, onZoneChange, zones]);
+    }, [enabled, sidebarRef, editorRef, searchRef, onZoneChange]);
 
     useEffect(() => {
         if (!enabled) return;

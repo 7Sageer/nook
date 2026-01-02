@@ -3,12 +3,14 @@ import {
     TextAlignButton,
     useSelectedBlocks,
     useBlockNoteEditor,
+    useComponentsContext,
 } from "@blocknote/react";
 import {
     ExternalLink,
     FolderOpen,
     Eye,
     Pencil,
+    Trash2,
 } from "lucide-react";
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 import {
@@ -20,26 +22,13 @@ import { useDocumentContext } from "../contexts/DocumentContext";
 import { useState } from "react";
 import { ContentViewerModal } from "./ContentViewerModal";
 
-// ========== 自定义工具栏按钮样式 ==========
-const toolbarButtonStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 32,
-    height: 32,
-    border: "none",
-    background: "transparent",
-    cursor: "pointer",
-    borderRadius: 4,
-    color: "inherit",
-};
-
-// ========== 通用按钮组件 ==========
+// ========== 通用按钮组件（使用 BlockNote 原生 Button 组件） ==========
 
 // 编辑书签按钮 - 清空 URL 触发编辑模式
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function EditBookmarkButton({ block }: { block: any }) {
     const editor = useBlockNoteEditor();
+    const Components = useComponentsContext()!;
 
     const handleEdit = () => {
         editor.updateBlock(block.id, {
@@ -51,13 +40,114 @@ function EditBookmarkButton({ block }: { block: any }) {
     };
 
     return (
-        <button
-            style={toolbarButtonStyle}
-            title="Edit"
+        <Components.FormattingToolbar.Button
+            mainTooltip="Edit"
             onClick={handleEdit}
-        >
-            <Pencil size={18} />
-        </button>
+            icon={<Pencil size={18} />}
+            label="Edit"
+        />
+    );
+}
+
+// 删除块按钮
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DeleteBlockButton({ block }: { block: any }) {
+    const editor = useBlockNoteEditor();
+    const Components = useComponentsContext()!;
+
+    const handleDelete = () => {
+        editor.removeBlocks([block.id]);
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Delete"
+            onClick={handleDelete}
+            icon={<Trash2 size={18} />}
+            label="Delete"
+        />
+    );
+}
+
+// 打开文件按钮
+function OpenFileButton({ filePath }: { filePath: string }) {
+    const Components = useComponentsContext()!;
+
+    const handleClick = () => {
+        if (filePath) OpenFileWithSystem(filePath);
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Open File"
+            onClick={handleClick}
+            icon={<ExternalLink size={18} />}
+            label="Open File"
+        />
+    );
+}
+
+// 在 Finder 中显示按钮
+function RevealInFinderButton({ filePath }: { filePath: string }) {
+    const Components = useComponentsContext()!;
+
+    const handleClick = () => {
+        if (filePath) RevealInFinder(filePath);
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Show in Finder"
+            onClick={handleClick}
+            icon={<FolderOpen size={18} />}
+            label="Show in Finder"
+        />
+    );
+}
+
+// 打开链接按钮
+function OpenLinkButton({ url }: { url: string }) {
+    const Components = useComponentsContext()!;
+
+    const handleClick = () => {
+        if (url) BrowserOpenURL(url);
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Open Link"
+            onClick={handleClick}
+            icon={<ExternalLink size={18} />}
+            label="Open Link"
+        />
+    );
+}
+
+// 查看内容按钮
+function ViewContentButton({
+    blockId,
+    activeId,
+    onViewContent,
+}: {
+    blockId: string;
+    activeId: string | null;
+    onViewContent: () => void;
+}) {
+    const Components = useComponentsContext()!;
+
+    const handleClick = () => {
+        if (activeId && blockId) {
+            onViewContent();
+        }
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="View Content"
+            onClick={handleClick}
+            icon={<Eye size={18} />}
+            label="View Content"
+        />
     );
 }
 
@@ -78,14 +168,6 @@ function FileBlockToolbar() {
     const fileName = block.props?.fileName as string;
     const indexed = block.props?.indexed as boolean;
 
-    const handleOpenFile = () => {
-        if (filePath) OpenFileWithSystem(filePath);
-    };
-
-    const handleRevealInFinder = () => {
-        if (filePath) RevealInFinder(filePath);
-    };
-
     const handleViewContent = async () => {
         if (!activeId || !block.id) return;
         setShowContentModal(true);
@@ -103,29 +185,16 @@ function FileBlockToolbar() {
 
     return (
         <FormattingToolbar>
-            <button
-                style={toolbarButtonStyle}
-                title="Open File"
-                onClick={handleOpenFile}
-            >
-                <ExternalLink size={18} />
-            </button>
-            <button
-                style={toolbarButtonStyle}
-                title="Show in Finder"
-                onClick={handleRevealInFinder}
-            >
-                <FolderOpen size={18} />
-            </button>
+            <OpenFileButton filePath={filePath} />
+            <RevealInFinderButton filePath={filePath} />
             {indexed && (
-                <button
-                    style={toolbarButtonStyle}
-                    title="View Content"
-                    onClick={handleViewContent}
-                >
-                    <Eye size={18} />
-                </button>
+                <ViewContentButton
+                    blockId={block.id}
+                    activeId={activeId}
+                    onViewContent={handleViewContent}
+                />
             )}
+            <DeleteBlockButton block={block} />
             <TextAlignButton textAlignment="left" />
             <TextAlignButton textAlignment="center" />
             <TextAlignButton textAlignment="right" />
@@ -159,10 +228,6 @@ function BookmarkBlockToolbar() {
     const title = block.props?.title as string;
     const indexed = block.props?.indexed as boolean;
 
-    const handleOpenLink = () => {
-        if (url) BrowserOpenURL(url);
-    };
-
     const handleViewContent = async () => {
         if (!activeId || !block.id) return;
         setShowContentModal(true);
@@ -180,23 +245,16 @@ function BookmarkBlockToolbar() {
 
     return (
         <FormattingToolbar>
-            <button
-                style={toolbarButtonStyle}
-                title="Open Link"
-                onClick={handleOpenLink}
-            >
-                <ExternalLink size={18} />
-            </button>
+            <OpenLinkButton url={url} />
             {indexed && (
-                <button
-                    style={toolbarButtonStyle}
-                    title="View Content"
-                    onClick={handleViewContent}
-                >
-                    <Eye size={18} />
-                </button>
+                <ViewContentButton
+                    blockId={block.id}
+                    activeId={activeId}
+                    onViewContent={handleViewContent}
+                />
             )}
             <EditBookmarkButton block={block} />
+            <DeleteBlockButton block={block} />
             <TextAlignButton textAlignment="left" />
             <TextAlignButton textAlignment="center" />
             <TextAlignButton textAlignment="right" />

@@ -251,6 +251,9 @@ const BookmarkBlockComponent = (props: { block: any, editor: any }) => {
                             handleFetch(inputValue);
                         }
                     }}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck="false"
                     ref={inputRef}
                 />
             </div>
