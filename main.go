@@ -14,6 +14,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"notion-lite/internal/constant"
@@ -170,7 +171,14 @@ func main() {
 				app.handleExternalFileOpen(filePath)
 			},
 		},
-		Frameless: true,
+		Windows: &windows.Options{
+			WebviewIsTransparent:              false,                 // 保持不透明，稳定性更好
+			WindowIsTranslucent:               false,                 // 不使用毛玻璃效果
+			DisableWindowIcon:                 false,                 // 保留窗口图标（原生体验）
+			DisableFramelessWindowDecorations: false,                 // 使用系统原生窗口装饰
+			Theme:                             windows.SystemDefault, // 跟随系统深浅主题
+			ResizeDebounceMS:                  0,                     // 最快的窗口调整重绘速度
+		},
 	})
 
 	if err != nil {

@@ -17,9 +17,7 @@ import (
 	"notion-lite/internal/tag"
 	"notion-lite/internal/watcher"
 
-	"runtime"
-
-	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -121,12 +119,12 @@ func (a *App) startup(ctx context.Context) {
 			}
 		}
 
-	if err := a.watcherService.Start(ctx); err != nil {
-		wailsRuntime.LogError(ctx, "Failed to start file watcher: "+err.Error())
-	}
+		if err := a.watcherService.Start(ctx); err != nil {
+			runtime.LogError(ctx, "Failed to start file watcher: "+err.Error())
+		}
 	}
 
-	wailsRuntime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
+	runtime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
 		a.pendingExternalOpensMu.Lock()
 		a.frontendReady = true
 		a.pendingExternalOpensMu.Unlock()
@@ -160,7 +158,7 @@ func (a *App) handleExternalFileOpen(filePath string) {
 	ctx := a.ctx
 	a.pendingExternalOpensMu.Unlock()
 
-	wailsRuntime.EventsEmit(ctx, "file:open-external", filePath)
+	runtime.EventsEmit(ctx, "file:open-external", filePath)
 }
 
 func (a *App) flushPendingExternalFileOpens() {
@@ -178,7 +176,7 @@ func (a *App) flushPendingExternalFileOpens() {
 		if path == "" {
 			continue
 		}
-		wailsRuntime.EventsEmit(ctx, "file:open-external", path)
+		runtime.EventsEmit(ctx, "file:open-external", path)
 	}
 }
 
@@ -377,12 +375,6 @@ func (a *App) PrintHTML(htmlContent string, title string) error {
 	return a.fileHandler.PrintHTML(htmlContent, title)
 }
 
-
 func (a *App) FetchLinkMetadata(url string) (*opengraph.LinkMetadata, error) {
 	return a.fileHandler.FetchLinkMetadata(url)
 }
-
-func (a *App) GetPlatform() string {
-	return runtime.GOOS
-}
-

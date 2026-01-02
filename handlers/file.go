@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"time"
 
@@ -201,9 +202,8 @@ func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 		return err
 	}
 
-	// 使用系统命令打开文件（macOS 使用 open 命令）
-	cmd := exec.Command("open", filePath)
-	return cmd.Start()
+	// 使用系统默认程序打开文件（跨平台）
+	return openWithSystemApp(filePath)
 }
 
 // FetchLinkMetadata 获取链接的 Open Graph 元数据
@@ -304,8 +304,7 @@ func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 	// relativePath: /files/xxx.md
 	fullPath := filepath.Join(h.dataPath, strings.TrimPrefix(relativePath, "/"))
 
-	cmd := exec.Command("open", fullPath) // macOS
-	return cmd.Start()
+	return openWithSystemApp(fullPath)
 }
 
 // randomString 生成随机字符串
@@ -316,4 +315,20 @@ func randomString(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+// openWithSystemApp 使用系统默认应用打开文件（跨平台）
+func openWithSystemApp(filePath string) error {
+	var cmd *exec.Cmd
+
+	switch goruntime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", filePath)
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "start", "", filePath)
+	default: // linux and others
+		cmd = exec.Command("xdg-open", filePath)
+	}
+
+	return cmd.Start()
 }

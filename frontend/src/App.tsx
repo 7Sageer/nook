@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { EditorContainer } from "./components/EditorContainer";
 import { SidebarContainer } from "./components/SidebarContainer";
 import { WindowToolbar } from "./components/WindowToolbar";
-import { WindowControls } from "./components/WindowControls";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImport } from "./hooks/useImport";
@@ -51,21 +50,6 @@ function AppContent() {
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [platform, setPlatform] = useState<'darwin' | 'windows' | 'linux' | 'unknown'>('unknown');
-
-  useEffect(() => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    if (userAgent.includes('mac')) {
-      setPlatform('darwin');
-      document.body.classList.add('platform-darwin');
-    } else if (userAgent.includes('win')) {
-      setPlatform('windows');
-      document.body.classList.add('platform-windows');
-    } else {
-      setPlatform('linux');
-      document.body.classList.add('platform-linux');
-    }
-  }, []);
 
   // 外部文件管理
   const {
@@ -289,10 +273,8 @@ function AppContent() {
 
 
 
-
   return (
-    <div className={`app-container ${theme} ${platform}`}>
-      {platform !== 'darwin' && platform !== 'unknown' && <WindowControls />}
+    <div className={`app-container ${theme}`}>
       <WindowToolbar
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}

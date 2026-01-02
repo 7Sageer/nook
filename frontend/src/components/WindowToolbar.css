@@ -31,7 +31,6 @@
 }
 
 /* 折叠状态的展开按钮区域 */
-/* 折叠状态的展开按钮区域 */
 .window-toolbar .toolbar-collapsed {
     position: absolute;
     top: 0;
@@ -40,20 +39,13 @@
     align-items: flex-start;
     justify-content: flex-start;
     height: 100%;
-
-    /* Default spacing (Windows/Linux) */
-    padding: 14px var(--space-2) 0 var(--space-2);
-
+    padding: 14px var(--space-2) 0 100px;
+    /* 100px = 红黄绿按钮宽度(~68px) + 适当间距(32px) */
     --wails-draggable: drag;
     pointer-events: auto;
     transition:
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         transform var(--transition-sidebar);
-}
-
-/* Mac traffic lights spacing override */
-body.platform-darwin .window-toolbar .toolbar-collapsed {
-    padding-left: 100px;
 }
 
 .window-toolbar .toolbar-collapsed.hidden {
