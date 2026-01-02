@@ -28,6 +28,8 @@ export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetDocumentList():Promise<document.Index>;
 
+export function GetOS():Promise<string>;
+
 export function GetPinnedTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetRAGConfig():Promise<rag.EmbeddingConfig>;

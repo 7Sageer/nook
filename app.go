@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	stdruntime "runtime"
 	"sync"
 
 	"notion-lite/handlers"
@@ -377,4 +378,9 @@ func (a *App) PrintHTML(htmlContent string, title string) error {
 
 func (a *App) FetchLinkMetadata(url string) (*opengraph.LinkMetadata, error) {
 	return a.fileHandler.FetchLinkMetadata(url)
+}
+
+// GetOS returns the current operating system
+func (a *App) GetOS() string {
+	return stdruntime.GOOS
 }
