@@ -5,7 +5,13 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		{
 			Name:        "list_documents",
 			Description: "List all documents in Nook with their metadata (id, title, tags, timestamps)",
-			InputSchema: InputSchema{Type: "object"},
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"offset": {Type: "number", Description: "Skip first N documents (default: 0)"},
+					"limit":  {Type: "number", Description: "Maximum documents to return (default: 50, max: 100)"},
+				},
+			},
 		},
 		{
 			Name:        "get_document",
@@ -71,6 +77,7 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Type: "object",
 				Properties: map[string]Property{
 					"query": {Type: "string", Description: "Search query"},
+					"limit": {Type: "number", Description: "Maximum results to return (default: 20, max: 50)"},
 				},
 				Required: []string{"query"},
 			},
@@ -167,7 +174,8 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"tag": {Type: "string", Description: "Tag name to filter by"},
+					"tag":   {Type: "string", Description: "Tag name to filter by"},
+					"limit": {Type: "number", Description: "Maximum results to return (default: 50, max: 100)"},
 				},
 				Required: []string{"tag"},
 			},
@@ -184,6 +192,18 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 					"granularity": {Type: "string", Description: "Result granularity: 'documents' for document-level results (default), 'chunks' for text blocks"},
 				},
 				Required: []string{"query"},
+			},
+		},
+		{
+			Name:        "get_block_content",
+			Description: "Get the extracted text content of a bookmark or file block. Returns the full readable content that was indexed for RAG search. Use this to read the actual content of bookmarked webpages or uploaded files.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id":   {Type: "string", Description: "Document ID containing the block"},
+					"block_id": {Type: "string", Description: "Block ID (the BlockNote block ID of the bookmark or file block)"},
+				},
+				Required: []string{"doc_id", "block_id"},
 			},
 		},
 	}

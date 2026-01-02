@@ -72,6 +72,7 @@ export const EN = {
         DELETE_MESSAGE: "Are you sure you want to delete this document? This action cannot be undone.",
         DELETE_TAG_TITLE: "Delete Tag",
         DELETE_TAG_MESSAGE: "Are you sure you want to delete this tag? The tag will be removed from all documents.",
+        RENAME_TAG_TITLE: "Rename Tag",
     },
 
     MENU: {
@@ -95,6 +96,8 @@ export const EN = {
         LAST_UPDATE: "Last Update",
         REBUILD_INDEX: "Rebuild Index",
         REBUILDING: "Rebuilding...",
+        INDEXING_DOCUMENTS: "Indexing documents",
+        INDEXING_EXTERNAL: "Indexing external content",
         SAVING: "Saving...",
         PROVIDER: "Provider",
         BASE_URL: "Base URL",

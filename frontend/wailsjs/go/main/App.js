@@ -46,8 +46,8 @@ export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }
 
-export function GetOS() {
-  return window['go']['main']['App']['GetOS']();
+export function GetExternalBlockContent(arg1, arg2) {
+  return window['go']['main']['App']['GetExternalBlockContent'](arg1, arg2);
 }
 
 export function GetPinnedTags() {
@@ -132,6 +132,10 @@ export function ReorderDocuments(arg1) {
 
 export function ReorderPinnedTags(arg1) {
   return window['go']['main']['App']['ReorderPinnedTags'](arg1);
+}
+
+export function RevealInFinder(arg1) {
+  return window['go']['main']['App']['RevealInFinder'](arg1);
 }
 
 export function SaveDocumentContent(arg1, arg2) {

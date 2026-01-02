@@ -99,6 +99,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
 	a.fileHandler.SetContext(ctx)
+	a.ragHandler.SetContext(ctx)
 
 	// 一次性迁移：将文件夹转换为标签组
 	a.tagHandler.MigrateFoldersToTagGroups()
@@ -269,9 +270,19 @@ func (a *App) OpenFileWithSystem(relativePath string) error {
 	return a.fileHandler.OpenFileWithSystem(relativePath)
 }
 
+// RevealInFinder 在文件管理器中显示文件
+func (a *App) RevealInFinder(relativePath string) error {
+	return a.fileHandler.RevealInFinder(relativePath)
+}
+
 // IndexFileContent 索引文件内容
 func (a *App) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID)
+}
+
+// GetExternalBlockContent 获取外部块的完整提取内容
+func (a *App) GetExternalBlockContent(docID, blockID string) (*handlers.ExternalBlockContent, error) {
+	return a.ragHandler.GetExternalBlockContent(docID, blockID)
 }
 
 // ========== 设置 API (委托给 SettingsHandler) ==========

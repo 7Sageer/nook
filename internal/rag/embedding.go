@@ -3,10 +3,36 @@ package rag
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 )
+
+// EmbeddingServiceError 嵌入服务错误（包含 HTTP 状态码，用于判断是否可恢复）
+type EmbeddingServiceError struct {
+	Provider   string
+	StatusCode int
+	Message    string
+}
+
+func (e *EmbeddingServiceError) Error() string {
+	return e.Message
+}
+
+// IsUnrecoverable 判断是否是不可恢复的错误（5xx 服务端错误，以及 401/403/404 配置错误）
+func (e *EmbeddingServiceError) IsUnrecoverable() bool {
+	return e.StatusCode >= 500 || e.StatusCode == 404 || e.StatusCode == 401 || e.StatusCode == 403 || e.StatusCode == -1
+}
+
+// IsEmbeddingServiceError 检查错误是否是 EmbeddingServiceError 并返回
+func IsEmbeddingServiceError(err error) (*EmbeddingServiceError, bool) {
+	var serviceErr *EmbeddingServiceError
+	if errors.As(err, &serviceErr) {
+		return serviceErr, true
+	}
+	return nil, false
+}
 
 // EmbeddingClient 嵌入向量生成接口
 type EmbeddingClient interface {
@@ -66,14 +92,24 @@ func (c *OllamaClient) Embed(text string) ([]float32, error) {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("ollama returned status %d", resp.StatusCode)
+		return nil, &EmbeddingServiceError{
+			Provider:   "ollama",
+			StatusCode: resp.StatusCode,
+			Message:    fmt.Sprintf("ollama returned status %d", resp.StatusCode),
+		}
 	}
 
 	var result struct {
 		Embedding []float32 `json:"embedding"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		// JSON 解析失败通常意味着返回了 HTML 或其他非预期格式（例如错误的端点返回 200 OK）
+		// 这种情况下我们也视为不可恢复的配置错误
+		return nil, &EmbeddingServiceError{
+			Provider:   "ollama",
+			StatusCode: -1, // 特殊状态码表示格式错误
+			Message:    fmt.Sprintf("failed to decode response: %v", err),
+		}
 	}
 	return result.Embedding, nil
 }
@@ -163,7 +199,11 @@ func (c *OpenAIClient) EmbedBatch(texts []string) ([][]float32, error) {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("openai returned status %d", resp.StatusCode)
+		return nil, &EmbeddingServiceError{
+			Provider:   "openai",
+			StatusCode: resp.StatusCode,
+			Message:    fmt.Sprintf("openai returned status %d", resp.StatusCode),
+		}
 	}
 
 	var result struct {
@@ -172,7 +212,11 @@ func (c *OpenAIClient) EmbedBatch(texts []string) ([][]float32, error) {
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+		return nil, &EmbeddingServiceError{
+			Provider:   "openai",
+			StatusCode: -1,
+			Message:    fmt.Sprintf("failed to decode response: %v", err),
+		}
 	}
 
 	embeddings := make([][]float32, len(result.Data))
@@ -184,5 +228,13 @@ func (c *OpenAIClient) EmbedBatch(texts []string) ([][]float32, error) {
 
 // Dimension 返回向量维度
 func (c *OpenAIClient) Dimension() int {
-	return 1536 // text-embedding-ada-002 默认维度
+	// 根据模型返回对应的向量维度
+	switch c.model {
+	case "text-embedding-3-large":
+		return 3072
+	case "text-embedding-3-small", "text-embedding-ada-002":
+		return 1536
+	default:
+		return 1536 // 默认维度
+	}
 }

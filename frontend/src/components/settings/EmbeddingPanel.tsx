@@ -35,6 +35,10 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
                     value={config.baseUrl}
                     onChange={(e) => onChange('baseUrl', e.target.value)}
                     placeholder="http://localhost:11434"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
                 />
             </div>
 
@@ -45,6 +49,10 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
                     value={config.model}
                     onChange={(e) => onChange('model', e.target.value)}
                     placeholder="nomic-embed-text"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
                 />
             </div>
 
@@ -55,6 +63,10 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
                     value={config.apiKey}
                     onChange={(e) => onChange('apiKey', e.target.value)}
                     placeholder={strings.SETTINGS.API_KEY_PLACEHOLDER}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    autoComplete="off"
+                    spellCheck={false}
                 />
             </div>
         </div>

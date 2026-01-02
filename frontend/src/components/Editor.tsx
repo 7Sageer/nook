@@ -5,6 +5,9 @@ import {
   useCreateBlockNote,
   SuggestionMenuController,
   getDefaultReactSlashMenuItems,
+  SideMenu,
+  SideMenuController,
+  FormattingToolbarController,
 } from "@blocknote/react";
 import { BlockNoteSchema, defaultBlockSpecs, Block } from "@blocknote/core";
 import { useEffect, useRef, useMemo } from "react";
@@ -28,6 +31,8 @@ import {
 import { useImageUpload } from "../hooks/useImageUpload";
 import { usePasteHandler } from "../hooks/usePasteHandler";
 import { useFileDrop } from "../hooks/useFileDrop";
+import { CustomDragHandleMenu } from "./CustomDragHandleMenu";
+import { CustomFormattingToolbar } from "./CustomFormattingToolbar";
 
 // Re-export getIsComposing for external use
 export { getIsComposing } from "../utils/editorExtensions";
@@ -182,10 +187,18 @@ export function Editor({
         editor={editor}
         theme={theme}
         slashMenu={false}
+        sideMenu={false}
+        formattingToolbar={false}
         onChange={() => {
           onChange?.(editor.document);
         }}
       >
+        <FormattingToolbarController formattingToolbar={CustomFormattingToolbar} />
+        <SideMenuController
+          sideMenu={(props) => (
+            <SideMenu {...props} dragHandleMenu={CustomDragHandleMenu} />
+          )}
+        />
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) => {

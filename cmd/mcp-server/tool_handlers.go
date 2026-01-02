@@ -15,7 +15,7 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 	var result ToolCallResult
 	switch params.Name {
 	case "list_documents":
-		result = s.toolListDocuments()
+		result = s.toolListDocuments(params.Arguments)
 	case "get_document":
 		result = s.toolGetDocument(params.Arguments)
 	case "create_document":
@@ -53,6 +53,8 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 	// RAG tools
 	case "semantic_search":
 		result = s.toolSemanticSearch(params.Arguments)
+	case "get_block_content":
+		result = s.toolGetBlockContent(params.Arguments)
 
 	default:
 		result = ToolCallResult{

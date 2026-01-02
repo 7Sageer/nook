@@ -52,6 +52,7 @@ export function Sidebar({
     selectedTag,
     setSelectedTag,
     tagColors,
+    setTagColor,
   } = useDocumentContext();
   const { theme, language } = useSettings();
   const STRINGS = getStrings(language);
@@ -259,6 +260,7 @@ export function Sidebar({
                   onRenameTag={renameTag}
                   onDeleteTag={handleDeleteTagClick}
                   onUnpinTag={unpinTag}
+                  onColorSelect={setTagColor}
                   onSelectDocument={handleSelect}
                   onDeleteDocument={handleDeleteClick}
                   onEditingChange={setEditingTagName}

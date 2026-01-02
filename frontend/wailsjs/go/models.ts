@@ -326,6 +326,34 @@ export namespace rag {
 	        this.overlap = source["overlap"];
 	    }
 	}
+	export class ExternalBlockContent {
+	    id: string;
+	    docId: string;
+	    blockId: string;
+	    blockType: string;
+	    url: string;
+	    filePath: string;
+	    title: string;
+	    content: string;
+	    extractedAt: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExternalBlockContent(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.docId = source["docId"];
+	        this.blockId = source["blockId"];
+	        this.blockType = source["blockType"];
+	        this.url = source["url"];
+	        this.filePath = source["filePath"];
+	        this.title = source["title"];
+	        this.content = source["content"];
+	        this.extractedAt = source["extractedAt"];
+	    }
+	}
 
 }
 

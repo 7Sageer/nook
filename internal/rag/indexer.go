@@ -125,6 +125,12 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		// 需要更新：生成新的 Embedding
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			// 检查是否是不可恢复的错误（5xx 服务端错误）
+			if serviceErr, ok := IsEmbeddingServiceError(err); ok && serviceErr.IsUnrecoverable() {
+				fmt.Printf("❌ [RAG] Embedding service unavailable (status %d), aborting indexing\n", serviceErr.StatusCode)
+				return fmt.Errorf("embedding service unavailable: %w", err)
+			}
+			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
 			continue
 		}
 		// 若 block 本身是聚合/合并块，使用其 SourceBlockID；否则使用 block.ID
@@ -219,6 +225,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 	}
 
 	// 4. 为每个块生成 embedding 并存储
+	successCount := 0
+	failedCount := 0
+	var lastError error
 	for _, block := range blocks {
 		if block.Content == "" {
 			continue
@@ -226,6 +235,14 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			// 检查是否是不可恢复的错误（5xx 服务端错误）
+			if serviceErr, ok := IsEmbeddingServiceError(err); ok && serviceErr.IsUnrecoverable() {
+				fmt.Printf("❌ [RAG] Embedding service unavailable (status %d), aborting reindexing\n", serviceErr.StatusCode)
+				return fmt.Errorf("embedding service unavailable: %w", err)
+			}
+			failedCount++
+			lastError = err
+			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
 			continue
 		}
 
@@ -247,7 +264,15 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 			Embedding:      embedding,
 		}); err != nil {
 			fmt.Printf("⚠️ [RAG] Failed to upsert block %s: %v\n", block.ID, err)
+			failedCount++
+		} else {
+			successCount++
 		}
+	}
+
+	// 如果所有块都嵌入失败，返回错误
+	if successCount == 0 && failedCount > 0 {
+		return fmt.Errorf("embedding failed: %v", lastError)
 	}
 
 	return nil
@@ -283,11 +308,76 @@ func (idx *Indexer) ReindexAll() (int, error) {
 
 	// 重建索引
 	count := 0
+	failedCount := 0
+	var lastError error
 	for _, doc := range index.Documents {
 		if err := idx.ForceReindexDocument(doc.ID); err != nil {
+			failedCount++
+			lastError = err
 			continue // 跳过失败的文档
 		}
 		count++
 	}
+
+	// 如果所有文档都失败了，返回错误
+	if count == 0 && failedCount > 0 {
+		return 0, fmt.Errorf("all documents failed to index: %v", lastError)
+	}
+
+	return count, nil
+}
+
+// ReindexAllWithCallback 重建所有文档索引（带进度回调）
+func (idx *Indexer) ReindexAllWithCallback(onProgress func(current, total int)) (int, error) {
+	index, err := idx.docRepo.GetAll()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get documents: %w", err)
+	}
+
+	// 构建现有文档 ID 集合
+	existingDocIDs := make(map[string]bool)
+	for _, doc := range index.Documents {
+		existingDocIDs[doc.ID] = true
+	}
+
+	// 清理已删除文档的孤儿块
+	indexedDocIDs, err := idx.store.GetAllDocIDs()
+	if err == nil {
+		for _, docID := range indexedDocIDs {
+			if !existingDocIDs[docID] {
+				if debugChunks {
+					fmt.Printf("🗑️ [RAG] Cleaning orphan blocks for deleted document: %s\n", docID)
+				}
+				if err := idx.store.DeleteByDocID(docID); err != nil {
+					fmt.Printf("⚠️ [RAG] Failed to delete blocks for doc %s: %v\n", docID, err)
+				}
+			}
+		}
+	}
+
+	// 重建索引
+	total := len(index.Documents)
+	count := 0
+	failedCount := 0
+	var lastError error
+	for i, doc := range index.Documents {
+		// 发送进度
+		if onProgress != nil {
+			onProgress(i+1, total)
+		}
+
+		if err := idx.ForceReindexDocument(doc.ID); err != nil {
+			failedCount++
+			lastError = err
+			continue // 跳过失败的文档
+		}
+		count++
+	}
+
+	// 如果所有文档都失败了，返回错误
+	if count == 0 && failedCount > 0 {
+		return 0, fmt.Errorf("all documents failed to index: %v", lastError)
+	}
+
 	return count, nil
 }

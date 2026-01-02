@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { Pin, PinOff, Palette } from 'lucide-react';
+import { Pin, PinOff, Palette, Pencil, Trash2 } from 'lucide-react';
 import { TagColorPicker } from './TagColorPicker';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
@@ -13,6 +13,8 @@ interface TagContextMenuProps {
     onPin: (tagName: string) => void;
     onUnpin: (tagName: string) => void;
     onColorSelect: (tagName: string, color: string) => void;
+    onRename: (oldName: string, newName: string) => void;
+    onDelete: (tagName: string) => void;
     onClose: () => void;
 }
 
@@ -24,6 +26,8 @@ export const TagContextMenu = memo(function TagContextMenu({
     onPin,
     onUnpin,
     onColorSelect,
+    onRename,
+    onDelete,
     onClose,
 }: TagContextMenuProps) {
     const { language } = useSettings();
@@ -31,6 +35,9 @@ export const TagContextMenu = memo(function TagContextMenu({
     const menuRef = useRef<HTMLDivElement>(null);
     const [showColorPicker, setShowColorPicker] = useState(false);
     const [colorPickerPosition, setColorPickerPosition] = useState(position);
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [renameValue, setRenameValue] = useState(tagName);
+    const renameInputRef = useRef<HTMLInputElement>(null);
 
     // 点击外部关闭
     useEffect(() => {
@@ -88,6 +95,25 @@ export const TagContextMenu = memo(function TagContextMenu({
         onClose();
     };
 
+    const handleRenameClick = () => {
+        setIsRenaming(true);
+        setRenameValue(tagName);
+        setTimeout(() => renameInputRef.current?.focus(), 0);
+    };
+
+    const handleRenameSubmit = () => {
+        if (renameValue.trim() && renameValue !== tagName) {
+            onRename(tagName, renameValue.trim());
+        }
+        setIsRenaming(false);
+        onClose();
+    };
+
+    const handleDeleteClick = () => {
+        onDelete(tagName);
+        onClose();
+    };
+
     // 调整位置避免超出视口
     const adjustedPosition = { ...position };
     if (typeof window !== 'undefined') {
@@ -117,6 +143,35 @@ export const TagContextMenu = memo(function TagContextMenu({
             <button className="tag-context-menu-item" onClick={handleColorClick}>
                 <Palette size={14} />
                 <span>Set Color</span>
+            </button>
+            {isRenaming ? (
+                <div className="tag-context-menu-item rename-input-container">
+                    <Pencil size={14} />
+                    <input
+                        ref={renameInputRef}
+                        type="text"
+                        className="tag-rename-input"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onBlur={handleRenameSubmit}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleRenameSubmit();
+                            if (e.key === 'Escape') {
+                                setIsRenaming(false);
+                                onClose();
+                            }
+                        }}
+                    />
+                </div>
+            ) : (
+                <button className="tag-context-menu-item" onClick={handleRenameClick}>
+                    <Pencil size={14} />
+                    <span>{STRINGS.TOOLTIPS.PINNED_TAG_RENAME}</span>
+                </button>
+            )}
+            <button className="tag-context-menu-item danger" onClick={handleDeleteClick}>
+                <Trash2 size={14} />
+                <span>{STRINGS.TOOLTIPS.PINNED_TAG_DELETE}</span>
             </button>
 
             {showColorPicker && (

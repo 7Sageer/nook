@@ -1,13 +1,63 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
-func (s *MCPServer) toolListDocuments() ToolCallResult {
+// 内容截断限制（约 10KB）
+const maxContentLength = 10000
+
+func (s *MCPServer) toolListDocuments(args json.RawMessage) ToolCallResult {
+	var params struct {
+		Offset int `json:"offset"`
+		Limit  int `json:"limit"`
+	}
+	// 解析参数（可选）
+	if len(args) > 0 {
+		_ = json.Unmarshal(args, &params)
+	}
+
+	// 默认值和上限
+	if params.Limit <= 0 {
+		params.Limit = 50
+	}
+	if params.Limit > 100 {
+		params.Limit = 100
+	}
+
 	index, err := s.docRepo.GetAll()
 	if err != nil {
 		return errorResult(err.Error())
 	}
-	data, _ := json.MarshalIndent(index, "", "  ")
+
+	// 分页处理
+	total := len(index.Documents)
+	start := params.Offset
+	if start > total {
+		start = total
+	}
+	end := start + params.Limit
+	if end > total {
+		end = total
+	}
+
+	// 构建分页结果
+	type paginatedResult struct {
+		Documents interface{} `json:"documents"`
+		Total     int         `json:"total"`
+		Offset    int         `json:"offset"`
+		Limit     int         `json:"limit"`
+	}
+
+	result := paginatedResult{
+		Documents: index.Documents[start:end],
+		Total:     total,
+		Offset:    params.Offset,
+		Limit:     params.Limit,
+	}
+
+	data, _ := json.MarshalIndent(result, "", "  ")
 	return textResult(string(data))
 }
 
@@ -22,7 +72,19 @@ func (s *MCPServer) toolGetDocument(args json.RawMessage) ToolCallResult {
 	if err != nil {
 		return errorResult("Failed to load document: " + err.Error())
 	}
+	// 内容截断
+	if len(content) > maxContentLength {
+		content = content[:maxContentLength] + "\n... (truncated, total " + formatSize(len(content)) + ")"
+	}
 	return textResult(content)
+}
+
+// formatSize 格式化字节大小
+func formatSize(bytes int) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d bytes", bytes)
+	}
+	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
 }
 
 func (s *MCPServer) toolCreateDocument(args json.RawMessage) ToolCallResult {

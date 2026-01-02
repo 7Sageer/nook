@@ -10,6 +10,7 @@ import { ExternalFileProvider, useExternalFileContext } from "./contexts/Externa
 import { SearchProvider, useSearchContext } from "./contexts/SearchContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SettingsModal } from "./components/SettingsModal";
+import { ToastProvider } from "./components/Toast";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
 import { useTitleSync } from "./hooks/useTitleSync";
@@ -325,7 +326,9 @@ function App() {
         <DocumentProvider>
           <ExternalFileProvider>
             <SearchProvider>
-              <AppContent />
+              <ToastProvider>
+                <AppContent />
+              </ToastProvider>
             </SearchProvider>
           </ExternalFileProvider>
         </DocumentProvider>

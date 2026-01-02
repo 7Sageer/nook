@@ -1,5 +1,5 @@
 import { memo, useState, useCallback, useEffect } from 'react';
-import { Tag } from 'lucide-react';
+import { Tag, MoreVertical } from 'lucide-react';
 import type { TagInfo } from '../types/document';
 import { TagContextMenu } from './TagContextMenu';
 import { useDocumentContext } from '../contexts/DocumentContext';
@@ -18,7 +18,7 @@ export const TagList = memo(function TagList({
     onSelectTag,
     tagColors,
 }: TagListProps) {
-    const { setTagColor, pinTag, unpinTag, pinnedTags } = useDocumentContext();
+    const { setTagColor, pinTag, unpinTag, pinnedTags, renameTag, deleteTag } = useDocumentContext();
     const [contextMenu, setContextMenu] = useState<{
         tagName: string;
         position: { x: number; y: number };
@@ -33,6 +33,16 @@ export const TagList = memo(function TagList({
         });
     }, []);
 
+    // Handle click on more button - opens the same context menu
+    const handleMoreClick = useCallback((e: React.MouseEvent, tagName: string) => {
+        e.stopPropagation();
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        setContextMenu({
+            tagName,
+            position: { x: rect.left, y: rect.bottom + 4 },
+        });
+    }, []);
+
     const handleColorSelect = useCallback(async (tagName: string, color: string) => {
         await setTagColor(tagName, color);
     }, [setTagColor]);
@@ -44,6 +54,14 @@ export const TagList = memo(function TagList({
     const handleUnpinTag = useCallback(async (tagName: string) => {
         await unpinTag(tagName);
     }, [unpinTag]);
+
+    const handleRenameTag = useCallback(async (oldName: string, newName: string) => {
+        await renameTag(oldName, newName);
+    }, [renameTag]);
+
+    const handleDeleteTag = useCallback(async (tagName: string) => {
+        await deleteTag(tagName);
+    }, [deleteTag]);
 
     // ESC 键取消选择标签
     useEffect(() => {
@@ -89,8 +107,10 @@ export const TagList = memo(function TagList({
                     {sortedTags.map((tag) => {
                         const color = tagColors[tag.name] || tag.color;
                         return (
-                            <button
+                            <div
                                 key={tag.name}
+                                role="button"
+                                tabIndex={0}
                                 className={`tag-list-item ${selectedTag === tag.name ? 'active' : ''}`}
                                 onClick={() => onSelectTag(selectedTag === tag.name ? null : tag.name)}
                                 onContextMenu={(e) => handleContextMenu(e, tag.name)}
@@ -112,25 +132,21 @@ export const TagList = memo(function TagList({
                                         // macOS WebKit Tab 键兼容处理
                                         const currentElement = e.currentTarget as HTMLElement;
                                         if (e.shiftKey) {
-                                            // Shift+Tab: 移动到上一个标签或搜索框
                                             const prevSibling = currentElement.previousElementSibling as HTMLElement;
                                             if (prevSibling) {
                                                 e.preventDefault();
                                                 prevSibling.focus();
                                             } else {
-                                                // 第一个标签，跳转回搜索框
                                                 e.preventDefault();
                                                 const searchInput = document.querySelector('.search-input') as HTMLElement;
                                                 searchInput?.focus();
                                             }
                                         } else {
-                                            // Tab: 移动到下一个标签或下一区域
                                             const nextSibling = currentElement.nextElementSibling as HTMLElement;
                                             if (nextSibling) {
                                                 e.preventDefault();
                                                 nextSibling.focus();
                                             } else {
-                                                // 最后一个标签，跳转到标签组区域的第一个可聚焦元素
                                                 e.preventDefault();
                                                 const nextFocusable = document.querySelector('.folders-section [tabindex="0"], .folders-section button, .uncategorized-section [tabindex="0"], .uncategorized-section button, .document-item') as HTMLElement;
                                                 nextFocusable?.focus();
@@ -139,7 +155,6 @@ export const TagList = memo(function TagList({
                                     }
                                 }}
                                 style={color ? { '--tag-color': color } as React.CSSProperties : undefined}
-                                title="Right-click to set color"
                             >
                                 <span
                                     className="tag-dot"
@@ -147,7 +162,15 @@ export const TagList = memo(function TagList({
                                 />
                                 <span className="tag-name">{tag.name}</span>
                                 <span className="tag-count">{tag.count}</span>
-                            </button>
+                                <button
+                                    className="tag-more-btn"
+                                    onClick={(e) => handleMoreClick(e, tag.name)}
+                                    title="More options"
+                                    aria-label="More options"
+                                >
+                                    <MoreVertical size={12} />
+                                </button>
+                            </div>
                         );
                     })}
                 </div>
@@ -163,6 +186,8 @@ export const TagList = memo(function TagList({
                     onPin={handlePinTag}
                     onUnpin={handleUnpinTag}
                     onColorSelect={handleColorSelect}
+                    onRename={handleRenameTag}
+                    onDelete={handleDeleteTag}
                     onClose={() => setContextMenu(null)}
                 />
             )}

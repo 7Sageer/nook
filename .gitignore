@@ -82,3 +82,11 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# Project specific binaries and directories
+bin/
+build/
+notion-lite
+.agent/
+nook-mcp
+scripts/include/

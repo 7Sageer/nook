@@ -160,13 +160,22 @@ func (s *MCPServer) toolDeleteTag(args json.RawMessage) ToolCallResult {
 
 func (s *MCPServer) toolListDocumentsByTag(args json.RawMessage) ToolCallResult {
 	var params struct {
-		Tag string `json:"tag"`
+		Tag   string `json:"tag"`
+		Limit int    `json:"limit"`
 	}
 	if err := json.Unmarshal(args, &params); err != nil {
 		return errorResult("Invalid arguments: " + err.Error())
 	}
 	if params.Tag == "" {
 		return errorResult("tag is required")
+	}
+
+	// 默认值和上限
+	if params.Limit <= 0 {
+		params.Limit = 50
+	}
+	if params.Limit > 100 {
+		params.Limit = 100
 	}
 
 	index, err := s.docRepo.GetAll()
@@ -193,6 +202,25 @@ func (s *MCPServer) toolListDocumentsByTag(args json.RawMessage) ToolCallResult 
 		}
 	}
 
-	data, _ := json.MarshalIndent(docs, "", "  ")
+	// 限制结果数量
+	total := len(docs)
+	if len(docs) > params.Limit {
+		docs = docs[:params.Limit]
+	}
+
+	// 构建结果
+	type tagResult struct {
+		Documents []docInfo `json:"documents"`
+		Total     int       `json:"total"`
+		Limit     int       `json:"limit"`
+	}
+
+	output := tagResult{
+		Documents: docs,
+		Total:     total,
+		Limit:     params.Limit,
+	}
+
+	data, _ := json.MarshalIndent(output, "", "  ")
 	return textResult(string(data))
 }

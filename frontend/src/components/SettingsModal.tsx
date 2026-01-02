@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
 import { X, Database, Bot, Palette } from 'lucide-react';
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
+import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { getStrings } from '../constants/strings';
 import type { EmbeddingConfig, RAGStatus } from '../types/settings';
 import { AppearancePanel } from './settings/AppearancePanel';
-import { KnowledgePanel } from './settings/KnowledgePanel';
+import { KnowledgePanel, ReindexProgress } from './settings/KnowledgePanel';
 import { EmbeddingPanel } from './settings/EmbeddingPanel';
+import { useToast } from './Toast';
 import './SettingsModal.css';
 
 interface SettingsModalProps {
@@ -18,6 +20,7 @@ type SettingsTab = 'appearance' | 'knowledge' | 'embedding';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
+    const { showToast } = useToast();
     const STRINGS = getStrings(language);
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +42,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         lastIndexTime: '',
     });
     const [isRebuilding, setIsRebuilding] = useState(false);
+    const [rebuildProgress, setRebuildProgress] = useState<ReindexProgress | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalConfig, setOriginalConfig] = useState<EmbeddingConfig | null>(null);
@@ -48,6 +52,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         if (isOpen) {
             loadData();
         }
+    }, [isOpen]);
+
+    // 订阅索引状态更新事件，实时刷新状态
+    useEffect(() => {
+        if (!isOpen) return;
+        const unsubscribe = EventsOn('rag:status-updated', async () => {
+            try {
+                const statusData = await GetRAGStatus();
+                setStatus(statusData);
+            } catch (err) {
+                console.error('Failed to refresh RAG status:', err);
+            }
+        });
+        return () => unsubscribe();
     }, [isOpen]);
 
     const loadData = async () => {
@@ -99,8 +117,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 const statusData = await GetRAGStatus();
                 setStatus(statusData);
                 setActiveTab('knowledge');
-                // 显示提醒（使用简单的 alert，可后续优化为 toast）
-                alert(STRINGS.SETTINGS.MODEL_CHANGED);
+                // 显示模型变更提醒
+                showToast(STRINGS.SETTINGS.MODEL_CHANGED, 'warning');
             }
         } catch (err) {
             console.error('Failed to save config:', err);
@@ -112,6 +130,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     // 重建索引
     const handleRebuild = async () => {
         setIsRebuilding(true);
+        setRebuildProgress(null);
+
+        // 订阅进度事件
+        const unsubscribe = EventsOn('rag:reindex-progress', (progress: ReindexProgress) => {
+            setRebuildProgress(progress);
+        });
+
         try {
             await RebuildIndex();
             // 刷新状态
@@ -119,8 +144,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             setStatus(statusData);
         } catch (err) {
             console.error('Failed to rebuild index:', err);
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            showToast(`Rebuild index failed: ${errorMessage}`, 'error');
         } finally {
+            unsubscribe();
             setIsRebuilding(false);
+            setRebuildProgress(null);
         }
     };
 
@@ -187,6 +216,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 <KnowledgePanel
                                     status={status}
                                     isRebuilding={isRebuilding}
+                                    progress={rebuildProgress}
                                     onRebuild={handleRebuild}
                                     strings={STRINGS}
                                 />
