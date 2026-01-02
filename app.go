@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"notion-lite/handlers"
@@ -388,4 +389,50 @@ func (a *App) PrintHTML(htmlContent string, title string) error {
 
 func (a *App) FetchLinkMetadata(url string) (*opengraph.LinkMetadata, error) {
 	return a.fileHandler.FetchLinkMetadata(url)
+}
+
+// ========== MCP API ==========
+
+// MCPInfo MCP 配置信息
+type MCPInfo struct {
+	BinaryPath string `json:"binaryPath"`
+	ConfigJSON string `json:"configJson"`
+}
+
+// GetMCPInfo 获取 MCP 二进制路径和配置示例
+func (a *App) GetMCPInfo() MCPInfo {
+	// 获取可执行文件路径
+	execPath, err := os.Executable()
+	if err != nil {
+		return MCPInfo{}
+	}
+
+	// 根据平台确定 MCP 二进制路径
+	execDir := filepath.Dir(execPath)
+	var mcpPath string
+
+	// macOS: MCP 在 .app/Contents/Resources/nook-mcp
+	// Windows/Linux: MCP 与主程序同目录
+	if strings.HasSuffix(execDir, "Contents/MacOS") {
+		// macOS .app 包结构
+		appContents := filepath.Dir(execDir)
+		mcpPath = filepath.Join(appContents, "Resources", "nook-mcp")
+	} else {
+		mcpPath = filepath.Join(execDir, "nook-mcp")
+	}
+
+	// 生成 Claude Code 配置示例
+	configJSON := `{
+  "mcpServers": {
+    "nook": {
+      "command": "` + mcpPath + `",
+      "args": []
+    }
+  }
+}`
+
+	return MCPInfo{
+		BinaryPath: mcpPath,
+		ConfigJSON: configJSON,
+	}
 }

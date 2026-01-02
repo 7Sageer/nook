@@ -4,6 +4,7 @@ import {document} from '../models';
 import {opengraph} from '../models';
 import {handlers} from '../models';
 import {rag} from '../models';
+import {main} from '../models';
 import {markdown} from '../models';
 
 export function AddDocumentTag(arg1:string,arg2:string):Promise<void>;
@@ -29,6 +30,8 @@ export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 export function GetDocumentList():Promise<document.Index>;
 
 export function GetExternalBlockContent(arg1:string,arg2:string):Promise<rag.ExternalBlockContent>;
+
+export function GetMCPInfo():Promise<main.MCPInfo>;
 
 export function GetPinnedTags():Promise<Array<handlers.TagInfo>>;
 

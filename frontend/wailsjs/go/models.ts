@@ -256,6 +256,25 @@ export namespace handlers {
 
 }
 
+export namespace main {
+	
+	export class MCPInfo {
+	    binaryPath: string;
+	    configJson: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MCPInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.binaryPath = source["binaryPath"];
+	        this.configJson = source["configJson"];
+	    }
+	}
+
+}
+
 export namespace markdown {
 	
 	export class ImportResult {

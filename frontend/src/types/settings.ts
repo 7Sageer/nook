@@ -21,3 +21,11 @@ export interface RAGStatus {
     totalDocs: number;
     lastIndexTime: string;
 }
+
+/**
+ * MCP server information
+ */
+export interface MCPInfo {
+    binaryPath: string;
+    configJson: string;
+}

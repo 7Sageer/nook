@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
-import { X, Database, Bot, Palette } from 'lucide-react';
-import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex } from '../../wailsjs/go/main/App';
+import { X, Database, Bot, Palette, Terminal } from 'lucide-react';
+import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex, GetMCPInfo } from '../../wailsjs/go/main/App';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { getStrings } from '../constants/strings';
-import type { EmbeddingConfig, RAGStatus } from '../types/settings';
+import type { EmbeddingConfig, RAGStatus, MCPInfo } from '../types/settings';
 import { AppearancePanel } from './settings/AppearancePanel';
 import { KnowledgePanel, ReindexProgress } from './settings/KnowledgePanel';
 import { EmbeddingPanel } from './settings/EmbeddingPanel';
+import { MCPPanel } from './settings/MCPPanel';
 import { useToast } from './Toast';
 import './SettingsModal.css';
 
@@ -16,7 +17,7 @@ interface SettingsModalProps {
     onClose: () => void;
 }
 
-type SettingsTab = 'appearance' | 'knowledge' | 'embedding';
+type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
@@ -46,6 +47,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [isSaving, setIsSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalConfig, setOriginalConfig] = useState<EmbeddingConfig | null>(null);
+    const [mcpInfo, setMcpInfo] = useState<MCPInfo>({ binaryPath: '', configJson: '' });
 
     // 加载配置和状态
     useEffect(() => {
@@ -70,13 +72,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
     const loadData = async () => {
         try {
-            const [configData, statusData] = await Promise.all([
+            const [configData, statusData, mcpData] = await Promise.all([
                 GetRAGConfig(),
                 GetRAGStatus(),
+                GetMCPInfo(),
             ]);
             setConfig(configData);
             setOriginalConfig(configData);
             setStatus(statusData);
+            setMcpInfo(mcpData);
             setHasChanges(false);
         } catch (err) {
             console.error('Failed to load settings:', err);
@@ -197,6 +201,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             <Bot size={18} />
                             <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
                         </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('mcp')}
+                        >
+                            <Terminal size={18} />
+                            <span>{STRINGS.MCP.TITLE}</span>
+                        </button>
                     </nav>
 
                     {/* 主内容区域 (包含内容和底部按钮) */}
@@ -225,6 +236,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 <EmbeddingPanel
                                     config={config}
                                     onChange={handleConfigChange}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'mcp' && (
+                                <MCPPanel
+                                    mcpInfo={mcpInfo}
                                     strings={STRINGS}
                                 />
                             )}

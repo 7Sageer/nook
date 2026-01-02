@@ -112,7 +112,25 @@ export const EN = {
         THEME_DARK: "Dark",
         THEME_SYSTEM: "Follow System",
         SIDEBAR_WIDTH: "Sidebar Width",
-    }
+    },
+
+    MCP: {
+        TITLE: "MCP Integration",
+        DESCRIPTION: "Nook provides an MCP (Model Context Protocol) server that allows AI assistants like Claude Code to access your notes.",
+        BINARY_PATH: "MCP Binary Path",
+        CONFIG_EXAMPLE: "Claude Code Configuration",
+        CONFIG_HINT: "Add the following to your Claude Code settings (~/.claude.json or project .mcp.json):",
+        COPY_PATH: "Copy Path",
+        COPY_CONFIG: "Copy Config",
+        COPIED: "Copied!",
+        FEATURES: "Features",
+        FEATURE_LIST: [
+            "Search and read your documents",
+            "Create and update notes",
+            "Semantic search with RAG",
+            "Manage tags and organization",
+        ],
+    },
 };
 
 
