@@ -148,17 +148,22 @@ func main() {
 	})
 
 	// Create application with options
-	// Windows下隐藏菜单栏 (保留macOS菜单)
-	var finalMenu *menu.Menu = nil
-	if goruntime.GOOS == "darwin" {
+	// Windows 使用无边框模式 + 自定义窗口控件
+	// macOS 使用 TitleBarHiddenInset 保留交通灯按钮和圆角
+	var finalMenu *menu.Menu
+	var frameless bool
+	switch goruntime.GOOS {
+	case "darwin":
 		finalMenu = AppMenu
+	case "windows":
+		frameless = true
 	}
 
 	err := wails.Run(&options.App{
 		Title:     constant.AppTitle,
 		Width:     1200,
 		Height:    800,
-		Frameless: true,
+		Frameless: frameless,
 		Menu:      finalMenu,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,

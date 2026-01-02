@@ -92,6 +92,14 @@ func (s *Service) SearchDocuments(query string, limit int) ([]DocumentSearchResu
 	return s.searcher.SearchDocuments(query, limit)
 }
 
+// FindRelatedDocuments 查找相关文档（基于内容片段的 chunk → doc 推荐）
+func (s *Service) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+	return s.searcher.FindRelatedDocuments(content, limit, excludeDocID)
+}
+
 // ReindexAll 重建所有文档索引
 func (s *Service) ReindexAll() (int, error) {
 	if err := s.init(); err != nil {

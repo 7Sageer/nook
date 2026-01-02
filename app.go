@@ -231,6 +231,10 @@ func (a *App) SemanticSearchDocuments(query string, limit int) ([]handlers.Docum
 	return a.searchHandler.SemanticSearchDocuments(query, limit)
 }
 
+func (a *App) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]handlers.DocumentSearchResult, error) {
+	return a.searchHandler.FindRelatedDocuments(content, limit, excludeDocID)
+}
+
 // ========== RAG API (委托给 RAGHandler) ==========
 
 func (a *App) GetRAGConfig() (handlers.EmbeddingConfig, error) {

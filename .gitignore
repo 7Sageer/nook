@@ -90,5 +90,3 @@ notion-lite
 .agent/
 nook-mcp
 scripts/include/
-frontend/wailsjs/go/main/App.d.ts
-frontend/wailsjs/go/main/App.js

@@ -168,6 +168,96 @@ func (s *Searcher) SearchDocuments(query string, limit int) ([]DocumentSearchRes
 	return output, nil
 }
 
+// FindRelatedDocuments 根据内容片段查找相关文档（chunk → doc 推荐）
+// content: 当前选中的内容/块文本
+// limit: 返回的文档数量上限
+// excludeDocID: 排除的文档 ID（当前文档，避免推荐自己）
+func (s *Searcher) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
+	// 1. 生成内容向量
+	contentVec, err := s.embedder.Embed(content)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 扩大召回量以确保覆盖更多文档（因为要排除当前文档）
+	expandedLimit := limit * 8
+	if expandedLimit < 30 {
+		expandedLimit = 30
+	}
+
+	results, err := s.store.Search(contentVec, expandedLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. 获取文档标题映射
+	index, _ := s.docRepo.GetAll()
+	titleMap := make(map[string]string)
+	for _, doc := range index.Documents {
+		titleMap[doc.ID] = doc.Title
+	}
+
+	// 4. 按 DocID 聚合 chunks，排除当前文档
+	docMap := make(map[string]*DocumentSearchResult)
+	for _, r := range results {
+		// 排除当前文档
+		if r.DocID == excludeDocID {
+			continue
+		}
+
+		score := 1 - r.Distance // 距离转相似度
+
+		chunk := ChunkMatch{
+			BlockID:        r.BlockID,
+			SourceBlockId:  getSourceBlockId(r),
+			Content:        r.Content,
+			BlockType:      r.BlockType,
+			HeadingContext: r.HeadingContext,
+			Score:          score,
+		}
+
+		if doc, exists := docMap[r.DocID]; exists {
+			doc.MatchedChunks = append(doc.MatchedChunks, chunk)
+			if score > doc.MaxScore {
+				doc.MaxScore = score
+			}
+		} else {
+			docMap[r.DocID] = &DocumentSearchResult{
+				DocID:         r.DocID,
+				DocTitle:      titleMap[r.DocID],
+				MaxScore:      score,
+				MatchedChunks: []ChunkMatch{chunk},
+			}
+		}
+	}
+
+	// 5. 转换为切片并按 MaxScore 排序
+	output := make([]DocumentSearchResult, 0, len(docMap))
+	for _, doc := range docMap {
+		// 对每个文档内的 chunks 按分数排序
+		sort.Slice(doc.MatchedChunks, func(i, j int) bool {
+			return doc.MatchedChunks[i].Score > doc.MatchedChunks[j].Score
+		})
+		// 限制每个文档最多返回 3 个 chunks
+		if len(doc.MatchedChunks) > 3 {
+			doc.MatchedChunks = doc.MatchedChunks[:3]
+		}
+		output = append(output, *doc)
+	}
+
+	// 按 MaxScore 降序排序
+	sort.Slice(output, func(i, j int) bool {
+		return output[i].MaxScore > output[j].MaxScore
+	})
+
+	// 限制返回数量
+	if len(output) > limit {
+		output = output[:limit]
+	}
+
+	return output, nil
+}
+
 // uuidPattern 匹配 UUID 格式（支持大小写）
 var uuidPattern = regexp.MustCompile(`(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
 

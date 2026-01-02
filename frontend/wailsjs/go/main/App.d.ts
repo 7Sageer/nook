@@ -25,6 +25,8 @@ export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function FetchLinkMetadata(arg1:string):Promise<opengraph.LinkMetadata>;
 
+export function FindRelatedDocuments(arg1:string,arg2:number,arg3:string):Promise<Array<handlers.DocumentSearchResult>>;
+
 export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetDocumentList():Promise<document.Index>;

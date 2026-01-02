@@ -8,6 +8,7 @@ import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
 import { SearchProvider, useSearchContext } from "./contexts/SearchContext";
+import { RelatedDocumentsProvider, useRelatedDocuments } from "./contexts/RelatedDocumentsContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SettingsModal } from "./components/SettingsModal";
 import { ToastProvider } from "./components/Toast";
@@ -134,6 +135,9 @@ function AppContent() {
 
   // 搜索上下文 - 用于 Cmd+K 选中文本填充
   const { setQueryWithFocus } = useSearchContext();
+
+  // 相关文档上下文
+  const { relatedView, exitRelatedView } = useRelatedDocuments();
 
   // 区域 refs（用于焦点管理）
   const sidebarRef = useRef<HTMLElement>(null);
@@ -290,6 +294,8 @@ function AppContent() {
         onSelectInternal={handleSwitchToInternal}
         onSelectExternal={handleSwitchToExternal}
         onCloseExternal={closeExternal}
+        relatedView={relatedView}
+        onExitRelatedView={exitRelatedView}
       />
       <EditorContainer
         content={content}
@@ -326,9 +332,11 @@ function App() {
         <DocumentProvider>
           <ExternalFileProvider>
             <SearchProvider>
-              <ToastProvider>
-                <AppContent />
-              </ToastProvider>
+              <RelatedDocumentsProvider>
+                <ToastProvider>
+                  <AppContent />
+                </ToastProvider>
+              </RelatedDocumentsProvider>
             </SearchProvider>
           </ExternalFileProvider>
         </DocumentProvider>

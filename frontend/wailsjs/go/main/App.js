@@ -38,6 +38,10 @@ export function FetchLinkMetadata(arg1) {
   return window['go']['main']['App']['FetchLinkMetadata'](arg1);
 }
 
+export function FindRelatedDocuments(arg1, arg2, arg3) {
+  return window['go']['main']['App']['FindRelatedDocuments'](arg1, arg2, arg3);
+}
+
 export function GetAllTags() {
   return window['go']['main']['App']['GetAllTags']();
 }

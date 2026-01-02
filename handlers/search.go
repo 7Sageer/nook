@@ -147,3 +147,41 @@ func (h *SearchHandler) SemanticSearchDocuments(query string, limit int) ([]Docu
 	}
 	return output, nil
 }
+
+// FindRelatedDocuments 查找相关文档（基于内容片段）
+func (h *SearchHandler) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
+	if h.ragService == nil {
+		return nil, fmt.Errorf("RAG service not initialized")
+	}
+	// 默认限制 5 条
+	if limit <= 0 {
+		limit = 5
+	}
+	results, err := h.ragService.FindRelatedDocuments(content, limit, excludeDocID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为前端兼容的类型
+	output := make([]DocumentSearchResult, len(results))
+	for i, r := range results {
+		chunks := make([]ChunkMatch, len(r.MatchedChunks))
+		for j, c := range r.MatchedChunks {
+			chunks[j] = ChunkMatch{
+				BlockID:        c.BlockID,
+				SourceBlockId:  c.SourceBlockId,
+				Content:        c.Content,
+				BlockType:      c.BlockType,
+				HeadingContext: c.HeadingContext,
+				Score:          c.Score,
+			}
+		}
+		output[i] = DocumentSearchResult{
+			DocID:         r.DocID,
+			DocTitle:      r.DocTitle,
+			MaxScore:      r.MaxScore,
+			MatchedChunks: chunks,
+		}
+	}
+	return output, nil
+}

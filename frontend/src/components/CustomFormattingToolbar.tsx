@@ -4,6 +4,7 @@ import {
     useSelectedBlocks,
     useBlockNoteEditor,
     useComponentsContext,
+    getFormattingToolbarItems,
 } from "@blocknote/react";
 import {
     ExternalLink,
@@ -11,6 +12,7 @@ import {
     Eye,
     Pencil,
     Trash2,
+    Sparkles,
 } from "lucide-react";
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 import {
@@ -19,10 +21,89 @@ import {
     GetExternalBlockContent,
 } from "../../wailsjs/go/main/App";
 import { useDocumentContext } from "../contexts/DocumentContext";
+import { useRelatedDocuments } from "../contexts/RelatedDocumentsContext";
 import { useState } from "react";
 import { ContentViewerModal } from "./ContentViewerModal";
 
 // ========== 通用按钮组件（使用 BlockNote 原生 Button 组件） ==========
+
+// 查找相关文档按钮
+function FindRelatedButton() {
+    const editor = useBlockNoteEditor();
+    const selectedBlocks = useSelectedBlocks();
+    const Components = useComponentsContext()!;
+    const { activeId } = useDocumentContext();
+    const { findRelated } = useRelatedDocuments();
+
+    const handleClick = () => {
+        // 获取当前选中的文本或当前块的内容
+        const selectedText = editor.getSelectedText?.() || '';
+
+        if (selectedText.trim()) {
+            // 如果有选中文本，使用选中的文本
+            findRelated(selectedText.trim(), activeId || '');
+            return;
+        }
+
+        // 对于选中的块，尝试获取内容
+        if (selectedBlocks.length > 0) {
+            const block = selectedBlocks[0];
+
+            // 特殊处理 bookmark 和 file 区块（它们的 content 是 "none"）
+            if (block.type === 'bookmark') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const props = block.props as any;
+                // 使用 title 和 description 组合作为搜索内容
+                const searchContent = [props.title, props.description]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim();
+                if (searchContent) {
+                    findRelated(searchContent, activeId || '');
+                    return;
+                }
+                // 如果没有 title/description，使用 url
+                if (props.url) {
+                    findRelated(props.url, activeId || '');
+                    return;
+                }
+            }
+
+            if (block.type === 'file') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const props = block.props as any;
+                // 使用 fileName 作为搜索内容
+                if (props.fileName) {
+                    findRelated(props.fileName, activeId || '');
+                    return;
+                }
+            }
+
+            // 对于普通块，尝试获取 inline content
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const content = (block as any).content;
+            if (Array.isArray(content)) {
+                const text = content
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .map((c: any) => c.text || '')
+                    .join('')
+                    .trim();
+                if (text) {
+                    findRelated(text, activeId || '');
+                }
+            }
+        }
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Find Related Documents"
+            onClick={handleClick}
+            icon={<Sparkles size={18} />}
+            label="Find Related"
+        />
+    );
+}
 
 // 编辑书签按钮 - 清空 URL 触发编辑模式
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -195,6 +276,7 @@ function FileBlockToolbar() {
                 />
             )}
             <DeleteBlockButton block={block} />
+            <FindRelatedButton />
             <TextAlignButton textAlignment="left" />
             <TextAlignButton textAlignment="center" />
             <TextAlignButton textAlignment="right" />
@@ -255,6 +337,7 @@ function BookmarkBlockToolbar() {
             )}
             <EditBookmarkButton block={block} />
             <DeleteBlockButton block={block} />
+            <FindRelatedButton />
             <TextAlignButton textAlignment="left" />
             <TextAlignButton textAlignment="center" />
             <TextAlignButton textAlignment="right" />
@@ -276,21 +359,24 @@ function BookmarkBlockToolbar() {
 export function CustomFormattingToolbar() {
     const selectedBlocks = useSelectedBlocks();
 
-    if (selectedBlocks.length !== 1) {
-        // 多选或无选中时，使用默认工具栏行为
-        return <FormattingToolbar />;
+    // 单块选中时，检查特殊块类型
+    if (selectedBlocks.length === 1) {
+        const block = selectedBlocks[0];
+
+        if (block.type === "file") {
+            return <FileBlockToolbar />;
+        }
+
+        if (block.type === "bookmark") {
+            return <BookmarkBlockToolbar />;
+        }
     }
 
-    const block = selectedBlocks[0];
-
-    if (block.type === "file") {
-        return <FileBlockToolbar />;
-    }
-
-    if (block.type === "bookmark") {
-        return <BookmarkBlockToolbar />;
-    }
-
-    // 其他块类型使用默认工具栏
-    return <FormattingToolbar />;
+    // 所有其他情况（包括多选、拖动选择等）：默认工具栏 + 查找相关按钮
+    return (
+        <FormattingToolbar>
+            {...getFormattingToolbarItems()}
+            <FindRelatedButton />
+        </FormattingToolbar>
+    );
 }
