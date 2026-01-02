@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Plus, PanelLeftClose, PanelLeft, FileText, FolderPlus, Cog } from 'lucide-react';
+import { WindowControls } from './WindowControls';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -62,8 +63,32 @@ export function WindowToolbar({
     };
 
     // 同时渲染两种状态，用 CSS 控制过渡动画
+    const [isWindows, setIsWindows] = useState(false);
+
+    useEffect(() => {
+        // Check OS
+        window.go?.main?.App?.GetOS().then((os: string) => {
+            setIsWindows(os === 'windows');
+        });
+    }, []);
+
     return (
         <div className={`window-toolbar ${theme} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
+            {/* Window Controls (Top Right) - Only for Windows */}
+            {isWindows && (
+                <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    zIndex: 9999,
+                    height: '100%',
+                    pointerEvents: 'auto',
+                    WebkitAppRegion: 'no-drag'
+                } as React.CSSProperties}>
+                    <WindowControls theme={theme} />
+                </div>
+            )}
+
             {/* 展开状态：侧边栏顶部的工具栏 */}
             <div className={`toolbar-drag-region toolbar-expanded ${sidebarCollapsed ? 'hidden' : ''}`}>
                 <div className="toolbar-buttons">

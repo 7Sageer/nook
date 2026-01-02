@@ -148,11 +148,18 @@ func main() {
 	})
 
 	// Create application with options
+	// Windows下隐藏菜单栏 (保留macOS菜单)
+	var finalMenu *menu.Menu = nil
+	if goruntime.GOOS == "darwin" {
+		finalMenu = AppMenu
+	}
+
 	err := wails.Run(&options.App{
-		Title:  constant.AppTitle,
-		Width:  1200,
-		Height: 800,
-		Menu:   AppMenu,
+		Title:     constant.AppTitle,
+		Width:     1200,
+		Height:    800,
+		Frameless: true,
+		Menu:      finalMenu,
 		AssetServer: &assetserver.Options{
 			Assets:  assets,
 			Handler: NewImageHandler(),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	stdruntime "runtime"
 	"strings"
 	"sync"
 
@@ -435,4 +436,9 @@ func (a *App) GetMCPInfo() MCPInfo {
 		BinaryPath: mcpPath,
 		ConfigJSON: configJSON,
 	}
+}
+
+// GetOS returns the current operating system
+func (a *App) GetOS() string {
+	return stdruntime.GOOS
 }

@@ -54,6 +54,10 @@ export function GetMCPInfo() {
   return window['go']['main']['App']['GetMCPInfo']();
 }
 
+export function GetOS() {
+  return window['go']['main']['App']['GetOS']();
+}
+
 export function GetPinnedTags() {
   return window['go']['main']['App']['GetPinnedTags']();
 }

@@ -1,0 +1,44 @@
+/* ========== WindowControls ========== */
+.window-controls {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    margin-left: auto; /* Push to the right */
+    -webkit-app-region: no-drag; /* Buttons must be clickable */
+}
+
+.window-control-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px; /* Standard Windows button width */
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: background-color 0.1s;
+    cursor: default;
+    border-radius: 0; /* No rounded corners for window controls usually */
+}
+
+/* Minimize & Maximize hover */
+.window-control-btn.minimize:hover,
+.window-control-btn.maximize:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Close button hover - standard Windows red */
+.window-control-btn.close:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+/* Active states */
+.window-control-btn:active {
+    opacity: 0.8;
+}
+
+.window-control-btn svg {
+    pointer-events: none;
+}

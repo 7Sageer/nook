@@ -6,6 +6,7 @@
 
 /* 组件样式 */
 @import './components/WindowToolbar.css';
+@import './components/WindowControls.css';
 @import './components/Sidebar.css';
 @import './components/DocumentList.css';
 @import './components/PinnedTagItem.css';

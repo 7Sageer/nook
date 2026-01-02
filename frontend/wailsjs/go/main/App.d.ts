@@ -33,6 +33,8 @@ export function GetExternalBlockContent(arg1:string,arg2:string):Promise<rag.Ext
 
 export function GetMCPInfo():Promise<main.MCPInfo>;
 
+export function GetOS():Promise<string>;
+
 export function GetPinnedTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetRAGConfig():Promise<rag.EmbeddingConfig>;
