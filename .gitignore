@@ -89,3 +89,4 @@ build/
 notion-lite
 .agent/
 nook-mcp
+scripts/include/
