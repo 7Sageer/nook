@@ -79,6 +79,31 @@ func (s *VectorStore) initSchema() error {
 		return err
 	}
 
+	// 创建配置表（存储维度等元信息）
+	_, err = s.db.Exec(`
+		CREATE TABLE IF NOT EXISTS vec_config (
+			key TEXT PRIMARY KEY,
+			value TEXT
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// 检查已存储的维度是否与当前模型匹配
+	var storedDimStr string
+	row := s.db.QueryRow("SELECT value FROM vec_config WHERE key = 'dimension'")
+	if err := row.Scan(&storedDimStr); err == nil {
+		var storedDim int
+		fmt.Sscanf(storedDimStr, "%d", &storedDim)
+		if storedDim > 0 && storedDim != s.dimension {
+			// 维度不匹配，需要重建向量表
+			fmt.Printf("⚠️ [RAG] Dimension mismatch: stored=%d, model=%d. Rebuilding vector index...\n", storedDim, s.dimension)
+			_, _ = s.db.Exec("DROP TABLE IF EXISTS vec_blocks")
+			_, _ = s.db.Exec("DELETE FROM block_vectors") // 清理元数据
+		}
+	}
+
 	// 添加新列（如果不存在，忽略错误）
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN content_hash TEXT`)
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
@@ -93,6 +118,12 @@ func (s *VectorStore) initSchema() error {
 		);
 	`, s.dimension)
 	_, err = s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	// 保存当前维度到配置表
+	_, err = s.db.Exec("INSERT OR REPLACE INTO vec_config (key, value) VALUES ('dimension', ?)", fmt.Sprintf("%d", s.dimension))
 	return err
 }
 

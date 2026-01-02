@@ -118,10 +118,10 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 >
                     {indexing ? (
                         <Loader2 size={14} className="animate-spin" />
-                    ) : indexed ? (
-                        <Check size={14} />
                     ) : indexError ? (
                         <AlertCircle size={14} />
+                    ) : indexed ? (
+                        <Check size={14} />
                     ) : (
                         <RefreshCw size={14} />
                     )}

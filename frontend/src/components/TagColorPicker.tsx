@@ -1,5 +1,5 @@
 import { memo, useCallback, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+
 import './TagColorPicker.css';
 
 // Predefined tag color palette - soft, harmonious colors
@@ -53,7 +53,7 @@ export const TagColorPicker = memo(function TagColorPicker({
         onClose();
     }, [tagName, onSelectColor, onClose]);
 
-    return createPortal(
+    return (
         <div
             ref={ref}
             className="tag-color-picker"
@@ -84,7 +84,6 @@ export const TagColorPicker = memo(function TagColorPicker({
                     ×
                 </button>
             </div>
-        </div>,
-        document.body
+        </div>
     );
 });

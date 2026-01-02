@@ -27,11 +27,18 @@ type FileBlockInfo struct {
 	FilePath string // 文件路径（如 /files/xxx.pdf）
 }
 
+// BookmarkBlockInfo bookmark 块信息（包含 ID 和 URL）
+type BookmarkBlockInfo struct {
+	BlockID string // BlockNote 块 ID
+	URL     string // 书签 URL
+}
+
 // ExternalBlockIDs 外部块（bookmark/file）的 ID 集合
 type ExternalBlockIDs struct {
-	BookmarkIDs []string
-	FileIDs     []string        // 兼容旧接口
-	FileBlocks  []FileBlockInfo // 包含文件路径的完整信息
+	BookmarkIDs    []string            // 兼容旧接口
+	BookmarkBlocks []BookmarkBlockInfo // 包含 URL 的完整信息
+	FileIDs        []string            // 兼容旧接口
+	FileBlocks     []FileBlockInfo     // 包含文件路径的完整信息
 }
 
 // ExtractExternalBlockIDs 一次解析提取所有外部块（bookmark/file）的 ID
@@ -56,6 +63,17 @@ func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs)
 					switch blockType {
 					case "bookmark":
 						result.BookmarkIDs = append(result.BookmarkIDs, id)
+						// 提取书签 URL
+						url := ""
+						if props, ok := blockMap["props"].(map[string]interface{}); ok {
+							if u, ok := props["url"].(string); ok {
+								url = u
+							}
+						}
+						result.BookmarkBlocks = append(result.BookmarkBlocks, BookmarkBlockInfo{
+							BlockID: id,
+							URL:     url,
+						})
 					case "file":
 						result.FileIDs = append(result.FileIDs, id)
 						// 提取文件路径

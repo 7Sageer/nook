@@ -107,26 +107,16 @@ func (s *Service) DeleteDocument(docID string) error {
 
 // GetIndexedCount 获取已索引的文档数量
 func (s *Service) GetIndexedCount() (int, error) {
-	if s.store == nil {
-		dbPath := filepath.Join(s.dataPath, "vectors.db")
-		store, err := NewVectorStore(dbPath, 768) // 默认维度
-		if err != nil {
-			return 0, nil // 数据库不存在，返回 0
-		}
-		s.store = store
+	if err := s.init(); err != nil {
+		return 0, nil // 初始化失败，返回 0
 	}
 	return s.store.GetIndexedDocCount()
 }
 
 // GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
 func (s *Service) GetIndexedStats() (int, int, int, error) {
-	if s.store == nil {
-		dbPath := filepath.Join(s.dataPath, "vectors.db")
-		store, err := NewVectorStore(dbPath, 768) // 默认维度
-		if err != nil {
-			return 0, 0, 0, nil // 数据库不存在，返回 0
-		}
-		s.store = store
+	if err := s.init(); err != nil {
+		return 0, 0, 0, nil // 初始化失败，返回 0
 	}
 	return s.store.GetIndexedStats()
 }
@@ -165,9 +155,13 @@ func (s *Service) Reinitialize() error {
 	}
 	newDimension := newEmbedder.Dimension()
 
+	// 检查维度是否变化
+	dimensionChanged := oldDimension > 0 && oldDimension != newDimension
+
 	// 如果维度变化，删除旧的向量数据库
-	if oldDimension > 0 && oldDimension != newDimension {
+	if dimensionChanged {
 		dbPath := filepath.Join(s.dataPath, "vectors.db")
+		fmt.Printf("🔄 [RAG] Dimension changed (%d → %d), removing old database...\n", oldDimension, newDimension)
 		if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
 			fmt.Printf("⚠️ [RAG] Failed to remove old database: %v\n", err)
 		}
@@ -186,7 +180,79 @@ func (s *Service) Reinitialize() error {
 	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage, s.dataPath)
 	s.searcher = NewSearcher(store, s.embedder, s.docRepo)
 
+	// 如果维度变化，自动触发全量重建索引（包括 bookmark 和 file 块）
+	if dimensionChanged {
+		go func() {
+			fmt.Println("🔄 [RAG] Starting automatic reindex due to dimension change...")
+			if count, err := s.ReindexAll(); err != nil {
+				fmt.Printf("⚠️ [RAG] ReindexAll failed: %v\n", err)
+			} else {
+				fmt.Printf("✅ [RAG] Reindexed %d documents\n", count)
+			}
+			if extCount, err := s.ReindexExternalContent(); err != nil {
+				fmt.Printf("⚠️ [RAG] ReindexExternalContent failed: %v\n", err)
+			} else {
+				fmt.Printf("✅ [RAG] Reindexed %d external blocks (bookmarks + files)\n", extCount)
+			}
+		}()
+	}
+
 	return nil
+}
+
+// ReindexExternalContent 重新索引所有 bookmark 和 file 块
+// 遍历所有文档，提取 bookmark/file 块信息，然后重新抓取和索引
+func (s *Service) ReindexExternalContent() (int, error) {
+	if err := s.init(); err != nil {
+		return 0, err
+	}
+
+	// 获取所有文档
+	index, err := s.docRepo.GetAll()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get documents: %w", err)
+	}
+
+	totalCount := 0
+	for _, doc := range index.Documents {
+		// 加载文档内容
+		content, err := s.docStorage.Load(doc.ID)
+		if err != nil {
+			fmt.Printf("⚠️ [RAG] Failed to load document %s: %v\n", doc.ID, err)
+			continue
+		}
+
+		// 提取外部块信息
+		externalIDs := ExtractExternalBlockIDs([]byte(content))
+
+		// 重新索引 bookmark 块
+		for _, bookmark := range externalIDs.BookmarkBlocks {
+			if bookmark.URL == "" {
+				continue
+			}
+			if err := s.IndexBookmarkContent(bookmark.URL, doc.ID, bookmark.BlockID); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex bookmark %s: %v\n", bookmark.BlockID, err)
+			} else {
+				totalCount++
+				fmt.Printf("✅ [RAG] Reindexed bookmark: %s\n", bookmark.URL)
+			}
+		}
+
+		// 重新索引 file 块
+		for _, file := range externalIDs.FileBlocks {
+			if file.FilePath == "" {
+				continue
+			}
+			if err := s.IndexFileContent(file.FilePath, doc.ID, file.BlockID); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex file %s: %v\n", file.BlockID, err)
+			} else {
+				totalCount++
+				fmt.Printf("✅ [RAG] Reindexed file: %s\n", file.FilePath)
+			}
+		}
+	}
+
+	return totalCount, nil
 }
 
 // IndexBookmarkContent 索引书签网页内容（分块存储）

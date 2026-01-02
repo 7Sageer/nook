@@ -125,6 +125,11 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		// 需要更新：生成新的 Embedding
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			// 检查是否是不可恢复的错误（5xx 服务端错误）
+			if serviceErr, ok := IsEmbeddingServiceError(err); ok && serviceErr.IsUnrecoverable() {
+				fmt.Printf("❌ [RAG] Embedding service unavailable (status %d), aborting indexing\n", serviceErr.StatusCode)
+				return fmt.Errorf("embedding service unavailable: %w", err)
+			}
 			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
 			continue
 		}
@@ -230,6 +235,11 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 
 		embedding, err := idx.embedder.Embed(block.Content)
 		if err != nil {
+			// 检查是否是不可恢复的错误（5xx 服务端错误）
+			if serviceErr, ok := IsEmbeddingServiceError(err); ok && serviceErr.IsUnrecoverable() {
+				fmt.Printf("❌ [RAG] Embedding service unavailable (status %d), aborting reindexing\n", serviceErr.StatusCode)
+				return fmt.Errorf("embedding service unavailable: %w", err)
+			}
 			failedCount++
 			lastError = err
 			fmt.Printf("⚠️ [RAG] Failed to embed block %s: %v\n", block.ID, err)
