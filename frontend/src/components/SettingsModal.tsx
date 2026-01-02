@@ -54,6 +54,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         }
     }, [isOpen]);
 
+    // 订阅索引状态更新事件，实时刷新状态
+    useEffect(() => {
+        if (!isOpen) return;
+        const unsubscribe = EventsOn('rag:status-updated', async () => {
+            try {
+                const statusData = await GetRAGStatus();
+                setStatus(statusData);
+            } catch (err) {
+                console.error('Failed to refresh RAG status:', err);
+            }
+        });
+        return () => unsubscribe();
+    }, [isOpen]);
+
     const loadData = async () => {
         try {
             const [configData, statusData] = await Promise.all([

@@ -15,7 +15,7 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 	var result ToolCallResult
 	switch params.Name {
 	case "list_documents":
-		result = s.toolListDocuments()
+		result = s.toolListDocuments(params.Arguments)
 	case "get_document":
 		result = s.toolGetDocument(params.Arguments)
 	case "create_document":

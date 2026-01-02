@@ -128,12 +128,20 @@ func (h *RAGHandler) RebuildIndex() (int, error) {
 
 // IndexBookmarkContent 索引书签网页内容
 func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) error {
-	return h.ragService.IndexBookmarkContent(url, sourceDocID, blockID)
+	err := h.ragService.IndexBookmarkContent(url, sourceDocID, blockID)
+	if err == nil && h.ctx != nil {
+		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	}
+	return err
 }
 
 // IndexFileContent 索引文件内容
 func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID string) error {
-	return h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
+	err := h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
+	if err == nil && h.ctx != nil {
+		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	}
+	return err
 }
 
 // ExternalBlockContent 外部块完整内容（前端用）

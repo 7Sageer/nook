@@ -5,7 +5,13 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		{
 			Name:        "list_documents",
 			Description: "List all documents in Nook with their metadata (id, title, tags, timestamps)",
-			InputSchema: InputSchema{Type: "object"},
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"offset": {Type: "number", Description: "Skip first N documents (default: 0)"},
+					"limit":  {Type: "number", Description: "Maximum documents to return (default: 50, max: 100)"},
+				},
+			},
 		},
 		{
 			Name:        "get_document",
@@ -71,6 +77,7 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Type: "object",
 				Properties: map[string]Property{
 					"query": {Type: "string", Description: "Search query"},
+					"limit": {Type: "number", Description: "Maximum results to return (default: 20, max: 50)"},
 				},
 				Required: []string{"query"},
 			},
@@ -167,7 +174,8 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"tag": {Type: "string", Description: "Tag name to filter by"},
+					"tag":   {Type: "string", Description: "Tag name to filter by"},
+					"limit": {Type: "number", Description: "Maximum results to return (default: 50, max: 100)"},
 				},
 				Required: []string{"tag"},
 			},

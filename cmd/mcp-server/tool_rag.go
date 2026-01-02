@@ -18,9 +18,9 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 	if params.Limit <= 0 {
 		params.Limit = 5
 	}
-	// if params.Limit > 20 {
-	// 	params.Limit = 20
-	// }
+	if params.Limit > 20 {
+		params.Limit = 20
+	}
 
 	// Default to document-level search
 	if params.Granularity == "" {
