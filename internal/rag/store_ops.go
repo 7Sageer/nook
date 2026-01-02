@@ -19,12 +19,10 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 		return err
 	}
 
-	// 更新向量
+	// 更新向量（sqlite-vec 虚拟表不支持 INSERT OR REPLACE，需要先删除再插入）
 	vecBytes := serializeVector(block.Embedding)
-	_, err = tx.Exec(`
-		INSERT OR REPLACE INTO vec_blocks (id, embedding)
-		VALUES (?, ?)
-	`, block.ID, vecBytes)
+	_, _ = tx.Exec(`DELETE FROM vec_blocks WHERE id = ?`, block.ID)
+	_, err = tx.Exec(`INSERT INTO vec_blocks (id, embedding) VALUES (?, ?)`, block.ID, vecBytes)
 	if err != nil {
 		return err
 	}

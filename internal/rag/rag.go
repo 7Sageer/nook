@@ -1,6 +1,7 @@
 package rag
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +14,7 @@ import (
 
 // Service RAG 服务统一入口
 type Service struct {
+	ctx        context.Context
 	dataPath   string
 	store      *VectorStore
 	indexer    *Indexer
@@ -95,6 +97,19 @@ func (s *Service) ReindexAll() (int, error) {
 		return 0, err
 	}
 	return s.indexer.ReindexAll()
+}
+
+// SetContext 设置 Wails 上下文（用于发送事件）
+func (s *Service) SetContext(ctx context.Context) {
+	s.ctx = ctx
+}
+
+// ReindexAllWithProgress 重建所有文档索引（带进度回调）
+func (s *Service) ReindexAllWithProgress(onProgress func(current, total int)) (int, error) {
+	if err := s.init(); err != nil {
+		return 0, err
+	}
+	return s.indexer.ReindexAllWithCallback(onProgress)
 }
 
 // DeleteDocument 删除文档的所有向量索引
@@ -253,6 +268,83 @@ func (s *Service) ReindexExternalContent() (int, error) {
 	}
 
 	return totalCount, nil
+}
+
+// ReindexExternalContentWithProgress 重新索引所有 bookmark 和 file 块（带进度回调）
+func (s *Service) ReindexExternalContentWithProgress(onProgress func(current, total int)) (int, error) {
+	if err := s.init(); err != nil {
+		return 0, err
+	}
+
+	// 获取所有文档并计算外部块总数
+	index, err := s.docRepo.GetAll()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get documents: %w", err)
+	}
+
+	// 先统计总数
+	var allExternalBlocks []struct {
+		docID    string
+		bookmark *BookmarkBlockInfo
+		file     *FileBlockInfo
+	}
+
+	for _, doc := range index.Documents {
+		content, err := s.docStorage.Load(doc.ID)
+		if err != nil {
+			continue
+		}
+		externalIDs := ExtractExternalBlockIDs([]byte(content))
+		for i := range externalIDs.BookmarkBlocks {
+			if externalIDs.BookmarkBlocks[i].URL != "" {
+				allExternalBlocks = append(allExternalBlocks, struct {
+					docID    string
+					bookmark *BookmarkBlockInfo
+					file     *FileBlockInfo
+				}{docID: doc.ID, bookmark: &externalIDs.BookmarkBlocks[i]})
+			}
+		}
+		for i := range externalIDs.FileBlocks {
+			if externalIDs.FileBlocks[i].FilePath != "" {
+				allExternalBlocks = append(allExternalBlocks, struct {
+					docID    string
+					bookmark *BookmarkBlockInfo
+					file     *FileBlockInfo
+				}{docID: doc.ID, file: &externalIDs.FileBlocks[i]})
+			}
+		}
+	}
+
+	total := len(allExternalBlocks)
+	if total == 0 {
+		return 0, nil
+	}
+
+	successCount := 0
+	for i, block := range allExternalBlocks {
+		// 发送进度
+		if onProgress != nil {
+			onProgress(i+1, total)
+		}
+
+		if block.bookmark != nil {
+			if err := s.IndexBookmarkContent(block.bookmark.URL, block.docID, block.bookmark.BlockID); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex bookmark %s: %v\n", block.bookmark.BlockID, err)
+			} else {
+				successCount++
+				fmt.Printf("✅ [RAG] Reindexed bookmark: %s\n", block.bookmark.URL)
+			}
+		} else if block.file != nil {
+			if err := s.IndexFileContent(block.file.FilePath, block.docID, block.file.BlockID); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex file %s: %v\n", block.file.BlockID, err)
+			} else {
+				successCount++
+				fmt.Printf("✅ [RAG] Reindexed file: %s\n", block.file.FilePath)
+			}
+		}
+	}
+
+	return successCount, nil
 }
 
 // IndexBookmarkContent 索引书签网页内容（分块存储）

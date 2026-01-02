@@ -96,6 +96,8 @@ export const EN = {
         LAST_UPDATE: "Last Update",
         REBUILD_INDEX: "Rebuild Index",
         REBUILDING: "Rebuilding...",
+        INDEXING_DOCUMENTS: "Indexing documents",
+        INDEXING_EXTERNAL: "Indexing external content",
         SAVING: "Saving...",
         PROVIDER: "Provider",
         BASE_URL: "Base URL",

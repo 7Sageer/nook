@@ -326,3 +326,58 @@ func (idx *Indexer) ReindexAll() (int, error) {
 
 	return count, nil
 }
+
+// ReindexAllWithCallback 重建所有文档索引（带进度回调）
+func (idx *Indexer) ReindexAllWithCallback(onProgress func(current, total int)) (int, error) {
+	index, err := idx.docRepo.GetAll()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get documents: %w", err)
+	}
+
+	// 构建现有文档 ID 集合
+	existingDocIDs := make(map[string]bool)
+	for _, doc := range index.Documents {
+		existingDocIDs[doc.ID] = true
+	}
+
+	// 清理已删除文档的孤儿块
+	indexedDocIDs, err := idx.store.GetAllDocIDs()
+	if err == nil {
+		for _, docID := range indexedDocIDs {
+			if !existingDocIDs[docID] {
+				if debugChunks {
+					fmt.Printf("🗑️ [RAG] Cleaning orphan blocks for deleted document: %s\n", docID)
+				}
+				if err := idx.store.DeleteByDocID(docID); err != nil {
+					fmt.Printf("⚠️ [RAG] Failed to delete blocks for doc %s: %v\n", docID, err)
+				}
+			}
+		}
+	}
+
+	// 重建索引
+	total := len(index.Documents)
+	count := 0
+	failedCount := 0
+	var lastError error
+	for i, doc := range index.Documents {
+		// 发送进度
+		if onProgress != nil {
+			onProgress(i+1, total)
+		}
+
+		if err := idx.ForceReindexDocument(doc.ID); err != nil {
+			failedCount++
+			lastError = err
+			continue // 跳过失败的文档
+		}
+		count++
+	}
+
+	// 如果所有文档都失败了，返回错误
+	if count == 0 && failedCount > 0 {
+		return 0, fmt.Errorf("all documents failed to index: %v", lastError)
+	}
+
+	return count, nil
+}

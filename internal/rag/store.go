@@ -95,7 +95,7 @@ func (s *VectorStore) initSchema() error {
 	row := s.db.QueryRow("SELECT value FROM vec_config WHERE key = 'dimension'")
 	if err := row.Scan(&storedDimStr); err == nil {
 		var storedDim int
-		fmt.Sscanf(storedDimStr, "%d", &storedDim)
+		_, _ = fmt.Sscanf(storedDimStr, "%d", &storedDim)
 		if storedDim > 0 && storedDim != s.dimension {
 			// 维度不匹配，需要重建向量表
 			fmt.Printf("⚠️ [RAG] Dimension mismatch: stored=%d, model=%d. Rebuilding vector index...\n", storedDim, s.dimension)

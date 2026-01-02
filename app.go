@@ -98,6 +98,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
 	a.fileHandler.SetContext(ctx)
+	a.ragHandler.SetContext(ctx)
 
 	// 一次性迁移：将文件夹转换为标签组
 	a.tagHandler.MigrateFoldersToTagGroups()

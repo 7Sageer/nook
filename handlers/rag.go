@@ -1,15 +1,33 @@
 package handlers
 
 import (
+	"context"
+
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+// ReindexProgress 重建索引进度信息
+type ReindexProgress struct {
+	Phase   string `json:"phase"`   // "documents" | "external"
+	Current int    `json:"current"` // 当前处理的索引
+	Total   int    `json:"total"`   // 总数
+}
 
 // RAGHandler RAG 配置与索引处理器
 type RAGHandler struct {
+	ctx        context.Context
 	dataPath   string
 	docRepo    *document.Repository
 	ragService *rag.Service
+}
+
+// SetContext 设置 Wails 上下文（用于发送事件）
+func (h *RAGHandler) SetContext(ctx context.Context) {
+	h.ragService.SetContext(ctx)
+	h.ctx = ctx
 }
 
 // NewRAGHandler 创建 RAG 处理器
@@ -75,9 +93,37 @@ func (h *RAGHandler) GetRAGStatus() RAGStatus {
 	}
 }
 
-// RebuildIndex 重建 RAG 索引
+// RebuildIndex 重建 RAG 索引（带进度通知）
 func (h *RAGHandler) RebuildIndex() (int, error) {
-	return h.ragService.ReindexAll()
+	// 文档索引阶段
+	docCount, err := h.ragService.ReindexAllWithProgress(func(current, total int) {
+		if h.ctx != nil {
+			runtime.EventsEmit(h.ctx, "rag:reindex-progress", ReindexProgress{
+				Phase:   "documents",
+				Current: current,
+				Total:   total,
+			})
+		}
+	})
+	if err != nil {
+		return docCount, err
+	}
+
+	// 外部内容索引阶段（书签和文件）
+	extCount, err := h.ragService.ReindexExternalContentWithProgress(func(current, total int) {
+		if h.ctx != nil {
+			runtime.EventsEmit(h.ctx, "rag:reindex-progress", ReindexProgress{
+				Phase:   "external",
+				Current: current,
+				Total:   total,
+			})
+		}
+	})
+	if err != nil {
+		return docCount + extCount, err
+	}
+
+	return docCount + extCount, nil
 }
 
 // IndexBookmarkContent 索引书签网页内容
