@@ -33,13 +33,13 @@ func (a *App) cleanupUnusedImages() {
 	referencedImages := make(map[string]bool)
 	imagePattern := regexp.MustCompile(`/images/([^"\s\]]+)`)
 
-	index, err := a.docRepo.GetAll()
+	index, err := a.documentHandler.GetDocumentList()
 	if err != nil {
 		return
 	}
 
 	for _, doc := range index.Documents {
-		content, err := a.docStorage.Load(doc.ID)
+		content, err := a.documentHandler.LoadDocumentContent(doc.ID)
 		if err != nil {
 			continue
 		}

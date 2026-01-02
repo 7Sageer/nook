@@ -24,18 +24,14 @@ import (
 
 // App struct
 type App struct {
-	ctx             context.Context
-	dataPath        string
-	docRepo         *document.Repository
-	docStorage      *document.Storage
-	searchService   *search.Service
-	settingsService *settings.Service
+	ctx      context.Context
+	dataPath string
+
+	// Services needed for startup/shutdown logic
 	markdownService *markdown.Service
 	watcherService  *watcher.Service
-	tagStore        *tag.Store
-	ragService      *rag.Service
 
-	// Handlers
+	// Handlers (the API boundary for Wails bindings)
 	documentHandler *handlers.DocumentHandler
 	searchHandler   *handlers.SearchHandler
 	ragHandler      *handlers.RAGHandler
@@ -55,6 +51,7 @@ func NewApp() *App {
 	_ = os.MkdirAll(dataPath, 0755)                             // 忽略错误
 	_ = os.MkdirAll(filepath.Join(dataPath, "documents"), 0755) // 忽略错误
 
+	// Create all services
 	docRepo := document.NewRepository(dataPath)
 	docStorage := document.NewStorage(dataPath)
 	folderRepo := folder.NewRepository(dataPath)
@@ -72,17 +69,11 @@ func NewApp() *App {
 
 	app := &App{
 		dataPath:        dataPath,
-		docRepo:         docRepo,
-		docStorage:      docStorage,
-		searchService:   searchService,
-		settingsService: settingsService,
 		markdownService: markdownService,
 		watcherService:  watcherService,
-		tagStore:        tagStore,
-		ragService:      ragService,
 	}
 
-	// 初始化 Handlers
+	// 初始化 Handlers (services are injected but not stored in App)
 	app.documentHandler = handlers.NewDocumentHandler(
 		dataPath, docRepo, docStorage, searchService, ragService, watcherService,
 	)
@@ -106,22 +97,10 @@ func (a *App) startup(ctx context.Context) {
 	a.tagHandler.MigrateFoldersToTagGroups()
 
 	// 启动文件监听服务
-	if a.watcherService != nil {
-		a.watcherService.OnDocumentChanged = func(e watcher.FileChangeEvent) {
-			if e.IsIndex {
-				return
-			}
-			switch e.Type {
-			case "create", "write", "rename":
-				content, err := a.docStorage.Load(e.DocID)
-				if err == nil {
-					a.searchService.UpdateIndex(e.DocID, content)
-				}
-			case "remove":
-				a.searchService.RemoveIndex(e.DocID)
-			}
-		}
+	// Delegate file change handling to DocumentHandler
+	a.documentHandler.SetupFileWatcher(a.documentHandler.OnExternalFileChange)
 
+	if a.watcherService != nil {
 		if err := a.watcherService.Start(ctx); err != nil {
 			runtime.LogError(ctx, "Failed to start file watcher: "+err.Error())
 		}
@@ -135,7 +114,7 @@ func (a *App) startup(ctx context.Context) {
 	})
 
 	// 异步构建搜索索引
-	go a.searchService.BuildIndex()
+	a.searchHandler.BuildSearchIndex()
 }
 
 // shutdown 应用关闭时调用

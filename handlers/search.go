@@ -185,3 +185,8 @@ func (h *SearchHandler) FindRelatedDocuments(content string, limit int, excludeD
 	}
 	return output, nil
 }
+
+// BuildSearchIndex 异步构建搜索索引（由 app.startup 调用）
+func (h *SearchHandler) BuildSearchIndex() {
+	go h.searchService.BuildIndex()
+}

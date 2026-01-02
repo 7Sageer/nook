@@ -154,3 +154,26 @@ func (h *DocumentHandler) scheduleIndex(docID string) {
 		}
 	})
 }
+
+// SetupFileWatcher 设置文件监听器回调（由 app.startup 调用）
+func (h *DocumentHandler) SetupFileWatcher(onFileChanged func(e watcher.FileChangeEvent)) {
+	if h.watcherService != nil {
+		h.watcherService.OnDocumentChanged = onFileChanged
+	}
+}
+
+// OnExternalFileChange 处理外部文件变更（由 file watcher 调用）
+func (h *DocumentHandler) OnExternalFileChange(e watcher.FileChangeEvent) {
+	if e.IsIndex {
+		return
+	}
+	switch e.Type {
+	case "create", "write", "rename":
+		content, err := h.docStorage.Load(e.DocID)
+		if err == nil {
+			h.searchService.UpdateIndex(e.DocID, content)
+		}
+	case "remove":
+		h.searchService.RemoveIndex(e.DocID)
+	}
+}
