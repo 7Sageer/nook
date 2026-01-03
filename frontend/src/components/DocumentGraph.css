@@ -1,0 +1,245 @@
+.graph-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.graph-modal {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    width: 90vw;
+    height: 85vh;
+    max-width: 1200px;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.graph-modal.dark {
+    background: #1a1a2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.graph-modal.light {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.graph-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.graph-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.graph-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.graph-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.graph-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-color);
+    gap: 20px;
+}
+
+.threshold-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.threshold-control label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.threshold-control input[type="range"] {
+    width: 150px;
+    height: 4px;
+    border-radius: 2px;
+    appearance: none;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+}
+
+.threshold-control input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-color, #6366f1);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.threshold-control input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.threshold-control span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    min-width: 40px;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.zoom-controls button {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.zoom-controls button:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-color, #6366f1);
+}
+
+.graph-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.graph-loading,
+.graph-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.graph-loading::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-color, #6366f1);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.graph-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.graph-legend span:nth-child(even) {
+    color: var(--border-color);
+}
+
+/* Dark theme specific */
+.dark .graph-header {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .graph-toolbar {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .graph-legend {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .threshold-control input[type="range"] {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .zoom-controls button {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .zoom-controls button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme specific */
+.light .graph-header {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .graph-toolbar {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .graph-legend {
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .threshold-control input[type="range"] {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.light .zoom-controls button {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light .zoom-controls button:hover {
+    background: rgba(0, 0, 0, 0.08);
+}

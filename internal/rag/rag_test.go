@@ -53,7 +53,7 @@ func TestIndexBookmarkContent(t *testing.T) {
 
 	// 验证索引结果 - 尝试搜索
 	fmt.Printf("\n=== Testing Search ===\n")
-	results, err := service.Search("运气表面积", 5)
+	results, err := service.SearchChunks("运气表面积", 5)
 	if err != nil {
 		t.Fatalf("Search failed: %v", err)
 	}

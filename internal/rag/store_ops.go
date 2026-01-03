@@ -1,6 +1,9 @@
 package rag
 
-import "database/sql"
+import (
+	"database/sql"
+	"unsafe"
+)
 
 // Upsert 插入或更新块向量
 func (s *VectorStore) Upsert(block *BlockVector) error {
@@ -158,4 +161,72 @@ func (s *VectorStore) GetAllDocIDs() ([]string, error) {
 		docIDs = append(docIDs, docID)
 	}
 	return docIDs, nil
+}
+
+// GetDocumentVectors 获取文档的所有向量嵌入
+func (s *VectorStore) GetDocumentVectors(docID string) ([][]float32, error) {
+	// 获取该文档的所有块 ID
+	rows, err := s.db.Query(`SELECT id FROM block_vectors WHERE doc_id = ?`, docID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var blockIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		blockIDs = append(blockIDs, id)
+	}
+
+	if len(blockIDs) == 0 {
+		return nil, nil
+	}
+
+	// 从 vec_blocks 获取每个块的向量
+	vectors := make([][]float32, 0, len(blockIDs))
+	for _, id := range blockIDs {
+		vec, err := s.getVectorByID(id)
+		if err != nil {
+			continue // 跳过获取失败的向量
+		}
+		if vec != nil {
+			vectors = append(vectors, vec)
+		}
+	}
+
+	return vectors, nil
+}
+
+// getVectorByID 根据 ID 获取向量（从 vec_blocks 虚拟表）
+func (s *VectorStore) getVectorByID(id string) ([]float32, error) {
+	row := s.db.QueryRow(`SELECT embedding FROM vec_blocks WHERE id = ?`, id)
+
+	var vecBytes []byte
+	if err := row.Scan(&vecBytes); err != nil {
+		return nil, err
+	}
+
+	// 反序列化向量
+	return deserializeVector(vecBytes, s.dimension), nil
+}
+
+// deserializeVector 将字节反序列化为 float32 切片
+func deserializeVector(buf []byte, dimension int) []float32 {
+	if len(buf) != dimension*4 {
+		return nil
+	}
+	vec := make([]float32, dimension)
+	for i := 0; i < dimension; i++ {
+		bits := uint32(buf[i*4]) | uint32(buf[i*4+1])<<8 | uint32(buf[i*4+2])<<16 | uint32(buf[i*4+3])<<24
+		vec[i] = float32frombits(bits)
+	}
+	return vec
+}
+
+// float32frombits 将 uint32 转换为 float32（等价于 math.Float32frombits）
+func float32frombits(b uint32) float32 {
+	return *(*float32)(unsafe.Pointer(&b))
 }

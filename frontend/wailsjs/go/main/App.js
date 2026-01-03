@@ -46,6 +46,10 @@ export function GetAppInfo() {
   return window['go']['main']['App']['GetAppInfo']();
 }
 
+export function GetDocumentGraph(arg1) {
+  return window['go']['main']['App']['GetDocumentGraph'](arg1);
+}
+
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }

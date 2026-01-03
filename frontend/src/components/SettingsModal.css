@@ -231,6 +231,25 @@
     }
 }
 
+/* 操作按钮容器 */
+.settings-action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.settings-action-btn.secondary {
+    background: var(--bg-secondary);
+    border-color: var(--border-secondary);
+}
+
+.settings-action-btn.secondary:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--accent-color, #6366f1);
+    color: var(--accent-color, #6366f1);
+}
+
+
 /* 底部栏 */
 .settings-footer {
     display: flex;

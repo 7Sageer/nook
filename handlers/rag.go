@@ -151,3 +151,11 @@ type ExternalBlockContent = rag.ExternalBlockContent
 func (h *RAGHandler) GetExternalBlockContent(docID, blockID string) (*ExternalBlockContent, error) {
 	return h.ragService.GetExternalBlockContent(docID, blockID)
 }
+
+// GraphData 图谱数据（前端用）
+type GraphData = rag.GraphData
+
+// GetDocumentGraph 获取文档关系图谱
+func (h *RAGHandler) GetDocumentGraph(threshold float32) (*GraphData, error) {
+	return h.ragService.GetDocumentGraph(threshold)
+}

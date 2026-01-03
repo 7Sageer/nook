@@ -15,6 +15,7 @@ type ChunkMatch struct {
 	BlockType      string  `json:"blockType"`
 	HeadingContext string  `json:"headingContext"`
 	Score          float32 `json:"score"`
+	DocID          string  `json:"docId"`
 }
 
 // DocumentSearchResult 文档级搜索结果
@@ -89,6 +90,7 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,
 			Score:          score,
+			DocID:          r.DocID,
 		}
 
 		if doc, exists := docMap[r.DocID]; exists {
@@ -157,7 +159,9 @@ func (s *Searcher) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,
 			Score:          1 - r.Distance,
+			DocID:          r.DocID,
 		}
+
 	}
 
 	return matches, nil

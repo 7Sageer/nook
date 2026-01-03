@@ -46,7 +46,7 @@ func main() {
 		fmt.Printf("🔍 查询: \"%s\"\n", query)
 		fmt.Println("─────────────────────────────────────")
 
-		results, err := ragService.SearchDocuments(query, 5)
+		results, err := ragService.SearchDocuments(query, 5, "")
 		if err != nil {
 			fmt.Printf("❌ 错误: %v\n\n", err)
 			continue

@@ -224,6 +224,11 @@ func (a *App) RebuildIndex() (int, error) {
 	return a.ragHandler.RebuildIndex()
 }
 
+// GetDocumentGraph 获取文档关系图谱
+func (a *App) GetDocumentGraph(threshold float32) (*handlers.GraphData, error) {
+	return a.ragHandler.GetDocumentGraph(threshold)
+}
+
 // IndexBookmarkContent 索引书签网页内容
 func (a *App) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexBookmarkContent(url, sourceDocID, blockID)

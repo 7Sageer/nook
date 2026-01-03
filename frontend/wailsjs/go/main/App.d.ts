@@ -29,6 +29,8 @@ export function GetAllTags():Promise<Array<handlers.TagInfo>>;
 
 export function GetAppInfo():Promise<main.AppInfo>;
 
+export function GetDocumentGraph(arg1:number):Promise<rag.GraphData>;
+
 export function GetDocumentList():Promise<document.Index>;
 
 export function GetExternalBlockContent(arg1:string,arg2:string):Promise<rag.ExternalBlockContent>;
