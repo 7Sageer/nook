@@ -510,6 +510,19 @@ func (e *ExternalIndexer) ReindexAll() (int, error) {
 				fmt.Printf("✅ [RAG] Reindexed file: %s\n", file.FilePath)
 			}
 		}
+
+		// 重新索引 folder 块
+		for _, folder := range externalIDs.FolderBlocks {
+			if folder.FolderPath == "" {
+				continue
+			}
+			if _, err := e.IndexFolderContent(folder.FolderPath, doc.ID, folder.BlockID, 0); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex folder %s: %v\n", folder.BlockID, err)
+			} else {
+				totalCount++
+				fmt.Printf("✅ [RAG] Reindexed folder: %s\n", folder.FolderPath)
+			}
+		}
 	}
 
 	return totalCount, nil
@@ -528,6 +541,7 @@ func (e *ExternalIndexer) ReindexAllWithProgress(onProgress func(current, total 
 		docID    string
 		bookmark *BookmarkBlockInfo
 		file     *FileBlockInfo
+		folder   *FolderBlockInfo
 	}
 
 	for _, doc := range index.Documents {
@@ -542,6 +556,7 @@ func (e *ExternalIndexer) ReindexAllWithProgress(onProgress func(current, total 
 					docID    string
 					bookmark *BookmarkBlockInfo
 					file     *FileBlockInfo
+					folder   *FolderBlockInfo
 				}{docID: doc.ID, bookmark: &externalIDs.BookmarkBlocks[i]})
 			}
 		}
@@ -551,7 +566,18 @@ func (e *ExternalIndexer) ReindexAllWithProgress(onProgress func(current, total 
 					docID    string
 					bookmark *BookmarkBlockInfo
 					file     *FileBlockInfo
+					folder   *FolderBlockInfo
 				}{docID: doc.ID, file: &externalIDs.FileBlocks[i]})
+			}
+		}
+		for i := range externalIDs.FolderBlocks {
+			if externalIDs.FolderBlocks[i].FolderPath != "" {
+				allExternalBlocks = append(allExternalBlocks, struct {
+					docID    string
+					bookmark *BookmarkBlockInfo
+					file     *FileBlockInfo
+					folder   *FolderBlockInfo
+				}{docID: doc.ID, folder: &externalIDs.FolderBlocks[i]})
 			}
 		}
 	}
@@ -581,6 +607,13 @@ func (e *ExternalIndexer) ReindexAllWithProgress(onProgress func(current, total 
 			} else {
 				successCount++
 				fmt.Printf("✅ [RAG] Reindexed file: %s\n", block.file.FilePath)
+			}
+		} else if block.folder != nil {
+			if _, err := e.IndexFolderContent(block.folder.FolderPath, block.docID, block.folder.BlockID, 0); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to reindex folder %s: %v\n", block.folder.BlockID, err)
+			} else {
+				successCount++
+				fmt.Printf("✅ [RAG] Reindexed folder: %s\n", block.folder.FolderPath)
 			}
 		}
 	}

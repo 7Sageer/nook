@@ -64,6 +64,12 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                         {status.indexedFiles || 0}
                     </span>
                 </div>
+                <div className="status-row">
+                    <span className="status-label">{strings.SETTINGS.INDEXED_FOLDERS || "Indexed Folders"}</span>
+                    <span className="status-value">
+                        {status.indexedFolders || 0}
+                    </span>
+                </div>
                 {status.lastIndexTime && (
                     <div className="status-row">
                         <span className="status-label">{strings.SETTINGS.LAST_UPDATE}</span>

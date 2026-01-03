@@ -41,6 +41,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         indexedDocs: 0,
         indexedBookmarks: 0,
         indexedFiles: 0,
+        indexedFolders: 0,
         totalDocs: 0,
         lastIndexTime: '',
     });

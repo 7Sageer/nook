@@ -78,6 +78,20 @@ function FindRelatedButton() {
                 }
             }
 
+
+            if (block.type === 'folder') {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const props = block.props as any;
+                // 使用 folderPath (base name) 或 manual name
+                const name = props.folderPath || '';
+                // Extract base name if path
+                const baseName = name.split(/[/\\]/).pop();
+                if (baseName) {
+                    setQueryWithExclude(baseName);
+                    return;
+                }
+            }
+
             // 对于普通块，尝试获取 inline content
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const content = (block as any).content;
@@ -354,6 +368,27 @@ function BookmarkBlockToolbar() {
     );
 }
 
+// ========== FolderBlock Toolbar ==========
+function FolderBlockToolbar() {
+    const selectedBlocks = useSelectedBlocks();
+    const block = selectedBlocks[0];
+
+    if (!block || block.type !== "folder") return null;
+
+    const folderPath = block.props?.folderPath as string;
+
+    return (
+        <FormattingToolbar>
+            <RevealInFinderButton filePath={folderPath} />
+            <DeleteBlockButton block={block} />
+            <FindRelatedButton />
+            <TextAlignButton textAlignment="left" />
+            <TextAlignButton textAlignment="center" />
+            <TextAlignButton textAlignment="right" />
+        </FormattingToolbar>
+    );
+}
+
 // ========== 主组件：根据选中块类型返回对应工具栏 ==========
 export function CustomFormattingToolbar() {
     const selectedBlocks = useSelectedBlocks();
@@ -368,6 +403,10 @@ export function CustomFormattingToolbar() {
 
         if (block.type === "bookmark") {
             return <BookmarkBlockToolbar />;
+        }
+
+        if (block.type === "folder") {
+            return <FolderBlockToolbar />;
         }
     }
 

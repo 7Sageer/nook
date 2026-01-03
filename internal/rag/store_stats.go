@@ -12,13 +12,13 @@ func (s *VectorStore) GetIndexedDocCount() (int, error) {
 	return count, nil
 }
 
-// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
-func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
+// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数, 文件夹数)
+func (s *VectorStore) GetIndexedStats() (int, int, int, int, error) {
 	// Count unique docs that have non-bookmark, non-file, and non-folder blocks
 	var docCount int
 	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type NOT IN ('bookmark', 'file', 'folder')`).Scan(&docCount)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 
 	// For bookmarks, we need to count unique "base" bookmarks, not chunks.
@@ -26,7 +26,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	// ID format: {docID}_{blockID}_bookmark_chunk_{N} or {docID}_{blockID}_bookmark
 	rows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'bookmark'`)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -34,7 +34,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return 0, 0, 0, err
+			return 0, 0, 0, 0, err
 		}
 
 		baseID := id
@@ -49,7 +49,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	// ID format: {docID}_{blockID}_file_chunk_{N} or {docID}_{blockID}_file
 	fileRows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'file'`)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	defer func() { _ = fileRows.Close() }()
 
@@ -57,7 +57,7 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 	for fileRows.Next() {
 		var id string
 		if err := fileRows.Scan(&id); err != nil {
-			return 0, 0, 0, err
+			return 0, 0, 0, 0, err
 		}
 
 		baseID := id
@@ -68,5 +68,39 @@ func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
 		uniqueFiles[baseID] = true
 	}
 
-	return docCount, len(uniqueBookmarks), len(uniqueFiles), nil
+	// For folders, count unique base folder blocks
+	// ID format: {docID}_{blockID}_folder_chunk_{N} or {docID}_{blockID}_folder_{fileIndex}_chunk_{N}
+	// Note: We use the base ID format: {docID}_{blockID}_folder
+	folderRows, err := s.db.Query(`SELECT id FROM block_vectors WHERE block_type = 'folder'`)
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	defer func() { _ = folderRows.Close() }()
+
+	uniqueFolders := make(map[string]bool)
+	for folderRows.Next() {
+		var id string
+		if err := folderRows.Scan(&id); err != nil {
+			return 0, 0, 0, 0, err
+		}
+
+		// Extract base ID: {docID}_{blockID}_folder
+		parts := strings.Split(id, "_")
+		if len(parts) >= 3 {
+			// Find the index of "folder"
+			folderIdx := -1
+			for i, p := range parts {
+				if p == "folder" {
+					folderIdx = i
+					break
+				}
+			}
+			if folderIdx != -1 {
+				baseID := strings.Join(parts[:folderIdx+1], "_")
+				uniqueFolders[baseID] = true
+			}
+		}
+	}
+
+	return docCount, len(uniqueBookmarks), len(uniqueFiles), len(uniqueFolders), nil
 }

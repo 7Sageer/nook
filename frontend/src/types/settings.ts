@@ -18,6 +18,7 @@ export interface RAGStatus {
     indexedDocs: number;
     indexedBookmarks: number;
     indexedFiles: number;
+    indexedFolders: number;
     totalDocs: number;
     lastIndexTime: string;
 }

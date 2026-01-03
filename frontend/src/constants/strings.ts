@@ -94,6 +94,7 @@ export const EN = {
         INDEX_STATUS: "Index Status",
         INDEXED_BOOKMARKS: "Indexed Bookmarks",
         INDEXED_FILES: "Indexed Files",
+        INDEXED_FOLDERS: "Indexed Folders",
         DOCUMENTS: "documents",
         LAST_UPDATE: "Last Update",
         REBUILD_INDEX: "Rebuild Index",

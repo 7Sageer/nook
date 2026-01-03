@@ -160,6 +160,7 @@ export namespace handlers {
 	    indexedDocs: number;
 	    indexedBookmarks: number;
 	    indexedFiles: number;
+	    indexedFolders: number;
 	    totalDocs: number;
 	    lastIndexTime: string;
 	
@@ -173,6 +174,7 @@ export namespace handlers {
 	        this.indexedDocs = source["indexedDocs"];
 	        this.indexedBookmarks = source["indexedBookmarks"];
 	        this.indexedFiles = source["indexedFiles"];
+	        this.indexedFolders = source["indexedFolders"];
 	        this.totalDocs = source["totalDocs"];
 	        this.lastIndexTime = source["lastIndexTime"];
 	    }

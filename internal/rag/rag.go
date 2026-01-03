@@ -127,10 +127,10 @@ func (s *Service) GetIndexedCount() (int, error) {
 	return s.store.GetIndexedDocCount()
 }
 
-// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
-func (s *Service) GetIndexedStats() (int, int, int, error) {
+// GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数, 文件夹数)
+func (s *Service) GetIndexedStats() (int, int, int, int, error) {
 	if err := s.init(); err != nil {
-		return 0, 0, 0, nil // 初始化失败，返回 0
+		return 0, 0, 0, 0, nil // 初始化失败，返回 0
 	}
 	return s.store.GetIndexedStats()
 }
