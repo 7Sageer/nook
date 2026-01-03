@@ -141,6 +141,7 @@ func (idx *Indexer) IndexDocument(docID string) error {
 		if err := idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
 			SourceBlockID:  sourceBlockID,
+			SourceType:     "document",
 			DocID:          docID,
 			Content:        block.Content,
 			ContentHash:    newHash,
@@ -262,6 +263,7 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 		if err := idx.store.Upsert(&BlockVector{
 			ID:             block.ID,
 			SourceBlockID:  sourceBlockID,
+			SourceType:     "document",
 			DocID:          docID,
 			Content:        block.Content,
 			ContentHash:    newHash,

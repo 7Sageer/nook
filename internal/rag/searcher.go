@@ -11,6 +11,8 @@ import (
 type ChunkMatch struct {
 	BlockID        string  `json:"blockId"`
 	SourceBlockId  string  `json:"sourceBlockId,omitempty"` // 原始 BlockNote block ID（用于定位）
+	SourceType     string  `json:"sourceType"`              // 节点类型: "document", "bookmark", "file", "folder"
+	SourceTitle    string  `json:"sourceTitle,omitempty"`   // 来源标题（书签标题/文件名）
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
 	HeadingContext string  `json:"headingContext"`
@@ -86,6 +88,8 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 		chunk := ChunkMatch{
 			BlockID:        r.BlockID,
 			SourceBlockId:  getSourceBlockId(r),
+			SourceType:     r.SourceType,
+			SourceTitle:    r.SourceTitle,
 			Content:        r.Content,
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,
@@ -155,6 +159,8 @@ func (s *Searcher) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
 		matches[i] = ChunkMatch{
 			BlockID:        r.BlockID,
 			SourceBlockId:  getSourceBlockId(r),
+			SourceType:     r.SourceType,
+			SourceTitle:    r.SourceTitle,
 			Content:        r.Content,
 			BlockType:      r.BlockType,
 			HeadingContext: r.HeadingContext,

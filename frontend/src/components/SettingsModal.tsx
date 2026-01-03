@@ -190,11 +190,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             <div className="settings-content">
                                 <DocumentGraph
                                     onBack={() => setShowGraph(false)}
-                                    onNodeClick={(docId) => {
-                                        // 关闭设置并导航到文档
+                                    onNodeClick={(docId, blockId) => {
+                                        // 关闭设置并导航到文档（可选定位到特定块）
                                         onClose();
-                                        // 触发文档导航事件
-                                        window.dispatchEvent(new CustomEvent('navigate-to-doc', { detail: docId }));
+                                        // 触发文档导航事件，包含可选的 blockId
+                                        window.dispatchEvent(new CustomEvent('navigate-to-doc', {
+                                            detail: { docId, blockId }
+                                        }));
                                     }}
                                 />
                             </div>

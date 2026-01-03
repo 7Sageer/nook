@@ -39,6 +39,8 @@ type SearchResult struct {
 type ChunkMatch struct {
 	BlockID        string  `json:"blockId"`
 	SourceBlockId  string  `json:"sourceBlockId,omitempty"` // 原始 BlockNote block ID（用于定位）
+	SourceType     string  `json:"sourceType"`              // 节点类型: "document", "bookmark", "file", "folder"
+	SourceTitle    string  `json:"sourceTitle,omitempty"`   // 来源标题（书签标题/文件名）
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
 	HeadingContext string  `json:"headingContext"`
@@ -93,6 +95,8 @@ func (h *SearchHandler) SemanticSearchDocuments(query string, limit int, exclude
 			chunks[j] = ChunkMatch{
 				BlockID:        c.BlockID,
 				SourceBlockId:  c.SourceBlockId,
+				SourceType:     c.SourceType,
+				SourceTitle:    c.SourceTitle,
 				Content:        c.Content,
 				BlockType:      c.BlockType,
 				HeadingContext: c.HeadingContext,

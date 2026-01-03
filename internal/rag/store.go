@@ -18,8 +18,9 @@ func init() {
 
 // BlockVector 块向量记录
 type BlockVector struct {
-	ID             string    // block_id
+	ID             string    // block_id (format: {type}:{docId}:{blockId}:chunk:{N})
 	SourceBlockID  string    // 原始块 ID（用于定位，对于合并/聚合块，保存第一个原始块 ID）
+	SourceType     string    // 节点类型: "document", "bookmark", "file", "folder"
 	DocID          string    // 所属文档 ID
 	Content        string    // 块的纯文本内容
 	ContentHash    string    // 内容哈希（用于去重）
@@ -33,6 +34,8 @@ type BlockVector struct {
 type SearchResult struct {
 	BlockID        string  `json:"blockId"`
 	SourceBlockID  string  `json:"sourceBlockId"` // 原始块 ID（用于定位）
+	SourceType     string  `json:"sourceType"`    // 节点类型: "document", "bookmark", "file", "folder"
+	SourceTitle    string  `json:"sourceTitle"`   // 来源标题（书签标题/文件名）
 	DocID          string  `json:"docId"`
 	Content        string  `json:"content"`
 	BlockType      string  `json:"blockType"`
@@ -142,6 +145,7 @@ func (s *VectorStore) initSchema() error {
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN heading_context TEXT`)
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_block_id TEXT`)
 	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN file_path TEXT`)
+	_, _ = s.db.Exec(`ALTER TABLE block_vectors ADD COLUMN source_type TEXT`) // document, bookmark, file, folder
 
 	// 创建 sqlite-vec 虚拟表（使用余弦距离，更适合文本相似度）
 	query := fmt.Sprintf(`

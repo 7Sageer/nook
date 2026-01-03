@@ -130,6 +130,7 @@ func (e *ExternalIndexer) IndexBookmarkContent(url, sourceDocID, blockID string)
 		if err := e.store.Upsert(&BlockVector{
 			ID:             chunk.ID,
 			SourceBlockID:  blockID, // BookmarkBlock 的 BlockNote ID，用于定位
+			SourceType:     "bookmark",
 			DocID:          sourceDocID,
 			Content:        chunk.Content,
 			ContentHash:    contentHash,
@@ -240,6 +241,7 @@ func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string
 		if err := e.store.Upsert(&BlockVector{
 			ID:             chunk.ID,
 			SourceBlockID:  blockID, // FileBlock 的 BlockNote ID，用于定位
+			SourceType:     "file",
 			DocID:          sourceDocID,
 			Content:        chunk.Content,
 			ContentHash:    contentHash,
@@ -387,6 +389,7 @@ func (e *ExternalIndexer) IndexFolderContent(folderPath, sourceDocID, blockID st
 			if err := e.store.Upsert(&BlockVector{
 				ID:             chunk.ID,
 				SourceBlockID:  blockID,
+				SourceType:     "folder",
 				DocID:          sourceDocID,
 				Content:        chunk.Content,
 				ContentHash:    contentHash,

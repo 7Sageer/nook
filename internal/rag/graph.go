@@ -4,11 +4,14 @@ import (
 	"math"
 )
 
-// GraphNode 图谱节点
+// GraphNode 图谱节点（支持多种类型：文档、书签、文件、文件夹）
 type GraphNode struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Val   int    `json:"val"` // 节点大小（基于块数量）
+	ID            string `json:"id"`
+	Type          string `json:"type"` // "document", "bookmark", "file", "folder"
+	Title         string `json:"title"`
+	Val           int    `json:"val"`                     // 节点大小（基于块数量/内容量）
+	ParentDocID   string `json:"parentDocId,omitempty"`   // 父文档 ID（仅 bookmark/file/folder）
+	ParentBlockID string `json:"parentBlockId,omitempty"` // 父块 ID（用于跳转定位）
 }
 
 // GraphLink 图谱边
@@ -24,7 +27,7 @@ type GraphData struct {
 	Links []GraphLink `json:"links"`
 }
 
-// GetDocumentGraph 获取文档关系图谱
+// GetDocumentGraph 获取文档关系图谱（包含所有知识节点：文档、书签、文件、文件夹）
 // threshold: 相似度阈值 (0-1)，低于此值的边不显示
 func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 	if err := s.init(); err != nil {
@@ -37,47 +40,69 @@ func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 		return nil, err
 	}
 
-	// 2. 获取每个文档的代表性向量（平均向量）
-	docVectors := make(map[string][]float32)
-	docBlockCounts := make(map[string]int)
+	// 2. 收集所有节点的向量
+	// nodeVectors: nodeID -> 平均向量
+	// nodeInfos: nodeID -> GraphNode
+	nodeVectors := make(map[string][]float32)
+	nodeInfos := make(map[string]GraphNode)
 
+	// 2.1 添加文档节点
 	for _, doc := range index.Documents {
 		vec, count, err := s.getDocumentAverageVector(doc.ID)
 		if err != nil || vec == nil {
-			continue // 跳过没有向量的文档
+			continue
 		}
-		docVectors[doc.ID] = vec
-		docBlockCounts[doc.ID] = count
+		nodeID := "doc:" + doc.ID
+		nodeVectors[nodeID] = vec
+		nodeInfos[nodeID] = GraphNode{
+			ID:    nodeID,
+			Type:  "document",
+			Title: doc.Title,
+			Val:   count,
+		}
 	}
 
-	// 3. 构建节点列表
-	nodes := make([]GraphNode, 0, len(docVectors))
-	docTitles := make(map[string]string)
-	for _, doc := range index.Documents {
-		if _, exists := docVectors[doc.ID]; exists {
-			docTitles[doc.ID] = doc.Title
-			nodes = append(nodes, GraphNode{
-				ID:    doc.ID,
-				Title: doc.Title,
-				Val:   docBlockCounts[doc.ID],
-			})
+	// 2.2 添加外部块节点（bookmark/file/folder）
+	externalNodes, err := s.store.GetAllExternalBlockNodes()
+	if err == nil {
+		for _, ext := range externalNodes {
+			vec, count, err := s.getExternalBlockAverageVector(ext.DocID, ext.BlockID, ext.BlockType)
+			if err != nil || vec == nil {
+				continue
+			}
+			nodeID := ext.BlockType + ":" + ext.DocID + ":" + ext.BlockID
+			nodeVectors[nodeID] = vec
+			nodeInfos[nodeID] = GraphNode{
+				ID:            nodeID,
+				Type:          ext.BlockType,
+				Title:         ext.Title,
+				Val:           count,
+				ParentDocID:   ext.DocID,
+				ParentBlockID: ext.BlockID,
+			}
 		}
+	}
+
+	// 3. 转换为节点列表
+	nodes := make([]GraphNode, 0, len(nodeInfos))
+	for _, node := range nodeInfos {
+		nodes = append(nodes, node)
 	}
 
 	// 4. 计算两两相似度，构建边
 	links := make([]GraphLink, 0)
-	docIDs := make([]string, 0, len(docVectors))
-	for id := range docVectors {
-		docIDs = append(docIDs, id)
+	nodeIDs := make([]string, 0, len(nodeVectors))
+	for id := range nodeVectors {
+		nodeIDs = append(nodeIDs, id)
 	}
 
-	for i := 0; i < len(docIDs); i++ {
-		for j := i + 1; j < len(docIDs); j++ {
-			similarity := cosineSimilarity(docVectors[docIDs[i]], docVectors[docIDs[j]])
+	for i := 0; i < len(nodeIDs); i++ {
+		for j := i + 1; j < len(nodeIDs); j++ {
+			similarity := cosineSimilarity(nodeVectors[nodeIDs[i]], nodeVectors[nodeIDs[j]])
 			if similarity >= threshold {
 				links = append(links, GraphLink{
-					Source:     docIDs[i],
-					Target:     docIDs[j],
+					Source:     nodeIDs[i],
+					Target:     nodeIDs[j],
 					Similarity: similarity,
 				})
 			}
@@ -90,14 +115,31 @@ func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 	}, nil
 }
 
-// getDocumentAverageVector 获取文档的平均向量
+// getDocumentAverageVector 获取文档的平均向量（只包含 source_type=document 的块）
 func (s *Service) getDocumentAverageVector(docID string) ([]float32, int, error) {
-	vectors, err := s.store.GetDocumentVectors(docID)
+	vectors, err := s.store.GetDocumentOnlyVectors(docID)
 	if err != nil || len(vectors) == 0 {
 		return nil, 0, err
 	}
 
-	// 计算平均向量
+	return averageVectors(vectors), len(vectors), nil
+}
+
+// getExternalBlockAverageVector 获取外部块的平均向量
+func (s *Service) getExternalBlockAverageVector(docID, blockID, blockType string) ([]float32, int, error) {
+	vectors, err := s.store.GetExternalBlockVectors(docID, blockID, blockType)
+	if err != nil || len(vectors) == 0 {
+		return nil, 0, err
+	}
+
+	return averageVectors(vectors), len(vectors), nil
+}
+
+// averageVectors 计算多个向量的平均值
+func averageVectors(vectors [][]float32) []float32 {
+	if len(vectors) == 0 {
+		return nil
+	}
 	dim := len(vectors[0])
 	avgVec := make([]float32, dim)
 	for _, vec := range vectors {
@@ -108,8 +150,7 @@ func (s *Service) getDocumentAverageVector(docID string) ([]float32, int, error)
 	for i := 0; i < dim; i++ {
 		avgVec[i] /= float32(len(vectors))
 	}
-
-	return avgVec, len(vectors), nil
+	return avgVec
 }
 
 // cosineSimilarity 计算两个向量的余弦相似度

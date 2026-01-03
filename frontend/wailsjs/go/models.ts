@@ -64,6 +64,8 @@ export namespace handlers {
 	export class ChunkMatch {
 	    blockId: string;
 	    sourceBlockId?: string;
+	    sourceType: string;
+	    sourceTitle?: string;
 	    content: string;
 	    blockType: string;
 	    headingContext: string;
@@ -77,6 +79,8 @@ export namespace handlers {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.blockId = source["blockId"];
 	        this.sourceBlockId = source["sourceBlockId"];
+	        this.sourceType = source["sourceType"];
+	        this.sourceTitle = source["sourceTitle"];
 	        this.content = source["content"];
 	        this.blockType = source["blockType"];
 	        this.headingContext = source["headingContext"];
@@ -407,8 +411,11 @@ export namespace rag {
 	}
 	export class GraphNode {
 	    id: string;
+	    type: string;
 	    title: string;
 	    val: number;
+	    parentDocId?: string;
+	    parentBlockId?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new GraphNode(source);
@@ -417,8 +424,11 @@ export namespace rag {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.type = source["type"];
 	        this.title = source["title"];
 	        this.val = source["val"];
+	        this.parentDocId = source["parentDocId"];
+	        this.parentBlockId = source["parentBlockId"];
 	    }
 	}
 	export class GraphData {

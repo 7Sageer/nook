@@ -5,10 +5,16 @@ import { GetDocumentGraph } from '../../wailsjs/go/main/App';
 import { useSettings } from '../contexts/SettingsContext';
 import './DocumentGraph.css';
 
+// 节点类型定义
+type NodeType = 'document' | 'bookmark' | 'file' | 'folder';
+
 interface GraphNode {
     id: string;
+    type: NodeType;
     title: string;
     val: number;
+    parentDocId?: string;
+    parentBlockId?: string;
     x?: number;
     y?: number;
     color?: string;
@@ -27,8 +33,16 @@ interface GraphData {
 
 interface DocumentGraphProps {
     onBack: () => void;
-    onNodeClick: (docId: string) => void;
+    onNodeClick: (docId: string, blockId?: string) => void;
 }
+
+// 节点类型配置
+const NODE_TYPE_CONFIG: Record<NodeType, { color: string; label: string }> = {
+    document: { color: '#6366f1', label: '📄' },  // Blue - Indigo
+    bookmark: { color: '#10b981', label: '🔖' },  // Green - Emerald
+    file: { color: '#f59e0b', label: '📎' },      // Orange - Amber
+    folder: { color: '#8b5cf6', label: '📁' },    // Purple - Violet
+};
 
 export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     onBack,
@@ -48,9 +62,10 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             const data = await GetDocumentGraph(threshold);
             if (data) {
                 // 为节点添加颜色
-                const nodes = (data.nodes || []).map((node: GraphNode) => ({
+                const nodes = (data.nodes || []).map((node: { id: string; type: string; title: string; val: number; parentDocId?: string; parentBlockId?: string }) => ({
                     ...node,
-                    color: getNodeColor(node.val),
+                    type: (node.type || 'document') as NodeType,
+                    color: getNodeColor((node.type || 'document') as NodeType),
                 }));
                 setGraphData({
                     nodes,
@@ -86,10 +101,9 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         }
     }, [graphData]);
 
-    // 根据节点值计算颜色
-    const getNodeColor = (val: number): string => {
-        const hue = Math.min(200 + val * 10, 280); // 从蓝到紫
-        return `hsl(${hue}, 70%, 50%)`;
+    // 根据节点类型获取颜色
+    const getNodeColor = (type: NodeType): string => {
+        return NODE_TYPE_CONFIG[type]?.color || NODE_TYPE_CONFIG.document.color;
     };
 
     // 获取边的颜色（基于相似度）
@@ -103,8 +117,64 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
 
     // 处理节点点击
     const handleNodeClick = useCallback((node: GraphNode) => {
-        onNodeClick(node.id);
+        if (node.type === 'document') {
+            // 文档节点：从 id 中提取 docId (格式: doc:{docId})
+            const docId = node.id.replace('doc:', '');
+            onNodeClick(docId);
+        } else {
+            // 外部块节点：跳转到父文档并定位到块
+            if (node.parentDocId) {
+                onNodeClick(node.parentDocId, node.parentBlockId);
+            }
+        }
     }, [onNodeClick]);
+
+    // 绘制不同形状的节点
+    const drawNodeShape = (
+        ctx: CanvasRenderingContext2D,
+        x: number,
+        y: number,
+        size: number,
+        type: NodeType,
+        color: string
+    ) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+
+        switch (type) {
+            case 'document':
+                // 圆形
+                ctx.arc(x, y, size, 0, 2 * Math.PI);
+                break;
+            case 'bookmark':
+                // 六边形
+                for (let i = 0; i < 6; i++) {
+                    const angle = (Math.PI / 3) * i - Math.PI / 2;
+                    const px = x + size * Math.cos(angle);
+                    const py = y + size * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                break;
+            case 'file':
+                // 正方形
+                ctx.rect(x - size * 0.8, y - size * 0.8, size * 1.6, size * 1.6);
+                break;
+            case 'folder':
+                // 菱形
+                ctx.moveTo(x, y - size);
+                ctx.lineTo(x + size, y);
+                ctx.lineTo(x, y + size);
+                ctx.lineTo(x - size, y);
+                ctx.closePath();
+                break;
+            default:
+                ctx.arc(x, y, size, 0, 2 * Math.PI);
+        }
+
+        ctx.fill();
+    };
 
     // 缩放控制
     const handleZoomIn = () => {
@@ -168,7 +238,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                     <ForceGraph2D
                         ref={graphRef}
                         graphData={graphData}
-                        nodeLabel={(node: GraphNode) => node.title}
+                        nodeLabel={(node: GraphNode) => `${NODE_TYPE_CONFIG[node.type]?.label || ''} ${node.title}`}
                         nodeColor={(node: GraphNode) => node.color || '#6366f1'}
                         nodeRelSize={4}
                         nodeVal={(node: GraphNode) => {
@@ -192,11 +262,8 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                             const logVal = Math.log(Math.max(1, node.val) + 1) * 3;
                             const nodeSize = Math.max(2, Math.min(logVal, 12));
 
-                            // 绘制节点圆形
-                            ctx.beginPath();
-                            ctx.arc(node.x || 0, node.y || 0, nodeSize, 0, 2 * Math.PI);
-                            ctx.fillStyle = node.color || '#6366f1';
-                            ctx.fill();
+                            // 绘制不同形状的节点
+                            drawNodeShape(ctx, node.x || 0, node.y || 0, nodeSize, node.type, node.color || '#6366f1');
 
                             // 高亮悬停节点
                             if (hoveredNode && hoveredNode.id === node.id) {
@@ -213,9 +280,10 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
 
                                 // 截断过长的标签
                                 const maxLen = 20;
+                                const typeLabel = NODE_TYPE_CONFIG[node.type]?.label || '';
                                 const displayLabel = label.length > maxLen
-                                    ? label.substring(0, maxLen) + '...'
-                                    : label;
+                                    ? `${typeLabel} ${label.substring(0, maxLen)}...`
+                                    : `${typeLabel} ${label}`;
 
                                 // 标签背景
                                 const textWidth = ctx.measureText(displayLabel).width;
@@ -249,11 +317,22 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
 
             {/* 图例 */}
             <div className="graph-legend">
-                <span>Closer = more similar</span>
-                <span>•</span>
-                <span>Node size = content</span>
-                <span>•</span>
-                <span>Click to open</span>
+                <div className="legend-item">
+                    <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.document.color, borderRadius: '50%' }}></span>
+                    <span>Document</span>
+                </div>
+                <div className="legend-item">
+                    <span className="legend-shape legend-hexagon" style={{ backgroundColor: NODE_TYPE_CONFIG.bookmark.color }}></span>
+                    <span>Bookmark</span>
+                </div>
+                <div className="legend-item">
+                    <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.file.color }}></span>
+                    <span>File</span>
+                </div>
+                <div className="legend-item">
+                    <span className="legend-shape legend-diamond" style={{ backgroundColor: NODE_TYPE_CONFIG.folder.color }}></span>
+                    <span>Folder</span>
+                </div>
             </div>
         </div>
     );

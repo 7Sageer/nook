@@ -13,11 +13,11 @@ func (s *VectorStore) Upsert(block *BlockVector) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// 更新元数据（包含 content_hash, heading_context, source_block_id 和 file_path）
+	// 更新元数据（包含 content_hash, heading_context, source_block_id, file_path 和 source_type）
 	_, err = tx.Exec(`
-		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context, source_block_id, file_path)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext, block.SourceBlockID, block.FilePath)
+		INSERT OR REPLACE INTO block_vectors (id, doc_id, content, content_hash, block_type, heading_context, source_block_id, file_path, source_type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, block.ID, block.DocID, block.Content, block.ContentHash, block.BlockType, block.HeadingContext, block.SourceBlockID, block.FilePath, block.SourceType)
 	if err != nil {
 		return err
 	}
@@ -229,4 +229,117 @@ func deserializeVector(buf []byte, dimension int) []float32 {
 // float32frombits 将 uint32 转换为 float32（等价于 math.Float32frombits）
 func float32frombits(b uint32) float32 {
 	return *(*float32)(unsafe.Pointer(&b))
+}
+
+// ExternalBlockNode 外部块节点信息（用于图谱）
+type ExternalBlockNode struct {
+	DocID     string
+	BlockID   string
+	BlockType string // "bookmark", "file", "folder"
+	Title     string
+}
+
+// GetAllExternalBlockNodes 获取所有外部块节点（用于图谱）
+func (s *VectorStore) GetAllExternalBlockNodes() ([]ExternalBlockNode, error) {
+	rows, err := s.db.Query(`
+		SELECT doc_id, block_id, block_type, COALESCE(title, '') as title
+		FROM external_block_content
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var nodes []ExternalBlockNode
+	for rows.Next() {
+		var node ExternalBlockNode
+		if err := rows.Scan(&node.DocID, &node.BlockID, &node.BlockType, &node.Title); err != nil {
+			continue
+		}
+		nodes = append(nodes, node)
+	}
+	return nodes, nil
+}
+
+// GetDocumentOnlyVectors 获取文档的向量（只包含 source_type=document 的块）
+func (s *VectorStore) GetDocumentOnlyVectors(docID string) ([][]float32, error) {
+	// 获取该文档的所有 document 类型块 ID
+	rows, err := s.db.Query(`
+		SELECT id FROM block_vectors 
+		WHERE doc_id = ? AND (source_type = 'document' OR source_type IS NULL OR source_type = '')
+	`, docID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var blockIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		blockIDs = append(blockIDs, id)
+	}
+
+	if len(blockIDs) == 0 {
+		return nil, nil
+	}
+
+	// 从 vec_blocks 获取每个块的向量
+	vectors := make([][]float32, 0, len(blockIDs))
+	for _, id := range blockIDs {
+		vec, err := s.getVectorByID(id)
+		if err != nil {
+			continue
+		}
+		if vec != nil {
+			vectors = append(vectors, vec)
+		}
+	}
+
+	return vectors, nil
+}
+
+// GetExternalBlockVectors 获取外部块的向量
+func (s *VectorStore) GetExternalBlockVectors(docID, blockID, blockType string) ([][]float32, error) {
+	// 构建块 ID 前缀：{docID}_{blockID}_{blockType}
+	prefix := docID + "_" + blockID + "_" + blockType
+
+	// 获取匹配前缀的所有块 ID
+	rows, err := s.db.Query(`
+		SELECT id FROM block_vectors 
+		WHERE id LIKE ? AND source_type = ?
+	`, prefix+"%", blockType)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var blockIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		blockIDs = append(blockIDs, id)
+	}
+
+	if len(blockIDs) == 0 {
+		return nil, nil
+	}
+
+	// 从 vec_blocks 获取每个块的向量
+	vectors := make([][]float32, 0, len(blockIDs))
+	for _, id := range blockIDs {
+		vec, err := s.getVectorByID(id)
+		if err != nil {
+			continue
+		}
+		if vec != nil {
+			vectors = append(vectors, vec)
+		}
+	}
+
+	return vectors, nil
 }

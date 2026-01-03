@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
 import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
@@ -17,11 +17,14 @@ interface UseSearchReturn {
 export function useSearch(): UseSearchReturn {
     const { query, setQuery: setContextQuery, excludeCurrentDoc } = useSearchContext();
     const { activeId } = useDocumentContext();
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [semanticResults, setSemanticResults] = useState<DocumentSearchResult[]>([]);
+    // 存储原始搜索结果（未过滤）
+    const [rawResults, setRawResults] = useState<SearchResult[]>([]);
+    const [rawSemanticResults, setRawSemanticResults] = useState<DocumentSearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isLoadingSemantic, setIsLoadingSemantic] = useState(false);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // 记录搜索时排除的文档 ID（用于语义搜索）
+    const excludedDocIdRef = useRef<string>("");
 
     // React to query changes from context
     useEffect(() => {
@@ -34,40 +37,36 @@ export function useSearch(): UseSearchReturn {
         if (query.trim()) {
             setIsSearching(true);
             setIsLoadingSemantic(true);
-            setSemanticResults([]); // Clear previous semantic results while loading new ones
+            setRawSemanticResults([]); // Clear previous semantic results while loading new ones
 
-            // 1. Instant Keyword Search
+            // 1. Instant Keyword Search (不在后端过滤，前端过滤)
             SearchDocuments(query)
                 .then(searchResults => {
-                    // 如果启用排除当前文档，过滤掉当前文档
-                    if (excludeCurrentDoc && activeId) {
-                        setResults(searchResults.filter(r => r.id !== activeId));
-                    } else {
-                        setResults(searchResults);
-                    }
+                    setRawResults(searchResults || []);
                 })
                 .catch(error => {
                     console.error('Keyword search failed:', error);
-                    setResults([]);
+                    setRawResults([]);
                 })
                 .finally(() => setIsSearching(false));
 
             // 2. Debounced Semantic Search (Document-level)
+            // 记录当前排除的文档 ID
+            excludedDocIdRef.current = (excludeCurrentDoc && activeId) ? activeId : "";
             debounceRef.current = setTimeout(async () => {
                 try {
-                    const excludeID = (excludeCurrentDoc && activeId) ? activeId : "";
-                    const semResults = await SemanticSearchDocuments(query, 5, excludeID);
-                    setSemanticResults(semResults || []);
+                    const semResults = await SemanticSearchDocuments(query, 5, excludedDocIdRef.current);
+                    setRawSemanticResults(semResults || []);
                 } catch (error) {
                     console.error('Semantic search failed:', error);
-                    setSemanticResults([]);
+                    setRawSemanticResults([]);
                 } finally {
                     setIsLoadingSemantic(false);
                 }
             }, 500); // 500ms debounce
         } else {
-            setResults([]);
-            setSemanticResults([]);
+            setRawResults([]);
+            setRawSemanticResults([]);
             setIsSearching(false);
             setIsLoadingSemantic(false);
         }
@@ -77,12 +76,23 @@ export function useSearch(): UseSearchReturn {
                 clearTimeout(debounceRef.current);
             }
         };
-    }, [query, excludeCurrentDoc, activeId]);
+    }, [query, excludeCurrentDoc]); // 移除 activeId 依赖，避免导航时重新搜索
+
+    // 前端过滤：根据 excludeCurrentDoc 和 activeId 过滤关键词搜索结果
+    const results = useMemo(() => {
+        if (excludeCurrentDoc && activeId) {
+            return rawResults.filter(r => r.id !== activeId);
+        }
+        return rawResults;
+    }, [rawResults, excludeCurrentDoc, activeId]);
+
+    // 语义搜索结果（已在后端过滤，直接使用）
+    const semanticResults = rawSemanticResults;
 
     const clearSearch = useCallback(() => {
         setContextQuery('');
-        setResults([]);
-        setSemanticResults([]);
+        setRawResults([]);
+        setRawSemanticResults([]);
         setIsLoadingSemantic(false);
         if (debounceRef.current) {
             clearTimeout(debounceRef.current);
