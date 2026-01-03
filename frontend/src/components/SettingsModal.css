@@ -86,6 +86,16 @@
     min-width: 0;
 }
 
+/* 图谱视图 - 全宽显示 */
+.settings-main.graph-view {
+    width: 100%;
+}
+
+.settings-main.graph-view .settings-content {
+    display: flex;
+    flex-direction: column;
+}
+
 .settings-nav-item {
     display: flex;
     align-items: center;

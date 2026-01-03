@@ -10,6 +10,7 @@ import { KnowledgePanel, ReindexProgress } from './settings/KnowledgePanel';
 import { EmbeddingPanel } from './settings/EmbeddingPanel';
 import { MCPPanel } from './settings/MCPPanel';
 import { AboutPanel } from './settings/AboutPanel';
+import { DocumentGraph } from './DocumentGraph';
 import { useToast } from './Toast';
 import './SettingsModal.css';
 
@@ -49,6 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     const [hasChanges, setHasChanges] = useState(false);
     const [originalConfig, setOriginalConfig] = useState<EmbeddingConfig | null>(null);
     const [mcpInfo, setMcpInfo] = useState<MCPInfo>({ binaryPath: '', configJson: '' });
+    const [showGraph, setShowGraph] = useState(false);
 
     // 加载配置和状态
     useEffect(() => {
@@ -172,108 +174,130 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             >
                 {/* 标题栏 */}
                 <div className="settings-header">
-                    <h2 id="settings-title">{STRINGS.SETTINGS.TITLE}</h2>
+                    <h2 id="settings-title">
+                        {showGraph ? 'Document Graph' : STRINGS.SETTINGS.TITLE}
+                    </h2>
                     <button className="settings-close" onClick={onClose} aria-label="Close">
                         <X size={18} />
                     </button>
                 </div>
 
                 <div className="settings-body">
-                    {/* 侧边栏 */}
-                    <nav className="settings-sidebar">
-                        <button
-                            className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('appearance')}
-                        >
-                            <Palette size={18} />
-                            <span>{STRINGS.SETTINGS.APPEARANCE}</span>
-                        </button>
-                        <button
-                            className={`settings-nav-item ${activeTab === 'knowledge' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('knowledge')}
-                        >
-                            <Database size={18} />
-                            <span>{STRINGS.SETTINGS.KNOWLEDGE_BASE}</span>
-                        </button>
-                        <button
-                            className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('embedding')}
-                        >
-                            <Bot size={18} />
-                            <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
-                        </button>
-                        <button
-                            className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('mcp')}
-                        >
-                            <Terminal size={18} />
-                            <span>{STRINGS.MCP.TITLE}</span>
-                        </button>
-                        <button
-                            className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('about')}
-                        >
-                            <Info size={18} />
-                            <span>{STRINGS.ABOUT.TITLE}</span>
-                        </button>
-                    </nav>
-
-                    {/* 主内容区域 (包含内容和底部按钮) */}
-                    <div className="settings-main">
-                        {/* 内容区 */}
-                        <div className="settings-content">
-                            {activeTab === 'appearance' && (
-                                <AppearancePanel
-                                    themeSetting={themeSetting}
-                                    sidebarWidth={sidebarWidth}
-                                    onThemeChange={setThemeSetting}
-                                    onSidebarWidthChange={setSidebarWidth}
-                                    strings={STRINGS}
+                    {/* 图谱视图 - 全屏显示 */}
+                    {showGraph ? (
+                        <div className="settings-main graph-view">
+                            <div className="settings-content">
+                                <DocumentGraph
+                                    onBack={() => setShowGraph(false)}
+                                    onNodeClick={(docId) => {
+                                        // 关闭设置并导航到文档
+                                        onClose();
+                                        // 触发文档导航事件
+                                        window.dispatchEvent(new CustomEvent('navigate-to-doc', { detail: docId }));
+                                    }}
                                 />
-                            )}
-                            {activeTab === 'knowledge' && (
-                                <KnowledgePanel
-                                    status={status}
-                                    isRebuilding={isRebuilding}
-                                    progress={rebuildProgress}
-                                    onRebuild={handleRebuild}
-                                    strings={STRINGS}
-                                />
-                            )}
-                            {activeTab === 'embedding' && (
-                                <EmbeddingPanel
-                                    config={config}
-                                    onChange={handleConfigChange}
-                                    strings={STRINGS}
-                                />
-                            )}
-                            {activeTab === 'mcp' && (
-                                <MCPPanel
-                                    mcpInfo={mcpInfo}
-                                    strings={STRINGS}
-                                />
-                            )}
-                            {activeTab === 'about' && (
-                                <AboutPanel
-                                    strings={STRINGS}
-                                />
-                            )}
+                            </div>
                         </div>
+                    ) : (
+                        <>
+                            {/* 侧边栏 */}
+                            <nav className="settings-sidebar">
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('appearance')}
+                                >
+                                    <Palette size={18} />
+                                    <span>{STRINGS.SETTINGS.APPEARANCE}</span>
+                                </button>
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'knowledge' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('knowledge')}
+                                >
+                                    <Database size={18} />
+                                    <span>{STRINGS.SETTINGS.KNOWLEDGE_BASE}</span>
+                                </button>
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('embedding')}
+                                >
+                                    <Bot size={18} />
+                                    <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
+                                </button>
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('mcp')}
+                                >
+                                    <Terminal size={18} />
+                                    <span>{STRINGS.MCP.TITLE}</span>
+                                </button>
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('about')}
+                                >
+                                    <Info size={18} />
+                                    <span>{STRINGS.ABOUT.TITLE}</span>
+                                </button>
+                            </nav>
 
-                        {/* 底部按钮 */}
-                        <div className="settings-footer">
-                            <button className="settings-btn cancel" onClick={onClose}>
-                                {STRINGS.BUTTONS.CANCEL}
-                            </button>
-                            <button
-                                className="settings-btn save"
-                                onClick={handleSave}
-                                disabled={!hasChanges || isSaving}
-                            >
-                                {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
-                            </button>
-                        </div>
-                    </div>
+                            {/* 主内容区域 (包含内容和底部按钮) */}
+                            <div className="settings-main">
+                                {/* 内容区 */}
+                                <div className="settings-content">
+                                    {activeTab === 'appearance' && (
+                                        <AppearancePanel
+                                            themeSetting={themeSetting}
+                                            sidebarWidth={sidebarWidth}
+                                            onThemeChange={setThemeSetting}
+                                            onSidebarWidthChange={setSidebarWidth}
+                                            strings={STRINGS}
+                                        />
+                                    )}
+                                    {activeTab === 'knowledge' && (
+                                        <KnowledgePanel
+                                            status={status}
+                                            isRebuilding={isRebuilding}
+                                            progress={rebuildProgress}
+                                            onRebuild={handleRebuild}
+                                            onViewGraph={() => setShowGraph(true)}
+                                            strings={STRINGS}
+                                        />
+                                    )}
+                                    {activeTab === 'embedding' && (
+                                        <EmbeddingPanel
+                                            config={config}
+                                            onChange={handleConfigChange}
+                                            strings={STRINGS}
+                                        />
+                                    )}
+                                    {activeTab === 'mcp' && (
+                                        <MCPPanel
+                                            mcpInfo={mcpInfo}
+                                            strings={STRINGS}
+                                        />
+                                    )}
+                                    {activeTab === 'about' && (
+                                        <AboutPanel
+                                            strings={STRINGS}
+                                        />
+                                    )}
+                                </div>
+
+                                {/* 底部按钮 */}
+                                <div className="settings-footer">
+                                    <button className="settings-btn cancel" onClick={onClose}>
+                                        {STRINGS.BUTTONS.CANCEL}
+                                    </button>
+                                    <button
+                                        className="settings-btn save"
+                                        onClick={handleSave}
+                                        disabled={!hasChanges || isSaving}
+                                    >
+                                        {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

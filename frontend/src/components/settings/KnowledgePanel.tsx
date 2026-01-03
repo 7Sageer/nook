@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { RefreshCw, Network } from 'lucide-react';
 import { getStrings } from '../../constants/strings';
-import { DocumentGraph } from '../DocumentGraph';
 import type { RAGStatus } from '../../types/settings';
 
 export interface ReindexProgress {
@@ -15,7 +14,7 @@ interface KnowledgePanelProps {
     isRebuilding: boolean;
     progress: ReindexProgress | null;
     onRebuild: () => void;
-    onNodeClick?: (docId: string) => void;
+    onViewGraph: () => void;
     strings: ReturnType<typeof getStrings>;
 }
 
@@ -24,11 +23,9 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
     isRebuilding,
     progress,
     onRebuild,
-    onNodeClick,
+    onViewGraph,
     strings,
 }) => {
-    const [showGraph, setShowGraph] = useState(false);
-
     // 获取进度显示文本
     const getProgressText = () => {
         if (!progress) return strings.SETTINGS.REBUILDING;
@@ -42,12 +39,6 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
     const getProgressPercent = () => {
         if (!progress || progress.total === 0) return 0;
         return Math.round((progress.current / progress.total) * 100);
-    };
-
-    const handleNodeClick = (docId: string) => {
-        if (onNodeClick) {
-            onNodeClick(docId);
-        }
     };
 
     return (
@@ -110,7 +101,7 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
 
                 <button
                     className="settings-action-btn secondary"
-                    onClick={() => setShowGraph(true)}
+                    onClick={onViewGraph}
                     disabled={status.indexedDocs === 0}
                     title={status.indexedDocs === 0 ? 'No indexed documents' : 'View document relationships'}
                 >
@@ -118,13 +109,6 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                     <span>View Graph</span>
                 </button>
             </div>
-
-            {/* 图谱弹窗 */}
-            <DocumentGraph
-                isOpen={showGraph}
-                onClose={() => setShowGraph(false)}
-                onNodeClick={handleNodeClick}
-            />
         </div>
     );
 };
