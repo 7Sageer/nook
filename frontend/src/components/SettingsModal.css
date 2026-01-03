@@ -14,8 +14,8 @@
 
 /* 模态框 */
 .settings-modal {
-    width: 600px;
-    height: 420px;
+    width: 800px;
+    height: 600px;
     background: var(--bg-primary);
     border-radius: 12px;
     display: flex;
@@ -462,15 +462,16 @@
 
 .mcp-copy-btn {
     position: absolute;
-    top: 50%;
+    top: 8px;
     right: 8px;
-    transform: translateY(-50%);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     border: 1px solid var(--border-primary);
-    border-radius: 4px;
+    border-radius: 6px;
     background: var(--bg-primary);
     color: var(--text-secondary);
     font-size: 11px;

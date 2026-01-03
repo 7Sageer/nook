@@ -50,7 +50,6 @@ export const MCPPanel: React.FC<MCPPanelProps> = ({ mcpInfo, strings }) => {
                             title={strings.MCP.COPY_PATH}
                         >
                             {copiedPath ? <Check size={14} /> : <Copy size={14} />}
-                            <span>{copiedPath ? strings.MCP.COPIED : strings.MCP.COPY_PATH}</span>
                         </button>
                     </div>
                 </div>
@@ -67,7 +66,6 @@ export const MCPPanel: React.FC<MCPPanelProps> = ({ mcpInfo, strings }) => {
                             title={strings.MCP.COPY_CONFIG}
                         >
                             {copiedConfig ? <Check size={14} /> : <Copy size={14} />}
-                            <span>{copiedConfig ? strings.MCP.COPIED : strings.MCP.COPY_CONFIG}</span>
                         </button>
                     </div>
                 </div>
