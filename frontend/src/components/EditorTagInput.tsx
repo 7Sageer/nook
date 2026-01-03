@@ -88,7 +88,7 @@ export const EditorTagInput = memo(function EditorTagInput({
     }, [onTagClick]);
 
     const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-        e.stopPropagation();
+        // e.stopPropagation(); // Allow global shortcuts to propagate
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();

@@ -5,6 +5,7 @@ import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, E
 import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import { ContentViewerModal } from "../ContentViewerModal";
+import "../../styles/ExternalBlock.css";
 import "../../styles/FileBlock.css";
 
 // 文件类型图标
@@ -94,7 +95,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     // 加载状态
     if (loading) {
         return (
-            <div className="file-block file-loading" contentEditable={false}>
+            <div className="external-block external-loading" contentEditable={false}>
                 <Loader2 size={18} className="animate-spin" />
                 <span>Uploading file...</span>
             </div>
@@ -104,7 +105,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     // 错误状态
     if (error) {
         return (
-            <div className="file-block file-error" contentEditable={false}>
+            <div className="external-block external-error" contentEditable={false}>
                 <AlertCircle size={18} />
                 <span>{error}</span>
             </div>
@@ -114,7 +115,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     // 文件卡片
     return (
         <div
-            className={`file-block file-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
+            className={`external-block external-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""} file-card-custom`}
             contentEditable={false}
             onDoubleClick={handleOpenFile}
         >
@@ -128,9 +129,9 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                     <span className="file-size">{formatFileSize(fileSize)}</span>
                 </div>
             </div>
-            <div className="file-actions">
+            <div className="external-actions">
                 <button
-                    className={`file-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
+                    className={`external-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
                     title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? "Indexing failed, retry?" : "Index content"}
                     disabled={indexing}
                     onClick={(e) => {
@@ -151,7 +152,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 </button>
                 {indexed && (
                     <button
-                        className="file-action-btn"
+                        className="external-action-btn"
                         title="View extracted content"
                         onClick={(e) => {
                             e.preventDefault();
@@ -163,7 +164,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                     </button>
                 )}
                 <button
-                    className="file-action-btn"
+                    className="external-action-btn"
                     title="Open file"
                     onClick={(e) => {
                         e.preventDefault();

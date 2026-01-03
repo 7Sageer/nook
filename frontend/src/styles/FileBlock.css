@@ -1,81 +1,12 @@
 /* File Block Styles */
 
-.file-block {
-    border-radius: 8px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-    margin: 8px 0;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.file-block * {
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.ProseMirror .file-card.ProseMirror-selectednode::selection,
-.ProseMirror .file-card.ProseMirror-selectednode *::selection,
-.ProseMirror .ProseMirror-selectednode .file-card::selection,
-.ProseMirror .ProseMirror-selectednode .file-card *::selection {
-    background-color: transparent !important;
-    color: inherit !important;
-}
-
-.file-loading {
-    background: var(--bn-colors-hovered-background, #f8f9fa);
-    border: 1px solid var(--bn-colors-menu-background, #e0e0e0);
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: var(--bn-colors-side-menu-text, #666);
-}
-
-.file-error {
-    background: #fff5f5;
-    border: 1px solid #ffc9c9;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #c92a2a;
-}
-
-.file-card {
-    display: flex;
-    align-items: center;
-    width: 75%;
-    position: relative;
-    padding: 12px 16px;
-    border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
-    border-left: 3px solid var(--bn-colors-menu-background, #d0d0d0);
-    background: var(--bn-colors-editor-background, var(--bg-primary));
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
+/* Specific Card Layout Override */
+.file-card-custom {
     overflow: hidden;
-    transition: border-left-color 0.2s ease;
+    /* Ensure content doesn't spill out */
 }
 
-.file-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
-    border-color: var(--bn-colors-highlighted-text, #0070f3);
-}
-
-.file-card.indexed {
-    border-left-color: var(--success);
-}
-
-.file-card.index-error {
-    border-left-color: #fa5252;
-    border-color: #ffc9c9;
-}
-
-.file-card.index-error:hover {
-    border-color: #fa5252;
-}
-
+/* File Icon */
 .file-icon-wrapper {
     margin-right: 12px;
     display: flex;
@@ -99,6 +30,7 @@
     color: #757575;
 }
 
+/* File Info */
 .file-info {
     flex: 1;
     min-width: 0;
@@ -119,94 +51,4 @@
     gap: 8px;
     font-size: 12px;
     color: var(--bn-colors-side-menu-text, #666);
-}
-
-/* Action Buttons */
-.file-actions {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    gap: 4px;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-}
-
-.file-card:hover .file-actions {
-    opacity: 1;
-}
-
-.file-action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
-    border-radius: 6px;
-    background: var(--bg-primary, #fff);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    color: var(--text-tertiary, #666);
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.file-action-btn:hover {
-    background: var(--bg-hover, #f5f5f5);
-    color: var(--text-primary, #333);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-1px);
-}
-
-.file-action-btn.indexed {
-    color: var(--success);
-}
-
-.file-action-btn.index-error {
-    color: #fa5252;
-}
-
-.file-action-btn.indexed:hover {
-    color: var(--success);
-    filter: brightness(0.85);
-}
-
-.file-action-btn.index-error:hover {
-    color: #fa5252;
-    background: #fff5f5;
-}
-
-.file-action-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-/* Spin animation */
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.animate-spin {
-    animation: spin 1s linear infinite;
-}
-
-/* Dark mode adjustments */
-[data-theme="dark"] .file-error {
-    background: rgba(255, 80, 80, 0.1);
-    border-color: rgba(255, 80, 80, 0.3);
-    color: #ff8787;
-}
-
-[data-theme="dark"] .file-card {
-    border-color: #333;
-}
-
-[data-theme="dark"] .file-card:hover {
-    border-color: #4dabf7;
 }

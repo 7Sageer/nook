@@ -1,0 +1,180 @@
+/* External Block Common Styles */
+/* 用于 FileBlock, FolderBlock, BookmarkBlock 的通用样式 */
+
+.external-block {
+    border-radius: 8px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    margin: 8px 0;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: inherit;
+}
+
+.external-block * {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Loading State */
+.external-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bn-colors-hovered-background, #f8f9fa);
+    border: 1px solid var(--bn-colors-menu-background, #e0e0e0);
+    color: var(--bn-colors-side-menu-text, #666);
+}
+
+/* Error State */
+.external-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fff5f5;
+    border: 1px solid #ffc9c9;
+    color: #c92a2a;
+}
+
+/* Card State */
+.external-card {
+    display: flex;
+    align-items: center;
+    width: 75%;
+    position: relative;
+    padding: 12px 16px;
+    border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
+    border-left: 3px solid var(--bn-colors-menu-background, #d0d0d0);
+    background: var(--bn-colors-editor-background, var(--bg-primary, #fff));
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-left-color 0.2s ease;
+}
+
+.external-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    border-color: var(--bn-colors-highlighted-text, #0070f3);
+}
+
+.external-card.indexed {
+    border-left-color: var(--success, #52c41a);
+}
+
+.external-card.index-error {
+    border-left-color: #fa5252;
+    border-color: #ffc9c9;
+}
+
+.external-card.index-error:hover {
+    border-color: #fa5252;
+}
+
+/* Action Buttons */
+.external-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.external-card:hover .external-actions {
+    opacity: 1;
+}
+
+.external-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-primary, rgba(0, 0, 0, 0.1));
+    border-radius: 6px;
+    background: var(--bg-primary, #fff);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    color: var(--text-tertiary, #666);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.external-action-btn:hover {
+    background: var(--bg-hover, #f5f5f5);
+    color: var(--text-primary, #333);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.external-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.external-action-btn.indexed {
+    color: var(--success, #52c41a);
+}
+
+.external-action-btn.index-error {
+    color: #fa5252;
+}
+
+.external-action-btn.indexed:hover {
+    color: var(--success, #52c41a);
+    filter: brightness(0.85);
+}
+
+.external-action-btn.index-error:hover {
+    color: #fa5252;
+    background: #fff5f5;
+}
+
+/* Animations */
+.animate-spin {
+    animation: external-spin 1s linear infinite;
+}
+
+@keyframes external-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Dark Mode */
+[data-theme="dark"] .external-card {
+    border-color: #333;
+}
+
+[data-theme="dark"] .external-card:hover {
+    border-color: #4dabf7;
+}
+
+[data-theme="dark"] .external-error {
+    background: rgba(255, 80, 80, 0.1);
+    border-color: rgba(255, 80, 80, 0.3);
+    color: #ff8787;
+}
+
+@media (prefers-color-scheme: dark) {
+    .external-block {
+        /* fallback if data-theme not present */
+    }
+}
+
+/* ProseMirror specific overrides to prevent blue selection overlay on cards */
+.ProseMirror .external-card.ProseMirror-selectednode::selection,
+.ProseMirror .external-card.ProseMirror-selectednode *::selection,
+.ProseMirror .ProseMirror-selectednode .external-card::selection,
+.ProseMirror .ProseMirror-selectednode .external-card *::selection {
+    background-color: transparent !important;
+    color: inherit !important;
+}

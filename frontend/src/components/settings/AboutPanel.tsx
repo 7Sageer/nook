@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ExternalLink, Github, Heart } from 'lucide-react';
 import { getStrings } from '../../constants/strings';
 import { GetAppInfo } from '../../../wailsjs/go/main/App';
+import { BrowserOpenURL } from '../../../wailsjs/runtime/runtime';
 import logoImage from '../../assets/images/logo-universal.png';
 
 interface AboutPanelProps {
@@ -23,7 +24,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
     }, []);
 
     const openLink = (url: string) => {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        BrowserOpenURL(url);
     };
 
     return (

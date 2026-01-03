@@ -17,11 +17,12 @@ import './SettingsModal.css';
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialTab?: SettingsTab;
 }
 
-type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
+export type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
     const { showToast } = useToast();
     const STRINGS = getStrings(language);
@@ -57,8 +58,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     useEffect(() => {
         if (isOpen) {
             loadData();
+            if (initialTab) {
+                setActiveTab(initialTab);
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialTab]);
 
     // 订阅索引状态更新事件，实时刷新状态
     useEffect(() => {

@@ -9,8 +9,9 @@ interface BookmarkInputProps {
 
 export const BookmarkInput = ({ inputValue, setInputValue, onFetch, inputRef }: BookmarkInputProps) => {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        e.stopPropagation();
+        // Only stop propagation for keys we handle or that interfere with the editor
         if (e.key === "Enter") {
+            e.stopPropagation();
             e.preventDefault();
             onFetch(inputValue);
         }

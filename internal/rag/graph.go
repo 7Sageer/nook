@@ -6,19 +6,22 @@ import (
 
 // GraphNode 图谱节点（支持多种类型：文档、书签、文件、文件夹）
 type GraphNode struct {
-	ID            string `json:"id"`
-	Type          string `json:"type"` // "document", "bookmark", "file", "folder"
-	Title         string `json:"title"`
-	Val           int    `json:"val"`                     // 节点大小（基于块数量/内容量）
-	ParentDocID   string `json:"parentDocId,omitempty"`   // 父文档 ID（仅 bookmark/file/folder）
-	ParentBlockID string `json:"parentBlockId,omitempty"` // 父块 ID（用于跳转定位）
+	ID            string   `json:"id"`
+	Type          string   `json:"type"` // "document", "bookmark", "file", "folder"
+	Title         string   `json:"title"`
+	Tags          []string `json:"tags,omitempty"`          // 标签列表
+	Val           int      `json:"val"`                     // 节点大小（基于块数量/内容量）
+	ParentDocID   string   `json:"parentDocId,omitempty"`   // 父文档 ID（仅 bookmark/file/folder）
+	ParentBlockID string   `json:"parentBlockId,omitempty"` // 父块 ID（用于跳转定位）
 }
 
 // GraphLink 图谱边
 type GraphLink struct {
-	Source     string  `json:"source"`
-	Target     string  `json:"target"`
-	Similarity float32 `json:"similarity"`
+	Source      string  `json:"source"`
+	Target      string  `json:"target"`
+	Similarity  float32 `json:"similarity"`
+	HasSemantic bool    `json:"hasSemantic"` // 具有语义相似度（原本向量相似度 >= threshold）
+	HasTags     bool    `json:"hasTags"`     // 具有相同标签
 }
 
 // GraphData 图谱完整数据
@@ -50,6 +53,13 @@ func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 	for _, doc := range index.Documents {
 		vec, count, err := s.getDocumentAverageVector(doc.ID)
 		if err != nil || vec == nil {
+			// 即使没有向量（比如空文档），如果有标签，也应该显示在图谱中吗？
+			// 目前逻辑是必须有向量才能计算相似度。
+			// 如果我们想纯靠标签关联，那也需要节点存在。
+			// 为了保持逻辑一致，暂时还是要求有内容（有向量）或者我们可以允许空向量但只由标签连接？
+			// 简单起见，如果只依靠标签连接，我们可以在这里放宽限制，
+			// 但余弦相似度需要向量。
+			// 如果没有向量，我们暂时跳过（通常文档都有内容）。
 			continue
 		}
 		nodeID := "doc:" + doc.ID
@@ -58,6 +68,7 @@ func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 			ID:    nodeID,
 			Type:  "document",
 			Title: doc.Title,
+			Tags:  doc.Tags,
 			Val:   count,
 		}
 	}
@@ -96,14 +107,49 @@ func (s *Service) GetDocumentGraph(threshold float32) (*GraphData, error) {
 		nodeIDs = append(nodeIDs, id)
 	}
 
+	// 标签增强因子随 threshold 衰减：threshold 越高，标签影响越小
+	tagFactor := float32(0.4) * (1.2 - threshold)
+
 	for i := 0; i < len(nodeIDs); i++ {
 		for j := i + 1; j < len(nodeIDs); j++ {
-			similarity := cosineSimilarity(nodeVectors[nodeIDs[i]], nodeVectors[nodeIDs[j]])
-			if similarity >= threshold {
+			idA := nodeIDs[i]
+			idB := nodeIDs[j]
+
+			// 基础向量相似度
+			semanticSimilarity := cosineSimilarity(nodeVectors[idA], nodeVectors[idB])
+			finalSimilarity := semanticSimilarity
+
+			hasSemantic := semanticSimilarity >= threshold
+			hasTags := false
+
+			// 标签相似度增强 (仅文档之间，使用 Jaccard + 乘法增强)
+			nodeA := nodeInfos[idA]
+			nodeB := nodeInfos[idB]
+
+			if nodeA.Type == "document" && nodeB.Type == "document" {
+				commonTags := countCommonTags(nodeA.Tags, nodeB.Tags)
+				if commonTags > 0 {
+					// Jaccard 系数：共同标签数 / 并集标签数
+					unionSize := len(nodeA.Tags) + len(nodeB.Tags) - commonTags
+					jaccard := float32(commonTags) / float32(unionSize)
+					// 乘法增强：标签只是放大已有的语义关联
+					finalSimilarity = semanticSimilarity * (1 + jaccard*tagFactor)
+					hasTags = true
+				}
+			}
+
+			// 截断到 1.0
+			if finalSimilarity > 1.0 {
+				finalSimilarity = 1.0
+			}
+
+			if finalSimilarity >= threshold {
 				links = append(links, GraphLink{
-					Source:     nodeIDs[i],
-					Target:     nodeIDs[j],
-					Similarity: similarity,
+					Source:      idA,
+					Target:      idB,
+					Similarity:  finalSimilarity,
+					HasSemantic: hasSemantic,
+					HasTags:     hasTags,
 				})
 			}
 		}
@@ -151,6 +197,20 @@ func averageVectors(vectors [][]float32) []float32 {
 		avgVec[i] /= float32(len(vectors))
 	}
 	return avgVec
+}
+
+// countCommonTags 计算两个标签列表的共同标签数
+func countCommonTags(tagsA, tagsB []string) int {
+	count := 0
+	for _, tA := range tagsA {
+		for _, tB := range tagsB {
+			if tA == tB {
+				count++
+				break
+			}
+		}
+	}
+	return count
 }
 
 // cosineSimilarity 计算两个向量的余弦相似度

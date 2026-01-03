@@ -2,6 +2,7 @@ import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import { ContentViewerModal } from "../ContentViewerModal";
+import "../../styles/ExternalBlock.css";
 import "../../styles/BookmarkBlock.css";
 
 import { useBookmarkState } from "./useBookmarkState";

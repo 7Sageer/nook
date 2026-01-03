@@ -299,6 +299,19 @@ func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
 	return h.SaveFile(base64Data, filepath.Base(filePath))
 }
 
+// CopyFileToStorage 从源路径复制文件到 ~/.Nook/files/（用于拖拽上传）
+func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
+	// 读取源文件
+	data, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source file: %w", err)
+	}
+
+	// 保存到 files 目录
+	base64Data := base64.StdEncoding.EncodeToString(data)
+	return h.SaveFile(base64Data, filepath.Base(sourcePath))
+}
+
 // OpenFileWithSystem 使用系统默认应用打开文件
 func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 	// relativePath: /files/xxx.md

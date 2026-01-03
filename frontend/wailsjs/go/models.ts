@@ -274,6 +274,28 @@ export namespace main {
 	        this.configJson = source["configJson"];
 	    }
 	}
+	export class UpdateInfo {
+	    hasUpdate: boolean;
+	    latestVersion: string;
+	    currentVersion: string;
+	    releaseNotes: string;
+	    releaseURL: string;
+	    publishedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hasUpdate = source["hasUpdate"];
+	        this.latestVersion = source["latestVersion"];
+	        this.currentVersion = source["currentVersion"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.releaseURL = source["releaseURL"];
+	        this.publishedAt = source["publishedAt"];
+	    }
+	}
 
 }
 
@@ -397,6 +419,8 @@ export namespace rag {
 	    source: string;
 	    target: string;
 	    similarity: number;
+	    hasSemantic: boolean;
+	    hasTags: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new GraphLink(source);
@@ -407,12 +431,15 @@ export namespace rag {
 	        this.source = source["source"];
 	        this.target = source["target"];
 	        this.similarity = source["similarity"];
+	        this.hasSemantic = source["hasSemantic"];
+	        this.hasTags = source["hasTags"];
 	    }
 	}
 	export class GraphNode {
 	    id: string;
 	    type: string;
 	    title: string;
+	    tags?: string[];
 	    val: number;
 	    parentDocId?: string;
 	    parentBlockId?: string;
@@ -426,6 +453,7 @@ export namespace rag {
 	        this.id = source["id"];
 	        this.type = source["type"];
 	        this.title = source["title"];
+	        this.tags = source["tags"];
 	        this.val = source["val"];
 	        this.parentDocId = source["parentDocId"];
 	        this.parentBlockId = source["parentBlockId"];

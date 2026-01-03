@@ -1,7 +1,9 @@
+import { Loader2 } from "lucide-react";
+
 export const BookmarkLoading = () => {
     return (
-        <div className="bookmark-block bookmark-loading" contentEditable={false}>
-            <div className="bookmark-spinner"></div>
+        <div className="external-block external-loading" contentEditable={false}>
+            <Loader2 size={18} className="animate-spin" />
             <span>Fetching link info...</span>
         </div>
     );

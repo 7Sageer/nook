@@ -65,6 +65,17 @@ export function useKeyboardNavigation({
 
         // Cmd+K - 搜索
         if (isMod && e.key === 'k') {
+            // 如果在编辑区域，不拦截 Cmd+K，让编辑器处理（通常是添加链接）
+            if (e.target instanceof HTMLElement && e.target.isContentEditable) {
+                return;
+            }
+            e.preventDefault();
+            callbacksRef.current.onSearch?.();
+            return;
+        }
+
+        // Cmd+P - 搜索 (全局通用，类似 VS Code / Notion)
+        if (isMod && e.key === 'p') {
             e.preventDefault();
             callbacksRef.current.onSearch?.();
             return;

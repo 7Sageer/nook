@@ -1,10 +1,10 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
-import { useCallback, useState } from "react";
-import { Folder, Loader2, Check, AlertCircle, RefreshCw, FolderOpen, Eye, Plus } from "lucide-react";
-import { IndexFolderContent, SelectFolderDialog, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
+import { useCallback } from "react";
+import { Folder, Loader2, Check, AlertCircle, RefreshCw, FolderOpen, Plus } from "lucide-react";
+import { IndexFolderContent, SelectFolderDialog } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
-import { ContentViewerModal } from "../ContentViewerModal";
+import "../../styles/ExternalBlock.css";
 import "../../styles/FolderBlock.css";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,12 +22,6 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
         indexError
     } = block.props;
     const { activeId } = useDocumentContext();
-
-    // 查看内容 Modal 状态
-    const [showContentModal, setShowContentModal] = useState(false);
-    const [contentLoading, setContentLoading] = useState(false);
-    const [contentError, setContentError] = useState("");
-    const [extractedContent, setExtractedContent] = useState("");
 
     // 选择文件夹
     const handleSelectFolder = useCallback(async () => {
@@ -94,22 +88,6 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
         }
     }, [block.id, editor, folderPath, activeId]);
 
-    // 查看元数据
-    const handleViewContent = useCallback(async () => {
-        if (!activeId) return;
-        setShowContentModal(true);
-        setContentLoading(true);
-        setContentError("");
-        try {
-            const result = await GetExternalBlockContent(activeId, block.id);
-            setExtractedContent(result?.content || "");
-        } catch (err) {
-            setContentError(err instanceof Error ? err.message : "Failed to load content");
-        } finally {
-            setContentLoading(false);
-        }
-    }, [activeId, block.id]);
-
     // 如果没有选择文件夹，显示选择界面
     if (!folderPath) {
         return (
@@ -128,7 +106,7 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
     // 加载状态
     if (loading) {
         return (
-            <div className="folder-block folder-loading" contentEditable={false}>
+            <div className="external-block external-loading" contentEditable={false}>
                 <Loader2 size={18} className="animate-spin" />
                 <span>Loading folder...</span>
             </div>
@@ -138,7 +116,7 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
     // 错误状态
     if (error) {
         return (
-            <div className="folder-block folder-error" contentEditable={false}>
+            <div className="external-block external-error" contentEditable={false}>
                 <AlertCircle size={18} />
                 <span>{error}</span>
             </div>
@@ -148,7 +126,7 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
     // 文件夹卡片
     return (
         <div
-            className={`folder-block folder-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
+            className={`external-block external-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""} folder-card-custom`}
             contentEditable={false}
         >
             <div className="folder-icon-wrapper">
@@ -165,9 +143,9 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
                     )}
                 </div>
             </div>
-            <div className="folder-actions">
+            <div className="external-actions">
                 <button
-                    className={`folder-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
+                    className={`external-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
                     title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? "Indexing failed, retry?" : "Index folder"}
                     disabled={indexing}
                     onClick={(e) => {
@@ -186,21 +164,8 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
                         <RefreshCw size={14} />
                     )}
                 </button>
-                {indexed && (
-                    <button
-                        className="folder-action-btn"
-                        title="View indexed info"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleViewContent();
-                        }}
-                    >
-                        <Eye size={14} />
-                    </button>
-                )}
                 <button
-                    className="folder-action-btn"
+                    className="external-action-btn"
                     title="Change folder"
                     onClick={(e) => {
                         e.preventDefault();
@@ -211,15 +176,6 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
                     <FolderOpen size={14} />
                 </button>
             </div>
-            <ContentViewerModal
-                isOpen={showContentModal}
-                onClose={() => setShowContentModal(false)}
-                title={folderName || "Folder Info"}
-                content={extractedContent}
-                blockType="folder"
-                loading={contentLoading}
-                error={contentError}
-            />
         </div>
     );
 };

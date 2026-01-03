@@ -2,11 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	stdruntime "runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"notion-lite/handlers"
 	"notion-lite/internal/document"
@@ -106,6 +110,9 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
+	// 注册拖拽处理回调
+	runtime.OnFileDrop(ctx, a.handleFileDrop)
+
 	runtime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
 		a.pendingExternalOpensMu.Lock()
 		a.frontendReady = true
@@ -159,6 +166,56 @@ func (a *App) flushPendingExternalFileOpens() {
 			continue
 		}
 		runtime.EventsEmit(ctx, "file:open-external", path)
+	}
+}
+
+// handleFileDrop 处理文件/文件夹拖拽
+func (a *App) handleFileDrop(x, y int, paths []string) {
+	if len(paths) == 0 {
+		return
+	}
+
+	// 只处理第一个拖入的项目
+	path := paths[0]
+	info, err := os.Stat(path)
+	if err != nil {
+		runtime.LogError(a.ctx, "Failed to stat dropped path: "+err.Error())
+		return
+	}
+
+	if info.IsDir() {
+		// 文件夹：发送 folder:dropped 事件
+		runtime.EventsEmit(a.ctx, "folder:dropped", map[string]interface{}{
+			"path": path,
+			"name": filepath.Base(path),
+		})
+	} else {
+		// 文件：发送 file:dropped 事件
+		runtime.EventsEmit(a.ctx, "file:dropped", map[string]interface{}{
+			"path":     path,
+			"name":     filepath.Base(path),
+			"size":     info.Size(),
+			"mimeType": getMimeType(path),
+		})
+	}
+}
+
+// getMimeType 根据文件扩展名获取 MIME 类型
+func getMimeType(path string) string {
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
+	case ".pdf":
+		return "application/pdf"
+	case ".md":
+		return "text/markdown"
+	case ".txt":
+		return "text/plain"
+	case ".docx":
+		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case ".html", ".htm":
+		return "text/html"
+	default:
+		return "application/octet-stream"
 	}
 }
 
@@ -244,6 +301,11 @@ func (a *App) SaveFile(base64Data string, originalName string) (*handlers.FileIn
 // OpenFileDialog 打开文件选择对话框
 func (a *App) OpenFileDialog() (*handlers.FileInfo, error) {
 	return a.fileHandler.OpenFileDialog()
+}
+
+// CopyFileToStorage 从源路径复制文件到存储目录（用于拖拽上传）
+func (a *App) CopyFileToStorage(sourcePath string) (*handlers.FileInfo, error) {
+	return a.fileHandler.CopyFileToStorage(sourcePath)
 }
 
 // OpenFileWithSystem 使用系统默认应用打开文件
@@ -453,4 +515,77 @@ func (a *App) GetAppInfo() AppInfo {
 		Author:    "7Sageer",
 		Copyright: "© 2025-2026 7Sageer",
 	}
+}
+
+// UpdateInfo 更新信息
+type UpdateInfo struct {
+	HasUpdate      bool   `json:"hasUpdate"`
+	LatestVersion  string `json:"latestVersion"`
+	CurrentVersion string `json:"currentVersion"`
+	ReleaseNotes   string `json:"releaseNotes"`
+	ReleaseURL     string `json:"releaseURL"`
+	PublishedAt    string `json:"publishedAt"`
+}
+
+// GitHubRelease GitHub 发布信息结构
+type GitHubRelease struct {
+	TagName     string `json:"tag_name"`
+	Name        string `json:"name"`
+	Body        string `json:"body"`
+	HTMLURL     string `json:"html_url"`
+	PublishedAt string `json:"published_at"`
+	Prerelease  bool   `json:"prerelease"`
+	Draft       bool   `json:"draft"`
+}
+
+// CheckForUpdates 检查更新
+func (a *App) CheckForUpdates() (UpdateInfo, error) {
+	// 如果是开发版本，不检查更新
+	if Version == "dev" {
+		return UpdateInfo{
+			HasUpdate:      false,
+			CurrentVersion: Version,
+			LatestVersion:  Version,
+		}, nil
+	}
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Get("https://api.github.com/repos/7Sageer/nook/releases/latest")
+	if err != nil {
+		return UpdateInfo{CurrentVersion: Version}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return UpdateInfo{CurrentVersion: Version}, nil
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return UpdateInfo{CurrentVersion: Version}, err
+	}
+
+	var release GitHubRelease
+	if err := json.Unmarshal(body, &release); err != nil {
+		return UpdateInfo{CurrentVersion: Version}, err
+	}
+
+	// 简单的版本比较：如果 tag_name 与当前版本不同，且不是 dev，则认为有更新
+	// 注意：GitHub tag 通常带有 'v' 前缀，通过 strings.TrimPrefix 去除比较
+	latestVer := strings.TrimPrefix(release.TagName, "v")
+	currentVer := strings.TrimPrefix(Version, "v")
+
+	hasUpdate := latestVer != currentVer
+
+	return UpdateInfo{
+		HasUpdate:      hasUpdate,
+		LatestVersion:  release.TagName,
+		CurrentVersion: Version,
+		ReleaseNotes:   release.Body,
+		ReleaseURL:     release.HTMLURL,
+		PublishedAt:    release.PublishedAt,
+	}, nil
 }

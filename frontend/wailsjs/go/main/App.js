@@ -6,8 +6,16 @@ export function AddDocumentTag(arg1, arg2) {
   return window['go']['main']['App']['AddDocumentTag'](arg1, arg2);
 }
 
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function Cleanup() {
   return window['go']['main']['App']['Cleanup']();
+}
+
+export function CopyFileToStorage(arg1) {
+  return window['go']['main']['App']['CopyFileToStorage'](arg1);
 }
 
 export function CopyImageToClipboard(arg1) {

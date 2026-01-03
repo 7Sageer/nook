@@ -1,3 +1,5 @@
+import { AlertCircle } from "lucide-react";
+
 interface BookmarkErrorProps {
     error: string;
     onRetry: () => void;
@@ -5,10 +7,10 @@ interface BookmarkErrorProps {
 
 export const BookmarkError = ({ error, onRetry }: BookmarkErrorProps) => {
     return (
-        <div className="bookmark-block bookmark-error" contentEditable={false}>
-            <span className="error-icon">!</span>
+        <div className="external-block external-error" contentEditable={false}>
+            <AlertCircle size={18} />
             <span>{error}</span>
-            <button onClick={onRetry}>Retry</button>
+            <button onClick={onRetry} style={{ marginLeft: "auto", padding: "4px 8px", cursor: "pointer" }}>Retry</button>
         </div>
     );
 };

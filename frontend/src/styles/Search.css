@@ -291,6 +291,7 @@
 /* 分组容器 */
 .semantic-chunks-grouped {
     margin-top: 8px;
+    width: 100%;
     overflow: hidden;
 }
 

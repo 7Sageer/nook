@@ -9,7 +9,7 @@ import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
 import { SearchProvider, useSearchContext } from "./contexts/SearchContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { SettingsModal } from "./components/SettingsModal";
+import { SettingsModal, SettingsTab } from "./components/SettingsModal";
 import { ToastProvider } from "./components/Toast";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
@@ -50,6 +50,7 @@ function AppContent() {
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('appearance');
 
   // 外部文件管理
   const {
@@ -152,10 +153,12 @@ function AppContent() {
   }, []);
 
   const handleAbout = useCallback(() => {
-    alert(STRINGS.ABOUT_INFO);
-  }, [STRINGS.ABOUT_INFO]);
+    setSettingsTab('about');
+    setSettingsOpen(true);
+  }, []);
 
   const handleSettings = useCallback(() => {
+    setSettingsTab('appearance');
     setSettingsOpen(true);
   }, []);
 
@@ -273,6 +276,20 @@ function AppContent() {
 
 
 
+  // 监听文档导航事件 (来自图谱等组件)
+  useEffect(() => {
+    const handleNavigation = (e: CustomEvent<{ docId: string; blockId?: string }>) => {
+      const { docId, blockId } = e.detail;
+      handleSwitchToInternal(docId, blockId);
+    };
+
+    window.addEventListener('navigate-to-doc', handleNavigation as EventListener);
+    return () => {
+      window.removeEventListener('navigate-to-doc', handleNavigation as EventListener);
+    };
+  }, [handleSwitchToInternal]);
+
+
   return (
     <div className={`app-container ${theme}`}>
       <WindowToolbar
@@ -314,6 +331,7 @@ function AppContent() {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        initialTab={settingsTab}
       />
     </div>
   );

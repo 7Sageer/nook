@@ -17,7 +17,7 @@ import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
 import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import { PasteLinkMenu } from "./PasteLinkMenu";
 import "../plugins/smoothCaret.css";
-import { OpenFileDialog } from "../../wailsjs/go/main/App";
+import { OpenFileDialog, SelectFolderDialog } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { FileBlock } from "./blocks/FileBlock";
 import { FolderBlock } from "./blocks/FolderBlock";
@@ -117,10 +117,9 @@ export function Editor({
     containerRef: editorContainerRef,
   });
 
-  // Hook for file drop handling
+  // Hook for file drop handling (Wails events)
   useFileDrop({
     editor,
-    containerRef: editorContainerRef,
     docId,
   });
 
@@ -211,7 +210,10 @@ export function Editor({
               const fileInfo = await OpenFileDialog();
               return fileInfo || null;
             }, () => docId);
-            const customFolder = createFolderMenuItem(editor, STRINGS);
+            const customFolder = createFolderMenuItem(editor, STRINGS, async () => {
+              const path = await SelectFolderDialog();
+              return path || null;
+            }, () => docId);
 
             // Insert custom items right after other Media group items
             const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");

@@ -12,6 +12,7 @@ interface GraphNode {
     id: string;
     type: NodeType;
     title: string;
+    tags?: string[];
     val: number;
     parentDocId?: string;
     parentBlockId?: string;
@@ -24,6 +25,8 @@ interface GraphLink {
     source: string | GraphNode;
     target: string | GraphNode;
     similarity: number;
+    hasSemantic?: boolean;
+    hasTags?: boolean;
 }
 
 interface GraphData {
@@ -44,6 +47,13 @@ const NODE_TYPE_CONFIG: Record<NodeType, { color: string; label: string }> = {
     folder: { color: '#8b5cf6', label: '📁' },    // Purple - Violet
 };
 
+// 连线类型颜色配置
+const LINK_TYPE_COLORS = {
+    semantic: { dark: 'rgba(99, 102, 241, opacity)', light: 'rgba(79, 70, 229, opacity)' },
+    tags: { dark: 'rgba(16, 185, 129, opacity)', light: 'rgba(5, 150, 105, opacity)' },
+    both: { dark: 'rgba(168, 85, 247, opacity)', light: 'rgba(147, 51, 234, opacity)' },
+};
+
 export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     onBack,
     onNodeClick,
@@ -62,7 +72,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             const data = await GetDocumentGraph(threshold);
             if (data) {
                 // 为节点添加颜色
-                const nodes = (data.nodes || []).map((node: { id: string; type: string; title: string; val: number; parentDocId?: string; parentBlockId?: string }) => ({
+                const nodes = (data.nodes || []).map((node: { id: string; type: string; title: string; tags?: string[]; val: number; parentDocId?: string; parentBlockId?: string }) => ({
                     ...node,
                     type: (node.type || 'document') as NodeType,
                     color: getNodeColor((node.type || 'document') as NodeType),
@@ -106,13 +116,20 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         return NODE_TYPE_CONFIG[type]?.color || NODE_TYPE_CONFIG.document.color;
     };
 
-    // 获取边的颜色（基于相似度）
+    // 获取边的颜色（基于相似度及类型）
     const getLinkColor = (link: GraphLink): string => {
         const similarity = link.similarity;
-        const alpha = 0.3 + similarity * 0.5;
-        return theme === 'dark'
-            ? `rgba(100, 150, 255, ${alpha})`
-            : `rgba(50, 100, 200, ${alpha})`;
+        const alpha = 0.2 + similarity * 0.5;
+
+        let colorConfig = LINK_TYPE_COLORS.semantic;
+        if (link.hasSemantic && link.hasTags) {
+            colorConfig = LINK_TYPE_COLORS.both;
+        } else if (link.hasTags) {
+            colorConfig = LINK_TYPE_COLORS.tags;
+        }
+
+        const baseColor = theme === 'dark' ? colorConfig.dark : colorConfig.light;
+        return baseColor.replace('opacity', alpha.toString());
     };
 
     // 处理节点点击
@@ -272,20 +289,20 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                                 ctx.stroke();
                             }
 
-                            // 绘制标签
+                            // 绘制标签/标题
                             if (globalScale > 0.8 || (hoveredNode && hoveredNode.id === node.id)) {
                                 ctx.font = `${fontSize}px Inter, sans-serif`;
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'top';
 
-                                // 截断过长的标签
+                                // 截断过长的标题
                                 const maxLen = 20;
                                 const typeLabel = NODE_TYPE_CONFIG[node.type]?.label || '';
                                 const displayLabel = label.length > maxLen
                                     ? `${typeLabel} ${label.substring(0, maxLen)}...`
                                     : `${typeLabel} ${label}`;
 
-                                // 标签背景
+                                // 标题背景
                                 const textWidth = ctx.measureText(displayLabel).width;
                                 const padding = 2 / globalScale;
                                 ctx.fillStyle = theme === 'dark'
@@ -298,9 +315,33 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                                     fontSize + padding * 2
                                 );
 
-                                // 标签文字
+                                // 标题文字
                                 ctx.fillStyle = theme === 'dark' ? '#e2e8f0' : '#1e293b';
                                 ctx.fillText(displayLabel, node.x || 0, (node.y || 0) + nodeSize + 4);
+
+                                // 如果悬停且有 tags，显示 tags
+                                if (hoveredNode && hoveredNode.id === node.id && node.tags && node.tags.length > 0) {
+                                    const tagsStr = node.tags.join(', ');
+                                    const tagFontSize = fontSize * 0.8;
+                                    ctx.font = `${tagFontSize}px Inter, sans-serif`;
+
+                                    const tagTextWidth = ctx.measureText(tagsStr).width;
+
+                                    // Tag 背景
+                                    ctx.fillStyle = theme === 'dark'
+                                        ? 'rgba(26, 26, 46, 0.8)'
+                                        : 'rgba(255, 255, 255, 0.8)';
+                                    ctx.fillRect(
+                                        (node.x || 0) - tagTextWidth / 2 - padding,
+                                        (node.y || 0) + nodeSize + fontSize + padding * 4,
+                                        tagTextWidth + padding * 2,
+                                        tagFontSize + padding * 2
+                                    );
+
+                                    // Tag 文字
+                                    ctx.fillStyle = theme === 'dark' ? '#94a3b8' : '#64748b';
+                                    ctx.fillText(tagsStr, node.x || 0, (node.y || 0) + nodeSize + fontSize + padding * 4 + 1);
+                                }
                             }
                         }}
                         nodePointerAreaPaint={(node: GraphNode, color: string, ctx: CanvasRenderingContext2D) => {
@@ -317,21 +358,42 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
 
             {/* 图例 */}
             <div className="graph-legend">
-                <div className="legend-item">
-                    <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.document.color, borderRadius: '50%' }}></span>
-                    <span>Document</span>
+                <div className="legend-group">
+                    <div className="legend-group-title">Nodes</div>
+                    <div className="legend-item">
+                        <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.document.color, borderRadius: '50%' }}></span>
+                        <span>Document</span>
+                    </div>
+                    <div className="legend-item">
+                        <span className="legend-shape legend-hexagon" style={{ backgroundColor: NODE_TYPE_CONFIG.bookmark.color }}></span>
+                        <span>Bookmark</span>
+                    </div>
+                    <div className="legend-item">
+                        <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.file.color }}></span>
+                        <span>File</span>
+                    </div>
+                    <div className="legend-item">
+                        <span className="legend-shape legend-diamond" style={{ backgroundColor: NODE_TYPE_CONFIG.folder.color }}></span>
+                        <span>Folder</span>
+                    </div>
                 </div>
-                <div className="legend-item">
-                    <span className="legend-shape legend-hexagon" style={{ backgroundColor: NODE_TYPE_CONFIG.bookmark.color }}></span>
-                    <span>Bookmark</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.file.color }}></span>
-                    <span>File</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-shape legend-diamond" style={{ backgroundColor: NODE_TYPE_CONFIG.folder.color }}></span>
-                    <span>Folder</span>
+
+                <div className="legend-separator"></div>
+
+                <div className="legend-group">
+                    <div className="legend-group-title">Links</div>
+                    <div className="legend-item">
+                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(99, 102, 241)' : 'rgb(79, 70, 229)' }}></span>
+                        <span>Semantic</span>
+                    </div>
+                    <div className="legend-item">
+                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(16, 185, 129)' : 'rgb(5, 150, 105)' }}></span>
+                        <span>Shared Tags</span>
+                    </div>
+                    <div className="legend-item">
+                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(168, 85, 247)' : 'rgb(147, 51, 234)' }}></span>
+                        <span>Both</span>
+                    </div>
                 </div>
             </div>
         </div>

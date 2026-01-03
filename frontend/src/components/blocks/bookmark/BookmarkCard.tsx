@@ -32,7 +32,7 @@ export const BookmarkCard = ({
 }: BookmarkCardProps) => {
     return (
         <div
-            className={`bookmark-block bookmark-card ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
+            className={`external-block external-card ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''} bookmark-card-custom`}
             contentEditable={false}
             onDoubleClick={() => BrowserOpenURL(url)}
         >
@@ -67,9 +67,9 @@ export const BookmarkCard = ({
                 </div>
             )}
             {/* 右上角的操作按钮 */}
-            <div className="bookmark-actions">
+            <div className="external-actions">
                 <button
-                    className={`bookmark-action-btn ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
+                    className={`external-action-btn ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
                     title={indexing ? "Indexing..." : indexed ? "Re-index content" : indexError ? "Indexing failed, retry?" : "Index content"}
                     disabled={indexing}
                     onClick={(e) => {
@@ -90,7 +90,7 @@ export const BookmarkCard = ({
                 </button>
                 {indexed && (
                     <button
-                        className="bookmark-action-btn"
+                        className="external-action-btn"
                         title="View extracted content"
                         onClick={(e) => {
                             e.preventDefault();
@@ -102,7 +102,7 @@ export const BookmarkCard = ({
                     </button>
                 )}
                 <button
-                    className="bookmark-action-btn"
+                    className="external-action-btn"
                     title="Edit"
                     onClick={(e) => {
                         e.preventDefault();
@@ -113,7 +113,7 @@ export const BookmarkCard = ({
                     <Pencil size={14} />
                 </button>
                 <button
-                    className="bookmark-action-btn"
+                    className="external-action-btn"
                     title="Open link"
                     onClick={(e) => {
                         e.preventDefault();

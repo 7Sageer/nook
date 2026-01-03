@@ -9,7 +9,7 @@ import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "prosemirror-state";
 import { createExtension } from "@blocknote/core";
 import { getStrings } from "../constants/strings";
-import { IndexFileContent } from "../../wailsjs/go/main/App";
+import { IndexFileContent, IndexFolderContent } from "../../wailsjs/go/main/App";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type InternalEditor = any;
@@ -253,6 +253,52 @@ export async function indexFileBlock(
 }
 
 /**
+ * 索引文件夹内容（共享函数）
+ * 用于拖放上传和 slash menu 上传后自动索引
+ */
+export async function indexFolderBlock(
+    editor: InternalEditor,
+    blockId: string,
+    folderPath: string,
+    docId: string
+): Promise<void> {
+    // 设置索引中状态
+    const currentBlock = editor.getBlock(blockId);
+    if (!currentBlock) return;
+
+    editor.updateBlock(currentBlock, {
+        props: { ...currentBlock.props, indexing: true, indexError: "" },
+    });
+
+    try {
+        const result = await IndexFolderContent(folderPath, docId, blockId);
+        const latestBlock = editor.getBlock(blockId);
+        if (latestBlock) {
+            editor.updateBlock(latestBlock, {
+                props: {
+                    ...latestBlock.props,
+                    indexed: true,
+                    indexing: false,
+                    fileCount: result?.totalFiles || 0,
+                    indexedCount: result?.successCount || 0,
+                },
+            });
+        }
+    } catch (err) {
+        const latestBlock = editor.getBlock(blockId);
+        if (latestBlock) {
+            editor.updateBlock(latestBlock, {
+                props: {
+                    ...latestBlock.props,
+                    indexing: false,
+                    indexError: err instanceof Error ? err.message : "Index failed"
+                },
+            });
+        }
+    }
+}
+
+/**
  * 插入 FileBlock
  */
 export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
@@ -347,7 +393,15 @@ export function fileToBase64(file: File): Promise<string> {
 // ========== FolderBlock 相关函数 ==========
 
 /**
- * 插入 FolderBlock
+ * FolderInfo 类型定义（用于拖拽上传）
+ */
+export interface FolderInfo {
+    path: string;
+    name: string;
+}
+
+/**
+ * 插入 FolderBlock（空白，需要用户手动选择文件夹）
  */
 export function insertFolderBlock(editor: InternalEditor) {
     const currentBlock = editor.getTextCursorPosition().block;
@@ -390,16 +444,73 @@ export function insertFolderBlock(editor: InternalEditor) {
 }
 
 /**
+ * 插入 FolderBlock（带路径，用于拖拽上传）
+ */
+export function insertFolderBlockWithPath(editor: InternalEditor, folderInfo: FolderInfo) {
+    const currentBlock = editor.getTextCursorPosition().block;
+    const currentContent = currentBlock.content;
+
+    const isEmptyOrSlash =
+        Array.isArray(currentContent) &&
+        (currentContent.length === 0 ||
+            (currentContent.length === 1 &&
+                currentContent[0]?.type === "text" &&
+                currentContent[0]?.text === "/"));
+
+    const folderProps = {
+        folderPath: folderInfo.path,
+        folderName: folderInfo.name,
+        fileCount: 0,
+        indexedCount: 0,
+        loading: false,
+        error: "",
+        indexed: false,
+        indexing: false,
+        indexError: "",
+    };
+
+    const newBlock = isEmptyOrSlash
+        ? editor.updateBlock(currentBlock, {
+            type: "folder" as const,
+            props: folderProps,
+        })
+        : editor.insertBlocks(
+            [{ type: "folder" as const, props: folderProps }],
+            currentBlock,
+            "after"
+        )[0];
+
+    editor.setTextCursorPosition(newBlock);
+    setSelectionToNextContentEditableBlock(editor);
+
+    return newBlock;
+}
+
+/**
  * 创建 Folder slash menu 项
  */
 export function createFolderMenuItem(
     editor: InternalEditor,
-    strings: StringsType
+    strings: StringsType,
+    onSelectFolder: () => Promise<string | null>,
+    getDocId: () => string | undefined
 ) {
     return {
         title: strings.LABELS.FOLDER || "Folder",
-        onItemClick: () => {
-            insertFolderBlock(editor);
+        onItemClick: async () => {
+            const folderPath = await onSelectFolder();
+            if (folderPath) {
+                // 直接插入带路径的 FolderBlock
+                const block = insertFolderBlockWithPath(editor, {
+                    path: folderPath,
+                    name: folderPath.split('/').pop() || folderPath,
+                });
+                // 自动索引
+                const docId = getDocId();
+                if (docId) {
+                    indexFolderBlock(editor, block.id, folderPath, docId);
+                }
+            }
         },
         aliases: ["folder", "directory", "index", "library"],
         group: "Media",
