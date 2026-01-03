@@ -1,19 +1,19 @@
 package handlers
 
 import (
-	"path/filepath"
 	"sync"
 	"time"
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
+	"notion-lite/internal/utils"
 	"notion-lite/internal/watcher"
 )
 
 // DocumentHandler 文档操作处理器
 type DocumentHandler struct {
-	dataPath       string
+	paths          *utils.PathBuilder
 	docRepo        *document.Repository
 	docStorage     *document.Storage
 	searchService  *search.Service
@@ -27,7 +27,7 @@ type DocumentHandler struct {
 
 // NewDocumentHandler 创建文档处理器
 func NewDocumentHandler(
-	dataPath string,
+	paths *utils.PathBuilder,
 	docRepo *document.Repository,
 	docStorage *document.Storage,
 	searchService *search.Service,
@@ -35,7 +35,7 @@ func NewDocumentHandler(
 	watcherService *watcher.Service,
 ) *DocumentHandler {
 	return &DocumentHandler{
-		dataPath:       dataPath,
+		paths:          paths,
 		docRepo:        docRepo,
 		docStorage:     docStorage,
 		searchService:  searchService,
@@ -48,7 +48,7 @@ func NewDocumentHandler(
 // markIndexWrite 标记 index.json 即将被写入
 func (h *DocumentHandler) markIndexWrite() {
 	if h.watcherService != nil {
-		indexPath := filepath.Join(h.dataPath, "index.json")
+		indexPath := h.paths.Index()
 		h.watcherService.MarkWrite(indexPath)
 	}
 }
@@ -63,7 +63,7 @@ func (h *DocumentHandler) CreateDocument(title string) (document.Meta, error) {
 	h.markIndexWrite()
 	doc, err := h.docRepo.Create(title)
 	if err == nil && h.watcherService != nil {
-		docPath := filepath.Join(h.dataPath, "documents", doc.ID+".json")
+		docPath := h.paths.Document(doc.ID)
 		h.watcherService.MarkWrite(docPath)
 	}
 	return doc, err
@@ -109,10 +109,10 @@ func (h *DocumentHandler) LoadDocumentContent(id string) (string, error) {
 func (h *DocumentHandler) SaveDocumentContent(id string, content string) error {
 	// 标记文件路径，避免触发自己的文件监听事件
 	if h.watcherService != nil {
-		docPath := filepath.Join(h.dataPath, "documents", id+".json")
+		docPath := h.paths.Document(id)
 		h.watcherService.MarkWrite(docPath)
 		// 同时标记 index.json（因为 UpdateTimestamp 会修改它）
-		indexPath := filepath.Join(h.dataPath, "index.json")
+		indexPath := h.paths.Index()
 		h.watcherService.MarkWrite(indexPath)
 	}
 	_ = h.docRepo.UpdateTimestamp(id) // 忽略时间戳更新失败

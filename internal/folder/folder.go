@@ -3,10 +3,11 @@ package folder
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/google/uuid"
+
+	"notion-lite/internal/utils"
 )
 
 // Folder 文件夹结构
@@ -25,16 +26,16 @@ type Index struct {
 
 // Repository 文件夹仓库
 type Repository struct {
-	dataPath string
+	paths *utils.PathBuilder
 }
 
 // NewRepository 创建文件夹仓库
-func NewRepository(dataPath string) *Repository {
-	return &Repository{dataPath: dataPath}
+func NewRepository(paths *utils.PathBuilder) *Repository {
+	return &Repository{paths: paths}
 }
 
 func (r *Repository) indexPath() string {
-	return filepath.Join(r.dataPath, "folders.json")
+	return r.paths.Folders()
 }
 
 // GetAll 获取所有文件夹

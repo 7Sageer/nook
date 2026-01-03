@@ -3,7 +3,8 @@ package rag
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"notion-lite/internal/utils"
 )
 
 // EmbeddingConfig 嵌入模型配置
@@ -42,8 +43,8 @@ func (c *EmbeddingConfig) GetChunkConfig() ChunkConfig {
 }
 
 // LoadConfig 从文件加载配置
-func LoadConfig(dataDir string) (*EmbeddingConfig, error) {
-	path := filepath.Join(dataDir, "rag_config.json")
+func LoadConfig(paths *utils.PathBuilder) (*EmbeddingConfig, error) {
+	path := paths.RAGConfig()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -61,8 +62,8 @@ func LoadConfig(dataDir string) (*EmbeddingConfig, error) {
 }
 
 // SaveConfig 保存配置到文件
-func SaveConfig(dataDir string, config *EmbeddingConfig) error {
-	path := filepath.Join(dataDir, "rag_config.json")
+func SaveConfig(paths *utils.PathBuilder, config *EmbeddingConfig) error {
+	path := paths.RAGConfig()
 	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		return err

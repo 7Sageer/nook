@@ -3,8 +3,9 @@ package tag
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"sync"
+
+	"notion-lite/internal/utils"
 )
 
 // TagMeta stores metadata for a tag
@@ -19,9 +20,9 @@ type TagMeta struct {
 
 // Store manages tag metadata (colors)
 type Store struct {
-	mu       sync.RWMutex
-	dataPath string
-	Tags     map[string]TagMeta `json:"tags"`
+	mu    sync.RWMutex
+	paths *utils.PathBuilder
+	Tags  map[string]TagMeta `json:"tags"`
 }
 
 // TagInfo represents a tag with its usage count
@@ -35,17 +36,18 @@ type TagInfo struct {
 }
 
 // NewStore creates a new tag store
-func NewStore(dataPath string) *Store {
+// NewStore creates a new tag store
+func NewStore(paths *utils.PathBuilder) *Store {
 	s := &Store{
-		dataPath: dataPath,
-		Tags:     make(map[string]TagMeta),
+		paths: paths,
+		Tags:  make(map[string]TagMeta),
 	}
 	s.load()
 	return s
 }
 
 func (s *Store) filePath() string {
-	return filepath.Join(s.dataPath, "tags.json")
+	return s.paths.TagStore()
 }
 
 func (s *Store) load() {

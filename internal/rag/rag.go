@@ -3,16 +3,15 @@ package rag
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-
 	"notion-lite/internal/document"
+	"notion-lite/internal/utils"
+	"os"
 )
 
 // Service RAG 服务统一入口
 type Service struct {
 	ctx             context.Context
-	dataPath        string
+	paths           *utils.PathBuilder
 	store           *VectorStore
 	indexer         *Indexer
 	searcher        *Searcher
@@ -23,9 +22,9 @@ type Service struct {
 }
 
 // NewService 创建 RAG 服务
-func NewService(dataPath string, docRepo *document.Repository, docStorage *document.Storage) *Service {
+func NewService(paths *utils.PathBuilder, docRepo *document.Repository, docStorage *document.Storage) *Service {
 	return &Service{
-		dataPath:   dataPath,
+		paths:      paths,
 		docRepo:    docRepo,
 		docStorage: docStorage,
 	}
@@ -38,7 +37,7 @@ func (s *Service) init() error {
 	}
 
 	// 加载配置
-	config, err := LoadConfig(s.dataPath)
+	config, err := LoadConfig(s.paths)
 	if err != nil {
 		return err
 	}
@@ -51,7 +50,7 @@ func (s *Service) init() error {
 	s.embedder = embedder
 
 	// 创建向量存储
-	dbPath := filepath.Join(s.dataPath, "vectors.db")
+	dbPath := s.paths.RAGDatabase()
 	store, err := NewVectorStore(dbPath, embedder.Dimension())
 	if err != nil {
 		return err
@@ -59,9 +58,9 @@ func (s *Service) init() error {
 	s.store = store
 
 	// 创建索引器和搜索器
-	s.indexer = NewIndexer(store, embedder, s.docRepo, s.docStorage, s.dataPath)
+	s.indexer = NewIndexer(store, embedder, s.docRepo, s.docStorage, s.paths)
 	s.searcher = NewSearcher(store, embedder, s.docRepo)
-	s.externalIndexer = NewExternalIndexer(store, embedder, s.docRepo, s.docStorage, s.indexer, s.dataPath)
+	s.externalIndexer = NewExternalIndexer(store, embedder, s.docRepo, s.docStorage, s.indexer, s.paths)
 
 	return nil
 }
@@ -158,7 +157,7 @@ func (s *Service) Reinitialize() error {
 	s.embedder = nil
 
 	// 加载新配置，检查维度是否变化
-	config, err := LoadConfig(s.dataPath)
+	config, err := LoadConfig(s.paths)
 	if err != nil {
 		return err
 	}
@@ -174,7 +173,7 @@ func (s *Service) Reinitialize() error {
 
 	// 如果维度变化，删除旧的向量数据库
 	if dimensionChanged {
-		dbPath := filepath.Join(s.dataPath, "vectors.db")
+		dbPath := s.paths.RAGDatabase()
 		fmt.Printf("🔄 [RAG] Dimension changed (%d → %d), removing old database...\n", oldDimension, newDimension)
 		if err := os.Remove(dbPath); err != nil && !os.IsNotExist(err) {
 			fmt.Printf("⚠️ [RAG] Failed to remove old database: %v\n", err)
@@ -184,16 +183,16 @@ func (s *Service) Reinitialize() error {
 	// 重新初始化
 	s.embedder = newEmbedder
 
-	dbPath := filepath.Join(s.dataPath, "vectors.db")
+	dbPath := s.paths.RAGDatabase()
 	store, err := NewVectorStore(dbPath, newDimension)
 	if err != nil {
 		return err
 	}
 	s.store = store
 
-	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage, s.dataPath)
+	s.indexer = NewIndexer(store, s.embedder, s.docRepo, s.docStorage, s.paths)
 	s.searcher = NewSearcher(store, s.embedder, s.docRepo)
-	s.externalIndexer = NewExternalIndexer(store, s.embedder, s.docRepo, s.docStorage, s.indexer, s.dataPath)
+	s.externalIndexer = NewExternalIndexer(store, s.embedder, s.docRepo, s.docStorage, s.indexer, s.paths)
 
 	// 如果维度变化，自动触发全量重建索引（包括 bookmark 和 file 块）
 	if dimensionChanged {

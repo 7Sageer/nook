@@ -10,6 +10,7 @@ import (
 	"notion-lite/internal/document"
 	"notion-lite/internal/fileextract"
 	"notion-lite/internal/opengraph"
+	"notion-lite/internal/utils"
 )
 
 // ExternalIndexer handles indexing of external content (bookmarks and files)
@@ -19,7 +20,7 @@ type ExternalIndexer struct {
 	docRepo    *document.Repository
 	docStorage *document.Storage
 	indexer    *Indexer
-	dataPath   string
+	paths      *utils.PathBuilder
 }
 
 // NewExternalIndexer creates a new external content indexer
@@ -29,7 +30,7 @@ func NewExternalIndexer(
 	docRepo *document.Repository,
 	docStorage *document.Storage,
 	indexer *Indexer,
-	dataPath string,
+	paths *utils.PathBuilder,
 ) *ExternalIndexer {
 	return &ExternalIndexer{
 		store:      store,
@@ -37,7 +38,7 @@ func NewExternalIndexer(
 		docRepo:    docRepo,
 		docStorage: docStorage,
 		indexer:    indexer,
-		dataPath:   dataPath,
+		paths:      paths,
 	}
 }
 
@@ -156,7 +157,7 @@ func (e *ExternalIndexer) IndexBookmarkContent(url, sourceDocID, blockID string)
 // IndexFileContent 索引文件内容（分块存储）
 func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	// 1. 获取完整文件路径
-	fullPath := filepath.Join(e.dataPath, strings.TrimPrefix(filePath, "/"))
+	fullPath := filepath.Join(e.paths.DataPath(), strings.TrimPrefix(filePath, "/"))
 
 	// 2. 提取文本内容
 	textContent, err := fileextract.ExtractText(fullPath)

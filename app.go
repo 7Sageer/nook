@@ -22,6 +22,7 @@ import (
 	"notion-lite/internal/search"
 	"notion-lite/internal/settings"
 	"notion-lite/internal/tag"
+	"notion-lite/internal/utils"
 	"notion-lite/internal/watcher"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -29,8 +30,8 @@ import (
 
 // App struct
 type App struct {
-	ctx      context.Context
-	dataPath string
+	ctx   context.Context
+	paths *utils.PathBuilder
 
 	// Services needed for startup/shutdown logic
 	markdownService *markdown.Service
@@ -53,40 +54,42 @@ type App struct {
 func NewApp() *App {
 	homeDir, _ := os.UserHomeDir()
 	dataPath := filepath.Join(homeDir, ".Nook")
-	_ = os.MkdirAll(dataPath, 0755)                             // 忽略错误
-	_ = os.MkdirAll(filepath.Join(dataPath, "documents"), 0755) // 忽略错误
+	paths := utils.NewPathBuilder(dataPath)
+
+	_ = os.MkdirAll(paths.DataPath(), 0755)     // 忽略错误
+	_ = os.MkdirAll(paths.DocumentsDir(), 0755) // 忽略错误
 
 	// Create all services
-	docRepo := document.NewRepository(dataPath)
-	docStorage := document.NewStorage(dataPath)
-	folderRepo := folder.NewRepository(dataPath)
+	docRepo := document.NewRepository(paths)
+	docStorage := document.NewStorage(paths)
+	folderRepo := folder.NewRepository(paths)
 	searchService := search.NewService(docRepo, docStorage)
-	settingsService := settings.NewService(dataPath)
+	settingsService := settings.NewService(paths)
 	markdownService := markdown.NewService()
-	tagStore := tag.NewStore(dataPath)
-	ragService := rag.NewService(dataPath, docRepo, docStorage)
+	tagStore := tag.NewStore(paths)
+	ragService := rag.NewService(paths, docRepo, docStorage)
 
 	// 创建文件监听服务
-	watcherService, err := watcher.NewService(dataPath)
+	watcherService, err := watcher.NewService(paths)
 	if err != nil {
 		watcherService = nil
 	}
 
 	app := &App{
-		dataPath:        dataPath,
+		paths:           paths,
 		markdownService: markdownService,
 		watcherService:  watcherService,
 	}
 
 	// 初始化 Handlers (services are injected but not stored in App)
 	app.documentHandler = handlers.NewDocumentHandler(
-		dataPath, docRepo, docStorage, searchService, ragService, watcherService,
+		paths, docRepo, docStorage, searchService, ragService, watcherService,
 	)
 	app.searchHandler = handlers.NewSearchHandler(docRepo, searchService, ragService)
-	app.ragHandler = handlers.NewRAGHandler(dataPath, docRepo, ragService)
+	app.ragHandler = handlers.NewRAGHandler(paths, docRepo, ragService)
 	app.settingsHandler = handlers.NewSettingsHandler(settingsService)
-	app.tagHandler = handlers.NewTagHandler(dataPath, docRepo, tagStore, folderRepo, watcherService)
-	app.fileHandler = handlers.NewFileHandler(context.TODO(), dataPath, markdownService)
+	app.tagHandler = handlers.NewTagHandler(paths, docRepo, tagStore, folderRepo, watcherService)
+	app.fileHandler = handlers.NewFileHandler(context.TODO(), paths, markdownService)
 
 	return app
 }

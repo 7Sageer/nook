@@ -2,17 +2,17 @@ package handlers
 
 import (
 	"os"
-	"path/filepath"
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/folder"
 	"notion-lite/internal/tag"
+	"notion-lite/internal/utils"
 	"notion-lite/internal/watcher"
 )
 
 // TagHandler 标签与标签组处理器
 type TagHandler struct {
-	dataPath       string
+	paths          *utils.PathBuilder
 	docRepo        *document.Repository
 	tagStore       *tag.Store
 	folderRepo     *folder.Repository
@@ -21,14 +21,14 @@ type TagHandler struct {
 
 // NewTagHandler 创建标签处理器
 func NewTagHandler(
-	dataPath string,
+	paths *utils.PathBuilder,
 	docRepo *document.Repository,
 	tagStore *tag.Store,
 	folderRepo *folder.Repository,
 	watcherService *watcher.Service,
 ) *TagHandler {
 	return &TagHandler{
-		dataPath:       dataPath,
+		paths:          paths,
 		docRepo:        docRepo,
 		tagStore:       tagStore,
 		folderRepo:     folderRepo,
@@ -49,7 +49,7 @@ type TagInfo struct {
 // markIndexWrite 标记 index.json 即将被写入
 func (h *TagHandler) markIndexWrite() {
 	if h.watcherService != nil {
-		indexPath := filepath.Join(h.dataPath, "index.json")
+		indexPath := h.paths.Index()
 		h.watcherService.MarkWrite(indexPath)
 	}
 }
@@ -184,7 +184,7 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 		return
 	}
 
-	foldersPath := filepath.Join(h.dataPath, "folders.json")
+	foldersPath := h.paths.Folders()
 
 	if _, err := os.Stat(foldersPath); os.IsNotExist(err) {
 		return

@@ -11,6 +11,7 @@ import (
 	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
 	"notion-lite/internal/tag"
+	"notion-lite/internal/utils"
 )
 
 // JSON-RPC 2.0 structures
@@ -41,26 +42,27 @@ type MCPServer struct {
 	tagStore      *tag.Store
 	searchService *search.Service
 	ragService    *rag.Service
-	dataPath      string
+	paths         *utils.PathBuilder
 }
 
 func NewMCPServer() *MCPServer {
 	homeDir, _ := os.UserHomeDir()
 	dataPath := filepath.Join(homeDir, ".Nook")
-	_ = os.MkdirAll(dataPath, 0755)                             // 忽略错误
-	_ = os.MkdirAll(filepath.Join(dataPath, "documents"), 0755) // 忽略错误
+	paths := utils.NewPathBuilder(dataPath)
+	_ = os.MkdirAll(paths.DataPath(), 0755)     // 忽略错误
+	_ = os.MkdirAll(paths.DocumentsDir(), 0755) // 忽略错误
 
-	docRepo := document.NewRepository(dataPath)
-	docStorage := document.NewStorage(dataPath)
-	tagStore := tag.NewStore(dataPath)
+	docRepo := document.NewRepository(paths)
+	docStorage := document.NewStorage(paths)
+	tagStore := tag.NewStore(paths)
 
 	return &MCPServer{
 		docRepo:       docRepo,
 		docStorage:    docStorage,
 		tagStore:      tagStore,
 		searchService: search.NewService(docRepo, docStorage),
-		ragService:    rag.NewService(dataPath, docRepo, docStorage),
-		dataPath:      dataPath,
+		ragService:    rag.NewService(paths, docRepo, docStorage),
+		paths:         paths,
 	}
 }
 

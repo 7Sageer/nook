@@ -3,12 +3,12 @@ package document
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"time"
 
-	"notion-lite/internal/constant"
-
 	"github.com/google/uuid"
+
+	"notion-lite/internal/constant"
+	"notion-lite/internal/utils"
 )
 
 // Meta 文档元数据
@@ -30,17 +30,18 @@ type Index struct {
 
 // Repository 文档仓库
 type Repository struct {
-	dataPath string
+	paths *utils.PathBuilder
 }
 
 // NewRepository 创建文档仓库
-func NewRepository(dataPath string) *Repository {
-	return &Repository{dataPath: dataPath}
+// NewRepository 创建文档仓库
+func NewRepository(paths *utils.PathBuilder) *Repository {
+	return &Repository{paths: paths}
 }
 
 // GetAll 获取文档列表
 func (r *Repository) GetAll() (Index, error) {
-	indexPath := filepath.Join(r.dataPath, "index.json")
+	indexPath := r.paths.Index()
 	data, err := os.ReadFile(indexPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -70,7 +71,8 @@ func (r *Repository) Create(title string) (Meta, error) {
 	}
 
 	// 创建空文档文件
-	docPath := filepath.Join(r.dataPath, "documents", doc.ID+".json")
+	// 创建空文档文件
+	docPath := r.paths.Document(doc.ID)
 	if err := os.WriteFile(docPath, []byte("[]"), 0644); err != nil {
 		return Meta{}, err
 	}
@@ -92,7 +94,7 @@ func (r *Repository) Create(title string) (Meta, error) {
 // Delete 删除文档
 func (r *Repository) Delete(id string) error {
 	// 删除文档文件
-	docPath := filepath.Join(r.dataPath, "documents", id+".json")
+	docPath := r.paths.Document(id)
 	if err := os.Remove(docPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -177,7 +179,7 @@ func (r *Repository) MoveToFolder(docId string, folderId string) error {
 }
 
 func (r *Repository) saveIndex(index Index) error {
-	indexPath := filepath.Join(r.dataPath, "index.json")
+	indexPath := r.paths.Index()
 	data, err := json.MarshalIndent(index, "", "  ")
 	if err != nil {
 		return err

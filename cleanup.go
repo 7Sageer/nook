@@ -17,7 +17,7 @@ func (a *App) Cleanup() {
 
 // cleanupUnusedImages 清理未被任何文档引用的图像文件
 func (a *App) cleanupUnusedImages() {
-	imagesDir := filepath.Join(a.dataPath, "images")
+	imagesDir := a.paths.ImagesDir()
 
 	// 获取所有图像文件
 	entries, err := os.ReadDir(imagesDir)
@@ -66,7 +66,7 @@ func (a *App) cleanupUnusedImages() {
 
 // cleanupTempFiles 清理超过 24 小时的临时文件
 func (a *App) cleanupTempFiles() {
-	tempDir := filepath.Join(a.dataPath, "temp")
+	tempDir := a.paths.TempDir()
 
 	entries, err := os.ReadDir(tempDir)
 	if err != nil {

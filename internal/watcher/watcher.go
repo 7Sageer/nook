@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"notion-lite/internal/utils"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -21,7 +23,7 @@ type FileChangeEvent struct {
 
 // Service 文件监听服务
 type Service struct {
-	dataPath      string
+	paths         *utils.PathBuilder
 	watcher       *fsnotify.Watcher
 	ctx           context.Context
 	cancel        context.CancelFunc
@@ -41,14 +43,14 @@ type Service struct {
 }
 
 // NewService 创建文件监听服务
-func NewService(dataPath string) (*Service, error) {
+func NewService(paths *utils.PathBuilder) (*Service, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Service{
-		dataPath:      dataPath,
+		paths:         paths,
 		watcher:       watcher,
 		debounceDelay: 300 * time.Millisecond,
 		ignoreWindow:  2 * time.Second, // 2秒内的事件视为自己触发（需要足够长以覆盖防抖延迟）
@@ -91,7 +93,7 @@ func (s *Service) Start(ctx context.Context) error {
 	s.cancel = cancel
 
 	// 监听 documents 目录
-	docsPath := filepath.Join(s.dataPath, "documents")
+	docsPath := s.paths.DocumentsDir()
 	if err := s.watcher.Add(docsPath); err != nil {
 		runtime.LogError(ctx, "Failed to watch documents directory: "+err.Error())
 		return err
@@ -100,10 +102,10 @@ func (s *Service) Start(ctx context.Context) error {
 
 	// 监听数据根目录（用于 index.json 变化）
 	// fsnotify 更适合监听目录而不是单个文件
-	if err := s.watcher.Add(s.dataPath); err != nil {
+	if err := s.watcher.Add(s.paths.DataPath()); err != nil {
 		runtime.LogWarning(ctx, "Failed to watch data directory: "+err.Error())
 	} else {
-		runtime.LogInfo(ctx, "File watcher: watching "+s.dataPath)
+		runtime.LogInfo(ctx, "File watcher: watching "+s.paths.DataPath())
 	}
 
 	// 启动事件处理 goroutine

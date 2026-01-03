@@ -16,6 +16,7 @@ import (
 	"notion-lite/internal/fileextract"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/opengraph"
+	"notion-lite/internal/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/clipboard"
@@ -24,19 +25,19 @@ import (
 // FileHandler 文件与图片处理器
 type FileHandler struct {
 	ctx             context.Context
-	dataPath        string
+	paths           *utils.PathBuilder
 	markdownService *markdown.Service
 }
 
 // NewFileHandler 创建文件处理器
 func NewFileHandler(
 	ctx context.Context,
-	dataPath string,
+	paths *utils.PathBuilder,
 	markdownService *markdown.Service,
 ) *FileHandler {
 	return &FileHandler{
 		ctx:             ctx,
-		dataPath:        dataPath,
+		paths:           paths,
 		markdownService: markdownService,
 	}
 }
@@ -133,7 +134,7 @@ func (h *FileHandler) CopyImageToClipboard(base64Data string) error {
 
 // SaveImage 保存图片到本地并返回文件路径
 func (h *FileHandler) SaveImage(base64Data string, filename string) (string, error) {
-	imagesDir := filepath.Join(h.dataPath, "images")
+	imagesDir := h.paths.ImagesDir()
 	if err := os.MkdirAll(imagesDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create images directory: %w", err)
 	}
@@ -188,7 +189,7 @@ func (h *FileHandler) SaveImageFile(base64Data string, defaultName string) error
 // PrintHTML 保存 HTML 到临时文件并在浏览器中打开
 func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 	// 创建临时目录
-	tempDir := filepath.Join(h.dataPath, "temp")
+	tempDir := h.paths.TempDir()
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -239,7 +240,7 @@ type FileInfo struct {
 
 // SaveFile 保存文件到 ~/.Nook/files/ 并返回文件信息
 func (h *FileHandler) SaveFile(base64Data string, originalName string) (*FileInfo, error) {
-	filesDir := filepath.Join(h.dataPath, "files")
+	filesDir := h.paths.FilesDir()
 	if err := os.MkdirAll(filesDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create files directory: %w", err)
 	}
@@ -315,7 +316,7 @@ func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
 // OpenFileWithSystem 使用系统默认应用打开文件
 func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.dataPath, strings.TrimPrefix(relativePath, "/"))
+	fullPath := filepath.Join(h.paths.DataPath(), strings.TrimPrefix(relativePath, "/"))
 
 	return openWithSystemApp(fullPath)
 }
@@ -323,7 +324,7 @@ func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 // RevealInFinder 在文件管理器中显示文件
 func (h *FileHandler) RevealInFinder(relativePath string) error {
 	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.dataPath, strings.TrimPrefix(relativePath, "/"))
+	fullPath := filepath.Join(h.paths.DataPath(), strings.TrimPrefix(relativePath, "/"))
 
 	return revealInFileManager(fullPath)
 }

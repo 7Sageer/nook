@@ -3,7 +3,8 @@ package settings
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
+
+	"notion-lite/internal/utils"
 )
 
 // Settings 用户设置
@@ -14,18 +15,20 @@ type Settings struct {
 }
 
 // Service 设置服务
+// Service 设置服务
 type Service struct {
-	dataPath string
+	paths *utils.PathBuilder
 }
 
 // NewService 创建设置服务
-func NewService(dataPath string) *Service {
-	return &Service{dataPath: dataPath}
+// NewService 创建设置服务
+func NewService(paths *utils.PathBuilder) *Service {
+	return &Service{paths: paths}
 }
 
 // Get 获取设置
 func (s *Service) Get() (*Settings, error) {
-	path := filepath.Join(s.dataPath, "settings.json")
+	path := s.paths.Settings()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -41,8 +44,9 @@ func (s *Service) Get() (*Settings, error) {
 }
 
 // Save 保存设置
+// Save 保存设置
 func (s *Service) Save(settings Settings) error {
-	path := filepath.Join(s.dataPath, "settings.json")
+	path := s.paths.Settings()
 	data, err := json.MarshalIndent(settings, "", "  ")
 	if err != nil {
 		return err

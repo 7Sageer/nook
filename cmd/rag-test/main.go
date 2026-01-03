@@ -7,19 +7,21 @@ import (
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
+	"notion-lite/internal/utils"
 )
 
 func main() {
 	// 获取数据目录
 	homeDir, _ := os.UserHomeDir()
 	dataPath := filepath.Join(homeDir, ".Nook")
+	paths := utils.NewPathBuilder(dataPath)
 
 	// 初始化依赖
-	docRepo := document.NewRepository(dataPath)
-	docStorage := document.NewStorage(dataPath)
+	docRepo := document.NewRepository(paths)
+	docStorage := document.NewStorage(paths)
 
 	// 创建 RAG 服务
-	ragService := rag.NewService(dataPath, docRepo, docStorage)
+	ragService := rag.NewService(paths, docRepo, docStorage)
 
 	// 检查是否需要重建索引
 	count, _ := ragService.GetIndexedCount()

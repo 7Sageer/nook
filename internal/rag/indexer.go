@@ -3,9 +3,11 @@ package rag
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/utils"
 )
 
 // debugChunks 是否输出 chunk 调试信息（通过环境变量 DEBUG_RAG_CHUNKS=1 启用）
@@ -27,30 +29,30 @@ type Indexer struct {
 	docRepo     *document.Repository
 	docStorage  *document.Storage
 	chunkConfig ChunkConfig
-	dataPath    string // 数据目录路径，用于删除物理文件
+	paths       *utils.PathBuilder // 数据目录路径，用于删除物理文件
 }
 
 // NewIndexer 创建索引器
-func NewIndexer(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, dataPath string) *Indexer {
+func NewIndexer(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, paths *utils.PathBuilder) *Indexer {
 	return &Indexer{
 		store:       store,
 		embedder:    embedder,
 		docRepo:     docRepo,
 		docStorage:  docStorage,
 		chunkConfig: DefaultChunkConfig,
-		dataPath:    dataPath,
+		paths:       paths,
 	}
 }
 
 // NewIndexerWithConfig 创建带配置的索引器
-func NewIndexerWithConfig(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, config ChunkConfig, dataPath string) *Indexer {
+func NewIndexerWithConfig(store *VectorStore, embedder EmbeddingClient, docRepo *document.Repository, docStorage *document.Storage, config ChunkConfig, paths *utils.PathBuilder) *Indexer {
 	return &Indexer{
 		store:       store,
 		embedder:    embedder,
 		docRepo:     docRepo,
 		docStorage:  docStorage,
 		chunkConfig: config,
-		dataPath:    dataPath,
+		paths:       paths,
 	}
 }
 
@@ -66,7 +68,7 @@ func (idx *Indexer) deletePhysicalFiles(filePaths []string) {
 			continue
 		}
 		// filePath 格式: /files/xxx.pdf
-		fullPath := idx.dataPath + filePath
+		fullPath := filepath.Join(idx.paths.DataPath(), strings.TrimPrefix(filePath, "/"))
 		if err := os.Remove(fullPath); err != nil {
 			if !os.IsNotExist(err) {
 				fmt.Printf("⚠️ [RAG] Failed to delete file %s: %v\n", fullPath, err)

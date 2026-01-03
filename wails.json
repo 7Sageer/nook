@@ -12,7 +12,7 @@
   },
   "info": {
     "productName": "Nook",
-    "productVersion": "1.0.0",
+    "productVersion": "v0.0.7-1-gafa01bd",
     "copyright": "Copyright © 2024 7Sageer",
     "comments": "A simple and elegant local note-taking app",
     "fileAssociations": [

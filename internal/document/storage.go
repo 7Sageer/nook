@@ -1,23 +1,23 @@
 package document
 
 import (
+	"notion-lite/internal/utils"
 	"os"
-	"path/filepath"
 )
 
 // Storage 文档存储
 type Storage struct {
-	dataPath string
+	paths *utils.PathBuilder
 }
 
 // NewStorage 创建文档存储
-func NewStorage(dataPath string) *Storage {
-	return &Storage{dataPath: dataPath}
+func NewStorage(paths *utils.PathBuilder) *Storage {
+	return &Storage{paths: paths}
 }
 
 // Load 加载指定文档内容
 func (s *Storage) Load(id string) (string, error) {
-	docPath := filepath.Join(s.dataPath, "documents", id+".json")
+	docPath := s.paths.Document(id)
 	data, err := os.ReadFile(docPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -30,6 +30,6 @@ func (s *Storage) Load(id string) (string, error) {
 
 // Save 保存指定文档内容
 func (s *Storage) Save(id string, content string) error {
-	docPath := filepath.Join(s.dataPath, "documents", id+".json")
+	docPath := s.paths.Document(id)
 	return os.WriteFile(docPath, []byte(content), 0644)
 }

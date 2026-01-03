@@ -5,6 +5,7 @@ import (
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
+	"notion-lite/internal/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -19,7 +20,7 @@ type ReindexProgress struct {
 // RAGHandler RAG 配置与索引处理器
 type RAGHandler struct {
 	ctx        context.Context
-	dataPath   string
+	paths      *utils.PathBuilder
 	docRepo    *document.Repository
 	ragService *rag.Service
 }
@@ -32,12 +33,12 @@ func (h *RAGHandler) SetContext(ctx context.Context) {
 
 // NewRAGHandler 创建 RAG 处理器
 func NewRAGHandler(
-	dataPath string,
+	paths *utils.PathBuilder,
 	docRepo *document.Repository,
 	ragService *rag.Service,
 ) *RAGHandler {
 	return &RAGHandler{
-		dataPath:   dataPath,
+		paths:      paths,
 		docRepo:    docRepo,
 		ragService: ragService,
 	}
@@ -61,7 +62,7 @@ type RAGStatus struct {
 
 // GetRAGConfig 获取 RAG 配置
 func (h *RAGHandler) GetRAGConfig() (EmbeddingConfig, error) {
-	config, err := rag.LoadConfig(h.dataPath)
+	config, err := rag.LoadConfig(h.paths)
 	if err != nil {
 		return EmbeddingConfig{}, err
 	}
@@ -70,7 +71,7 @@ func (h *RAGHandler) GetRAGConfig() (EmbeddingConfig, error) {
 
 // SaveRAGConfig 保存 RAG 配置
 func (h *RAGHandler) SaveRAGConfig(config EmbeddingConfig) error {
-	if err := rag.SaveConfig(h.dataPath, &config); err != nil {
+	if err := rag.SaveConfig(h.paths, &config); err != nil {
 		return err
 	}
 	// 重新初始化 RAG 服务

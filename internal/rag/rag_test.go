@@ -3,10 +3,10 @@ package rag
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"notion-lite/internal/document"
+	"notion-lite/internal/utils"
 )
 
 func TestIndexBookmarkContent(t *testing.T) {
@@ -21,17 +21,19 @@ func TestIndexBookmarkContent(t *testing.T) {
 		}
 	}()
 
+	paths := utils.NewPathBuilder(tmpDir)
+
 	// 创建必要的子目录
-	if err := os.MkdirAll(filepath.Join(tmpDir, "documents"), 0755); err != nil {
+	if err := os.MkdirAll(paths.DocumentsDir(), 0755); err != nil {
 		t.Fatalf("Failed to create documents dir: %v", err)
 	}
 
 	// 创建 document repo 和 storage
-	docRepo := document.NewRepository(tmpDir)
-	docStorage := document.NewStorage(tmpDir)
+	docRepo := document.NewRepository(paths)
+	docStorage := document.NewStorage(paths)
 
 	// 创建 RAG 服务
-	service := NewService(tmpDir, docRepo, docStorage)
+	service := NewService(paths, docRepo, docStorage)
 
 	// 测试 URL
 	testURL := "https://baoyu.io/blog/luck-surface-area-formula-good-luck"
