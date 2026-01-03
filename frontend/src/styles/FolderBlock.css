@@ -1,0 +1,244 @@
+/* FolderBlock 样式 - 基于 FileBlock 风格 */
+
+.folder-block {
+    border-radius: 8px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    margin: 8px 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.folder-block * {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* 空状态 - 选择文件夹 */
+.folder-block.folder-empty {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+    border: 1px dashed var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    background: transparent;
+}
+
+.folder-select-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent-color, #0066cc);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.folder-select-btn:hover {
+    background: var(--accent-hover, #0052a3);
+    transform: translateY(-1px);
+}
+
+/* 加载状态 */
+.folder-block.folder-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bn-colors-hovered-background, #f8f9fa);
+    border: 1px solid var(--bn-colors-menu-background, #e0e0e0);
+    color: var(--bn-colors-side-menu-text, #666);
+}
+
+/* 错误状态 */
+.folder-block.folder-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fff5f5;
+    border: 1px solid #ffc9c9;
+    color: #c92a2a;
+}
+
+/* 文件夹卡片 */
+.folder-block.folder-card {
+    display: flex;
+    align-items: center;
+    width: 75%;
+    position: relative;
+    padding: 12px 16px;
+    border: 1px solid var(--bn-colors-menu-background, #e5e5e5);
+    border-left: 3px solid #f59e0b;
+    background: var(--bn-colors-editor-background, var(--bg-primary));
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    overflow: visible;
+    transition: border-left-color 0.2s ease;
+}
+
+.folder-block.folder-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+    border-color: var(--bn-colors-highlighted-text, #0070f3);
+}
+
+.folder-block.folder-card.indexed {
+    border-left-color: var(--success, #52c41a);
+}
+
+.folder-block.folder-card.index-error {
+    border-left-color: #fa5252;
+    border-color: #ffc9c9;
+}
+
+/* 图标区域 */
+.folder-icon-wrapper {
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.folder-icon {
+    color: #f59e0b;
+}
+
+/* 信息区域 */
+.folder-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.folder-name {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--bn-colors-editor-text, #333);
+}
+
+.folder-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--bn-colors-side-menu-text, #666);
+}
+
+.folder-path {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.folder-stats {
+    color: var(--success-color, #52c41a);
+    font-weight: 500;
+}
+
+/* 操作按钮区域 - 悬停时显示 */
+.folder-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.folder-card:hover .folder-actions {
+    opacity: 1;
+}
+
+.folder-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: var(--bg-tertiary, #e8e8e8);
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.folder-action-btn:hover {
+    background: var(--bg-quaternary, #d8d8d8);
+    color: var(--text-primary, #1a1a1a);
+}
+
+.folder-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.folder-action-btn.indexed {
+    background: var(--success-bg, #f6ffed);
+    color: var(--success-color, #52c41a);
+}
+
+.folder-action-btn.index-error {
+    background: var(--warning-bg, #fffbe6);
+    color: var(--warning-color, #faad14);
+}
+
+/* 旋转动画 */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    .folder-block {
+        background: var(--bg-secondary, #2d2d2d);
+        border-color: var(--border-color, #404040);
+    }
+
+    .folder-block:hover {
+        background: var(--bg-tertiary, #3d3d3d);
+    }
+
+    .folder-icon-wrapper {
+        background: var(--accent-dark, #1a3a5c);
+    }
+
+    .folder-name {
+        color: var(--text-primary, #e0e0e0);
+    }
+
+    .folder-action-btn {
+        background: var(--bg-tertiary, #3d3d3d);
+        color: var(--text-secondary, #999);
+    }
+
+    .folder-action-btn:hover {
+        background: var(--bg-quaternary, #4d4d4d);
+        color: var(--text-primary, #e0e0e0);
+    }
+
+    .folder-select-btn {
+        background: var(--accent-color, #0077cc);
+    }
+}

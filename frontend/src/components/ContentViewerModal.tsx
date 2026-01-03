@@ -9,7 +9,7 @@ interface ContentViewerModalProps {
   onClose: () => void;
   title: string;
   content: string;
-  blockType: 'bookmark' | 'file';
+  blockType: 'bookmark' | 'file' | 'folder';
   url?: string;
   loading?: boolean;
   error?: string;

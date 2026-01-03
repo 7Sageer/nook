@@ -266,6 +266,18 @@ func (a *App) GetExternalBlockContent(docID, blockID string) (*handlers.External
 	return a.ragHandler.GetExternalBlockContent(docID, blockID)
 }
 
+// IndexFolderContent 索引文件夹内容
+func (a *App) IndexFolderContent(folderPath, sourceDocID, blockID string) (*handlers.FolderIndexResult, error) {
+	return a.ragHandler.IndexFolderContent(folderPath, sourceDocID, blockID)
+}
+
+// SelectFolderDialog 文件夹选择对话框
+func (a *App) SelectFolderDialog() (string, error) {
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select Folder to Index",
+	})
+}
+
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
 func (a *App) GetSettings() (handlers.Settings, error) {
@@ -437,8 +449,8 @@ type AppInfo struct {
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
 		Name:      "Nook",
-		Version:   "1.0.0",
+		Version:   Version, // 从编译时注入的版本号读取
 		Author:    "7Sageer",
-		Copyright: "© 2024-2026 7Sageer",
+		Copyright: "© 2025-2026 7Sageer",
 	}
 }

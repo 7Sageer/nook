@@ -98,6 +98,10 @@ export function IndexFileContent(arg1, arg2, arg3) {
   return window['go']['main']['App']['IndexFileContent'](arg1, arg2, arg3);
 }
 
+export function IndexFolderContent(arg1, arg2, arg3) {
+  return window['go']['main']['App']['IndexFolderContent'](arg1, arg2, arg3);
+}
+
 export function LoadDocumentContent(arg1) {
   return window['go']['main']['App']['LoadDocumentContent'](arg1);
 }
@@ -184,6 +188,10 @@ export function SaveSettings(arg1) {
 
 export function SearchDocuments(arg1) {
   return window['go']['main']['App']['SearchDocuments'](arg1);
+}
+
+export function SelectFolderDialog() {
+  return window['go']['main']['App']['SelectFolderDialog']();
 }
 
 export function SemanticSearchDocuments(arg1, arg2, arg3) {

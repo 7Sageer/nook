@@ -55,6 +55,8 @@ export function IndexBookmarkContent(arg1:string,arg2:string,arg3:string):Promis
 
 export function IndexFileContent(arg1:string,arg2:string,arg3:string):Promise<void>;
 
+export function IndexFolderContent(arg1:string,arg2:string,arg3:string):Promise<rag.FolderIndexResult>;
+
 export function LoadDocumentContent(arg1:string):Promise<string>;
 
 export function LoadExternalFile(arg1:string):Promise<string>;
@@ -98,6 +100,8 @@ export function SaveRAGConfig(arg1:rag.EmbeddingConfig):Promise<void>;
 export function SaveSettings(arg1:handlers.Settings):Promise<void>;
 
 export function SearchDocuments(arg1:string):Promise<Array<handlers.SearchResult>>;
+
+export function SelectFolderDialog():Promise<string>;
 
 export function SemanticSearchDocuments(arg1:string,arg2:number,arg3:string):Promise<Array<handlers.DocumentSearchResult>>;
 

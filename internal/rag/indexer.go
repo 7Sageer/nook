@@ -155,8 +155,8 @@ func (idx *Indexer) IndexDocument(docID string) error {
 	// 4. 删除已不存在的块（保护 bookmark 和 file 块）
 	var toDelete []string
 	for id := range existingHashes {
-		// 常规块：如果在新的块列表中不存在，且不是 bookmark 或 file，则删除
-		if !newBlockIDs[id] && !strings.Contains(id, "_bookmark") && !strings.Contains(id, "_file") {
+		// 常规块：如果在新的块列表中不存在，且不是 bookmark/file/folder，则删除
+		if !newBlockIDs[id] && !strings.Contains(id, "_bookmark") && !strings.Contains(id, "_file") && !strings.Contains(id, "_folder") {
 			toDelete = append(toDelete, id)
 		}
 	}
@@ -170,6 +170,9 @@ func (idx *Indexer) IndexDocument(docID string) error {
 	externalIDs := ExtractExternalBlockIDs([]byte(content))
 	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
+	}
+	if err := idx.store.DeleteOrphanFolders(docID, externalIDs.FolderBlocks); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan folders for doc %s: %v\n", docID, err)
 	}
 	orphanFilePaths, err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileBlocks)
 	if err != nil {
@@ -199,6 +202,9 @@ func (idx *Indexer) ForceReindexDocument(docID string) error {
 	externalIDs := ExtractExternalBlockIDs([]byte(content))
 	if err := idx.store.DeleteOrphanBookmarks(docID, externalIDs.BookmarkIDs); err != nil {
 		fmt.Printf("⚠️ [RAG] Failed to delete orphan bookmarks for doc %s: %v\n", docID, err)
+	}
+	if err := idx.store.DeleteOrphanFolders(docID, externalIDs.FolderBlocks); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete orphan folders for doc %s: %v\n", docID, err)
 	}
 	orphanFilePaths, err := idx.store.DeleteOrphanFiles(docID, externalIDs.FileBlocks)
 	if err != nil {

@@ -20,6 +20,7 @@ import "../plugins/smoothCaret.css";
 import { OpenFileDialog } from "../../wailsjs/go/main/App";
 import { BookmarkBlock } from "./blocks/BookmarkBlock";
 import { FileBlock } from "./blocks/FileBlock";
+import { FolderBlock } from "./blocks/FolderBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
 import { EditorTagInput } from "./EditorTagInput";
 import {
@@ -27,6 +28,7 @@ import {
   bookmarkAtomExtension,
   createBookmarkMenuItem,
   createFileMenuItem,
+  createFolderMenuItem,
 } from "../utils/editorExtensions";
 import { useImageUpload } from "../hooks/useImageUpload";
 import { usePasteHandler } from "../hooks/usePasteHandler";
@@ -90,6 +92,7 @@ export function Editor({
           ...defaultBlockSpecs,
           bookmark: BookmarkBlock(),
           file: FileBlock(),
+          folder: FolderBlock(),
         },
       }),
     []
@@ -208,12 +211,13 @@ export function Editor({
               const fileInfo = await OpenFileDialog();
               return fileInfo || null;
             }, () => docId);
+            const customFolder = createFolderMenuItem(editor, STRINGS);
 
             // Insert custom items right after other Media group items
             const lastMediaIndex = defaultItems.map(item => item.group).lastIndexOf("Media");
             const allItems = lastMediaIndex >= 0
-              ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, customFile, ...defaultItems.slice(lastMediaIndex + 1)]
-              : [...defaultItems, customBookmark, customFile];
+              ? [...defaultItems.slice(0, lastMediaIndex + 1), customBookmark, customFile, customFolder, ...defaultItems.slice(lastMediaIndex + 1)]
+              : [...defaultItems, customBookmark, customFile, customFolder];
 
             if (!query) return allItems;
             const lowerQuery = query.toLowerCase();

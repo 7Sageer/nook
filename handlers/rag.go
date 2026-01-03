@@ -159,3 +159,15 @@ type GraphData = rag.GraphData
 func (h *RAGHandler) GetDocumentGraph(threshold float32) (*GraphData, error) {
 	return h.ragService.GetDocumentGraph(threshold)
 }
+
+// FolderIndexResult 文件夹索引结果（前端用）
+type FolderIndexResult = rag.FolderIndexResult
+
+// IndexFolderContent 索引文件夹内容
+func (h *RAGHandler) IndexFolderContent(folderPath, sourceDocID, blockID string) (*FolderIndexResult, error) {
+	result, err := h.ragService.IndexFolderContent(folderPath, sourceDocID, blockID)
+	if err == nil && h.ctx != nil {
+		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	}
+	return result, err
+}

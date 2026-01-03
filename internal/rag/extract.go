@@ -33,15 +33,22 @@ type BookmarkBlockInfo struct {
 	URL     string // 书签 URL
 }
 
-// ExternalBlockIDs 外部块（bookmark/file）的 ID 集合
+// FolderBlockInfo folder 块信息（包含 ID 和文件夹路径）
+type FolderBlockInfo struct {
+	BlockID    string // BlockNote 块 ID
+	FolderPath string // 文件夹路径
+}
+
+// ExternalBlockIDs 外部块（bookmark/file/folder）的 ID 集合
 type ExternalBlockIDs struct {
 	BookmarkIDs    []string            // 兼容旧接口
 	BookmarkBlocks []BookmarkBlockInfo // 包含 URL 的完整信息
 	FileIDs        []string            // 兼容旧接口
 	FileBlocks     []FileBlockInfo     // 包含文件路径的完整信息
+	FolderBlocks   []FolderBlockInfo   // 文件夹块信息
 }
 
-// ExtractExternalBlockIDs 一次解析提取所有外部块（bookmark/file）的 ID
+// ExtractExternalBlockIDs 一次解析提取所有外部块（bookmark/file/folder）的 ID
 // 用于清理孤儿索引，避免多次解析 JSON
 func ExtractExternalBlockIDs(content []byte) ExternalBlockIDs {
 	var blocks []interface{}
@@ -86,6 +93,18 @@ func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs)
 						result.FileBlocks = append(result.FileBlocks, FileBlockInfo{
 							BlockID:  id,
 							FilePath: filePath,
+						})
+					case "folder":
+						// 提取文件夹路径
+						folderPath := ""
+						if props, ok := blockMap["props"].(map[string]interface{}); ok {
+							if fp, ok := props["folderPath"].(string); ok {
+								folderPath = fp
+							}
+						}
+						result.FolderBlocks = append(result.FolderBlocks, FolderBlockInfo{
+							BlockID:    id,
+							FolderPath: folderPath,
 						})
 					}
 				}

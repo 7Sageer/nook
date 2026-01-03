@@ -254,3 +254,11 @@ func (s *Service) GetExternalBlockContent(docID, blockID string) (*ExternalBlock
 	}
 	return s.store.GetExternalContent(docID, blockID)
 }
+
+// IndexFolderContent 索引文件夹内容
+func (s *Service) IndexFolderContent(folderPath, sourceDocID, blockID string) (*FolderIndexResult, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+	return s.externalIndexer.IndexFolderContent(folderPath, sourceDocID, blockID, 10)
+}

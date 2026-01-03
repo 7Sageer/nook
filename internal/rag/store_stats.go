@@ -14,9 +14,9 @@ func (s *VectorStore) GetIndexedDocCount() (int, error) {
 
 // GetIndexedStats 获取索引统计信息 (文档数, 书签数, 嵌入文件数)
 func (s *VectorStore) GetIndexedStats() (int, int, int, error) {
-	// Count unique docs that have non-bookmark and non-file blocks
+	// Count unique docs that have non-bookmark, non-file, and non-folder blocks
 	var docCount int
-	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type NOT IN ('bookmark', 'file')`).Scan(&docCount)
+	err := s.db.QueryRow(`SELECT COUNT(DISTINCT doc_id) FROM block_vectors WHERE block_type NOT IN ('bookmark', 'file', 'folder')`).Scan(&docCount)
 	if err != nil {
 		return 0, 0, 0, err
 	}

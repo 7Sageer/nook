@@ -151,7 +151,66 @@ func (s *VectorStore) DeleteOrphanFiles(docID string, keepFileBlocks []FileBlock
 	return result, nil
 }
 
-// DeleteNonBookmarkByDocID 删除文档的所有非 bookmark/file 块（保留外部索引块）
+// GetFolderBlockIDs 获取文档的所有 folder 块 ID
+func (s *VectorStore) GetFolderBlockIDs(docID string) ([]string, error) {
+	rows, err := s.db.Query(`
+		SELECT id FROM block_vectors
+		WHERE doc_id = ? AND block_type = 'folder'
+	`, docID)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			continue // 跳过扫描失败的行
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+// DeleteOrphanFolders 删除不在 keepFolderBlocks 列表中的 folder 块
+// keepFolderBlocks 是文档中当前存在的 folder 块信息
+func (s *VectorStore) DeleteOrphanFolders(docID string, keepFolderBlocks []FolderBlockInfo) error {
+	// 构建保留的 folder ID 前缀集合
+	keepPrefixes := make(map[string]bool)
+	for _, fb := range keepFolderBlocks {
+		prefix := fmt.Sprintf("%s_%s_folder", docID, fb.BlockID)
+		keepPrefixes[prefix] = true
+	}
+
+	// 获取所有 folder 块
+	allFolders, err := s.GetFolderBlockIDs(docID)
+	if err != nil {
+		return err
+	}
+
+	// 找出需要删除的块（ID 不以任何保留前缀开头）
+	var toDelete []string
+	for _, folderID := range allFolders {
+		shouldKeep := false
+		for prefix := range keepPrefixes {
+			if strings.HasPrefix(folderID, prefix) {
+				shouldKeep = true
+				break
+			}
+		}
+		if !shouldKeep {
+			toDelete = append(toDelete, folderID)
+		}
+	}
+
+	if len(toDelete) > 0 {
+		return s.DeleteBlocks(toDelete)
+	}
+	return nil
+}
+
+// DeleteNonBookmarkByDocID 删除文档的所有非 bookmark/file/folder 块（保留外部索引块）
 func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -159,10 +218,10 @@ func (s *VectorStore) DeleteNonBookmarkByDocID(docID string) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// 获取要删除的非 bookmark/file block IDs
+	// 获取要删除的非 bookmark/file/folder block IDs
 	rows, err := tx.Query(`
 		SELECT id FROM block_vectors 
-		WHERE doc_id = ? AND block_type NOT IN ('bookmark', 'file')
+		WHERE doc_id = ? AND block_type NOT IN ('bookmark', 'file', 'folder')
 	`, docID)
 	if err != nil {
 		return err

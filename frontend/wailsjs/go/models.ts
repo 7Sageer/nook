@@ -369,6 +369,24 @@ export namespace rag {
 	        this.extractedAt = source["extractedAt"];
 	    }
 	}
+	export class FolderIndexResult {
+	    totalFiles: number;
+	    successCount: number;
+	    failedCount: number;
+	    failedFiles: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new FolderIndexResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalFiles = source["totalFiles"];
+	        this.successCount = source["successCount"];
+	        this.failedCount = source["failedCount"];
+	        this.failedFiles = source["failedFiles"];
+	    }
+	}
 	export class GraphLink {
 	    source: string;
 	    target: string;

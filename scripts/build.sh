@@ -11,13 +11,28 @@ cd "$PROJECT_ROOT"
 # 颜色输出
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
+# 读取版本信息
+VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+BUILD_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+echo -e "${BLUE}版本信息:${NC}"
+echo -e "  Version:    ${YELLOW}${VERSION}${NC}"
+echo -e "  BuildTime:  ${YELLOW}${BUILD_TIME}${NC}"
+echo -e "  GitCommit:  ${YELLOW}${GIT_COMMIT}${NC}"
+echo ""
+
+# 构建 ldflags
+LDFLAGS="-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'"
+
 echo -e "${BLUE}[1/3]${NC} 构建 Wails 应用..."
-wails build
+wails build -ldflags "$LDFLAGS"
 
 echo -e "${BLUE}[2/3]${NC} 构建 MCP 服务器..."
-go build -o build/bin/nook-mcp ./cmd/mcp-server
+go build -ldflags "$LDFLAGS" -o build/bin/nook-mcp ./cmd/mcp-server
 
 echo -e "${BLUE}[3/3]${NC} 打包 MCP 到 .app..."
 if [[ -d "build/bin/Nook.app" ]]; then

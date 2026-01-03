@@ -2,6 +2,7 @@ package rag
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -265,8 +266,206 @@ func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string
 	return nil
 }
 
+// FolderIndexResult 文件夹索引结果
+type FolderIndexResult struct {
+	TotalFiles   int      `json:"totalFiles"`
+	SuccessCount int      `json:"successCount"`
+	FailedCount  int      `json:"failedCount"`
+	FailedFiles  []string `json:"failedFiles"`
+}
+
+// supportedExtensions 支持索引的文件扩展名
+var supportedExtensions = map[string]bool{
+	".pdf":  true,
+	".docx": true,
+	".xlsx": true,
+	".epub": true,
+	".html": true,
+	".htm":  true,
+	".txt":  true,
+	".md":   true,
+}
+
+// IndexFolderContent 索引文件夹内容（全量重建）
+// maxDepth 控制递归深度，0 表示只处理当前目录，-1 表示无限深度
+func (e *ExternalIndexer) IndexFolderContent(folderPath, sourceDocID, blockID string, maxDepth int) (*FolderIndexResult, error) {
+	fmt.Printf("\n📁 [RAG] IndexFolderContent called: folder=%s, docID=%s, blockID=%s\n", folderPath, sourceDocID, blockID)
+
+	// 1. 设置默认深度
+	if maxDepth <= 0 {
+		maxDepth = 10 // 默认最大 10 层
+	}
+
+	// 2. 生成基础 ID 并删除旧数据
+	baseID := fmt.Sprintf("%s_%s_folder", sourceDocID, blockID)
+	if err := e.store.DeleteBlocksByPrefix(baseID); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to delete old folder chunks for %s: %v\n", baseID, err)
+	}
+
+	// 3. 收集文件夹中所有支持的文件
+	var files []string
+	err := e.walkFolder(folderPath, 0, maxDepth, &files)
+	if err != nil {
+		fmt.Printf("❌ [RAG] Failed to walk folder: %v\n", err)
+		return nil, fmt.Errorf("failed to walk folder: %w", err)
+	}
+
+	fmt.Printf("📁 [RAG] Found %d supported files in folder\n", len(files))
+	if debugChunks {
+		for i, f := range files {
+			fmt.Printf("   [%d] %s\n", i, f)
+		}
+	}
+
+	if len(files) == 0 {
+		fmt.Printf("📁 [RAG] No supported files found in folder, returning empty result\n")
+		return &FolderIndexResult{
+			TotalFiles:   0,
+			SuccessCount: 0,
+			FailedCount:  0,
+			FailedFiles:  nil,
+		}, nil
+	}
+
+	// 4. 索引每个文件
+	result := &FolderIndexResult{
+		TotalFiles:  len(files),
+		FailedFiles: make([]string, 0),
+	}
+
+	folderName := filepath.Base(folderPath)
+
+	for fileIndex, filePath := range files {
+		// 提取文本内容
+		textContent, err := fileextract.ExtractText(filePath)
+		if err != nil {
+			result.FailedCount++
+			result.FailedFiles = append(result.FailedFiles, filepath.Base(filePath))
+			fmt.Printf("⚠️ [RAG] Failed to extract text from %s: %v\n", filePath, err)
+			continue
+		}
+
+		if textContent == "" {
+			result.FailedCount++
+			result.FailedFiles = append(result.FailedFiles, filepath.Base(filePath))
+			continue
+		}
+
+		// 构建上下文（文件夹名/文件名）
+		fileName := filepath.Base(filePath)
+		headingContext := fmt.Sprintf("%s/%s", folderName, fileName)
+
+		// 生成文件级别的 ID
+		fileID := fmt.Sprintf("%s_%d", baseID, fileIndex)
+
+		// 对内容进行分块
+		chunks := ChunkTextContent(textContent, headingContext, fileID, e.indexer.chunkConfig)
+
+		if len(chunks) == 0 {
+			chunks = []ExtractedBlock{{
+				ID:             fileID,
+				Type:           "folder",
+				Content:        textContent,
+				HeadingContext: headingContext,
+			}}
+		}
+
+		// 为每个 chunk 生成 embedding 并存储
+		fileSuccess := false
+		for _, chunk := range chunks {
+			if chunk.Content == "" {
+				continue
+			}
+
+			embedding, err := e.embedder.Embed(chunk.Content)
+			if err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to embed folder chunk %s: %v\n", chunk.ID, err)
+				continue
+			}
+
+			contentHash := HashContent(chunk.Content)
+			if err := e.store.Upsert(&BlockVector{
+				ID:             chunk.ID,
+				SourceBlockID:  blockID,
+				DocID:          sourceDocID,
+				Content:        chunk.Content,
+				ContentHash:    contentHash,
+				BlockType:      "folder",
+				HeadingContext: chunk.HeadingContext,
+				FilePath:       filePath,
+				Embedding:      embedding,
+			}); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to upsert folder chunk %s: %v\n", chunk.ID, err)
+			} else {
+				fileSuccess = true
+			}
+		}
+
+		if fileSuccess {
+			result.SuccessCount++
+		} else {
+			result.FailedCount++
+			result.FailedFiles = append(result.FailedFiles, fileName)
+		}
+	}
+
+	// 5. 保存文件夹级别元数据
+	if err := e.store.SaveExternalContent(&ExternalBlockContent{
+		ID:          fmt.Sprintf("%s_%s", sourceDocID, blockID),
+		DocID:       sourceDocID,
+		BlockID:     blockID,
+		BlockType:   "folder",
+		FilePath:    folderPath,
+		Title:       folderName,
+		RawContent:  fmt.Sprintf("Folder: %s\nTotal files: %d\nIndexed: %d", folderPath, result.TotalFiles, result.SuccessCount),
+		ExtractedAt: time.Now().Unix(),
+	}); err != nil {
+		fmt.Printf("⚠️ [RAG] Failed to save folder metadata for %s: %v\n", baseID, err)
+	}
+
+	fmt.Printf("✅ [RAG] Folder indexing complete: %d/%d files indexed\n", result.SuccessCount, result.TotalFiles)
+	return result, nil
+}
+
+// walkFolder 递归遍历文件夹，收集支持的文件
+func (e *ExternalIndexer) walkFolder(dir string, currentDepth, maxDepth int, files *[]string) error {
+	if currentDepth > maxDepth {
+		return nil
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		fullPath := filepath.Join(dir, entry.Name())
+
+		if entry.IsDir() {
+			// 跳过隐藏目录和常见的无关目录
+			name := entry.Name()
+			if strings.HasPrefix(name, ".") || name == "node_modules" || name == "vendor" || name == "__pycache__" {
+				continue
+			}
+			// 递归处理子目录
+			if err := e.walkFolder(fullPath, currentDepth+1, maxDepth, files); err != nil {
+				fmt.Printf("⚠️ [RAG] Failed to walk subdir %s: %v\n", fullPath, err)
+			}
+		} else {
+			// 检查是否是支持的文件类型
+			ext := strings.ToLower(filepath.Ext(entry.Name()))
+			if supportedExtensions[ext] {
+				*files = append(*files, fullPath)
+			}
+		}
+	}
+
+	return nil
+}
+
 // ReindexAll 重新索引所有 bookmark 和 file 块
 // 遍历所有文档，提取 bookmark/file 块信息，然后重新抓取和索引
+
 func (e *ExternalIndexer) ReindexAll() (int, error) {
 	// 获取所有文档
 	index, err := e.docRepo.GetAll()
