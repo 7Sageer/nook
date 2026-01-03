@@ -60,8 +60,12 @@ export const TagList = memo(function TagList({
     }, [renameTag]);
 
     const handleDeleteTag = useCallback(async (tagName: string) => {
+        // If the deleted tag is currently selected, clear the selection
+        if (selectedTag === tagName) {
+            onSelectTag(null);
+        }
         await deleteTag(tagName);
-    }, [deleteTag]);
+    }, [deleteTag, selectedTag, onSelectTag]);
 
     // ESC 键取消选择标签
     useEffect(() => {

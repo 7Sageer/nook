@@ -28,7 +28,7 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 	}
 
 	if params.Granularity == "chunks" {
-		results, err := s.ragService.Search(params.Query, params.Limit)
+		results, err := s.ragService.SearchChunks(params.Query, params.Limit)
 		if err != nil {
 			return errorResult("Semantic search failed: " + err.Error())
 		}
@@ -37,7 +37,7 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 	}
 
 	// Default: document-level search
-	results, err := s.ragService.SearchDocuments(params.Query, params.Limit)
+	results, err := s.ragService.SearchDocuments(params.Query, params.Limit, "")
 	if err != nil {
 		return errorResult("Semantic search failed: " + err.Error())
 	}

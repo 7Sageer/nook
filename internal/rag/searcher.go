@@ -133,6 +133,36 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 	return output, nil
 }
 
+// SearchChunks 执行块级语义搜索（不聚合）
+func (s *Searcher) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
+	// 1. 生成查询向量
+	queryVec, err := s.embedder.Embed(query)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. 搜索
+	results, err := s.store.Search(queryVec, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. 转换结果
+	matches := make([]ChunkMatch, len(results))
+	for i, r := range results {
+		matches[i] = ChunkMatch{
+			BlockID:        r.BlockID,
+			SourceBlockId:  getSourceBlockId(r),
+			Content:        r.Content,
+			BlockType:      r.BlockType,
+			HeadingContext: r.HeadingContext,
+			Score:          1 - r.Distance,
+		}
+	}
+
+	return matches, nil
+}
+
 // uuidPattern 匹配 UUID 格式（支持大小写）
 var uuidPattern = regexp.MustCompile(`(?i)[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)
 

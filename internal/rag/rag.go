@@ -82,6 +82,14 @@ func (s *Service) SearchDocuments(query string, limit int, excludeDocID string) 
 	return s.searcher.SearchDocuments(query, limit, excludeDocID)
 }
 
+// SearchChunks 块级语义搜索
+func (s *Service) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+	return s.searcher.SearchChunks(query, limit)
+}
+
 // ReindexAll 重建所有文档索引
 func (s *Service) ReindexAll() (int, error) {
 	if err := s.init(); err != nil {
