@@ -9,7 +9,7 @@ import { useExport } from "./hooks/useExport";
 import { ExternalFileProvider, useExternalFileContext } from "./contexts/ExternalFileContext";
 import { SearchProvider, useSearchContext } from "./contexts/SearchContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { SettingsModal } from "./components/SettingsModal";
+import { SettingsModal, SettingsTab } from "./components/SettingsModal";
 import { ToastProvider } from "./components/Toast";
 import { useMenuEvents } from "./hooks/useMenuEvents";
 import { useEditor } from "./hooks/useEditor";
@@ -50,6 +50,7 @@ function AppContent() {
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<SettingsTab>('appearance');
 
   // 外部文件管理
   const {
@@ -152,10 +153,12 @@ function AppContent() {
   }, []);
 
   const handleAbout = useCallback(() => {
-    alert(STRINGS.ABOUT_INFO);
-  }, [STRINGS.ABOUT_INFO]);
+    setSettingsInitialTab('about');
+    setSettingsOpen(true);
+  }, []);
 
   const handleSettings = useCallback(() => {
+    setSettingsInitialTab('appearance');
     setSettingsOpen(true);
   }, []);
 
@@ -314,6 +317,7 @@ function AppContent() {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        initialTab={settingsInitialTab}
       />
     </div>
   );

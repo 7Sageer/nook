@@ -131,6 +131,19 @@ export const EN = {
             "Manage tags and organization",
         ],
     },
+
+    ABOUT: {
+        TITLE: "About",
+        APP_NAME: "Nook",
+        VERSION: "v1.0.0",
+        DESCRIPTION: "A simple and elegant local note-taking application.",
+        COPYRIGHT: "© 2024 Nook Team. All rights reserved.",
+        LINKS: {
+            GITHUB: "GitHub Repository",
+            WEBSITE: "Website",
+            LICENSE: "License",
+        },
+    },
 };
 
 

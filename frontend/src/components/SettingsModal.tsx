@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
-import { X, Database, Bot, Palette, Terminal } from 'lucide-react';
+import { X, Database, Bot, Palette, Terminal, Info } from 'lucide-react';
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex, GetMCPInfo } from '../../wailsjs/go/main/App';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { getStrings } from '../constants/strings';
@@ -9,17 +9,19 @@ import { AppearancePanel } from './settings/AppearancePanel';
 import { KnowledgePanel, ReindexProgress } from './settings/KnowledgePanel';
 import { EmbeddingPanel } from './settings/EmbeddingPanel';
 import { MCPPanel } from './settings/MCPPanel';
+import { AboutPanel } from './settings/AboutPanel';
 import { useToast } from './Toast';
 import './SettingsModal.css';
+
+export type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
+    initialTab?: SettingsTab;
 }
 
-type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp';
-
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab = 'appearance' }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
     const { showToast } = useToast();
     const STRINGS = getStrings(language);
@@ -53,8 +55,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     useEffect(() => {
         if (isOpen) {
             loadData();
+            // 如果提供了 initialTab，则切换到该 tab
+            if (initialTab) {
+                setActiveTab(initialTab);
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, initialTab]);
 
     // 订阅索引状态更新事件，实时刷新状态
     useEffect(() => {
@@ -205,8 +211,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
                             onClick={() => setActiveTab('mcp')}
                         >
-                            <Terminal size={18} />
                             <span>{STRINGS.MCP.TITLE}</span>
+                        </button>
+                        <div className="settings-nav-divider"></div>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('about')}
+                        >
+                            <Info size={18} />
+                            <span>{STRINGS.ABOUT.TITLE}</span>
                         </button>
                     </nav>
 
@@ -242,6 +255,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             {activeTab === 'mcp' && (
                                 <MCPPanel
                                     mcpInfo={mcpInfo}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'about' && (
+                                <AboutPanel
                                     strings={STRINGS}
                                 />
                             )}

@@ -102,6 +102,12 @@
     white-space: nowrap;
 }
 
+.settings-nav-divider {
+    height: 1px;
+    background-color: var(--border-primary);
+    margin: 8px 12px;
+}
+
 .settings-nav-item span {
     overflow: hidden;
     text-overflow: ellipsis;
