@@ -202,16 +202,8 @@ func (a *App) SearchDocuments(query string) ([]handlers.SearchResult, error) {
 	return a.searchHandler.SearchDocuments(query)
 }
 
-func (a *App) SemanticSearch(query string, limit int) ([]handlers.SemanticSearchResult, error) {
-	return a.searchHandler.SemanticSearch(query, limit)
-}
-
-func (a *App) SemanticSearchDocuments(query string, limit int) ([]handlers.DocumentSearchResult, error) {
-	return a.searchHandler.SemanticSearchDocuments(query, limit)
-}
-
-func (a *App) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]handlers.DocumentSearchResult, error) {
-	return a.searchHandler.FindRelatedDocuments(content, limit, excludeDocID)
+func (a *App) SemanticSearchDocuments(query string, limit int, excludeDocID string) ([]handlers.DocumentSearchResult, error) {
+	return a.searchHandler.SemanticSearchDocuments(query, limit, excludeDocID)
 }
 
 // ========== RAG API (委托给 RAGHandler) ==========
@@ -424,4 +416,24 @@ func (a *App) GetMCPInfo() MCPInfo {
 // GetOS returns the current operating system
 func (a *App) GetOS() string {
 	return stdruntime.GOOS
+}
+
+// ========== App Info API ==========
+
+// AppInfo 应用信息
+type AppInfo struct {
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	Author    string `json:"author"`
+	Copyright string `json:"copyright"`
+}
+
+// GetAppInfo 获取应用信息
+func (a *App) GetAppInfo() AppInfo {
+	return AppInfo{
+		Name:      "Nook",
+		Version:   "1.0.0",
+		Author:    "7Sageer",
+		Copyright: "© 2024-2026 7Sageer",
+	}
 }

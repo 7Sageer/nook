@@ -136,13 +136,12 @@ export const EN = {
         TITLE: "About",
         APP_NAME: "Nook",
         VERSION: "v1.0.0",
-        DESCRIPTION: "A simple and elegant local note-taking application.",
-        COPYRIGHT: "© 2024 Nook Team. All rights reserved.",
-        LINKS: {
-            GITHUB: "GitHub Repository",
-            WEBSITE: "Website",
-            LICENSE: "License",
-        },
+        DESCRIPTION: "A simple and elegant local note-taking application with AI-powered semantic search.",
+        AUTHOR: "Author",
+        LICENSE: "License",
+        COPYRIGHT: "Copyright",
+        FEEDBACK: "Feedback",
+        BUILT_WITH: "Built with ❤️ using Wails, React & Go",
     },
 };
 

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
-import { SearchDocuments, SemanticSearchDocuments, FindRelatedDocuments } from '../../wailsjs/go/main/App';
+import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
 import { useDocumentContext } from '../contexts/DocumentContext';
 
@@ -55,13 +55,8 @@ export function useSearch(): UseSearchReturn {
             // 2. Debounced Semantic Search (Document-level)
             debounceRef.current = setTimeout(async () => {
                 try {
-                    let semResults: DocumentSearchResult[];
-                    if (excludeCurrentDoc && activeId) {
-                        // 使用 FindRelatedDocuments 来排除当前文档
-                        semResults = await FindRelatedDocuments(query, 5, activeId);
-                    } else {
-                        semResults = await SemanticSearchDocuments(query, 5);
-                    }
+                    const excludeID = (excludeCurrentDoc && activeId) ? activeId : "";
+                    const semResults = await SemanticSearchDocuments(query, 5, excludeID);
                     setSemanticResults(semResults || []);
                 } catch (error) {
                     console.error('Semantic search failed:', error);

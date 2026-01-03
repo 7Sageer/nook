@@ -38,12 +38,12 @@ export function FetchLinkMetadata(arg1) {
   return window['go']['main']['App']['FetchLinkMetadata'](arg1);
 }
 
-export function FindRelatedDocuments(arg1, arg2, arg3) {
-  return window['go']['main']['App']['FindRelatedDocuments'](arg1, arg2, arg3);
-}
-
 export function GetAllTags() {
   return window['go']['main']['App']['GetAllTags']();
+}
+
+export function GetAppInfo() {
+  return window['go']['main']['App']['GetAppInfo']();
 }
 
 export function GetDocumentList() {
@@ -182,12 +182,8 @@ export function SearchDocuments(arg1) {
   return window['go']['main']['App']['SearchDocuments'](arg1);
 }
 
-export function SemanticSearch(arg1, arg2) {
-  return window['go']['main']['App']['SemanticSearch'](arg1, arg2);
-}
-
-export function SemanticSearchDocuments(arg1, arg2) {
-  return window['go']['main']['App']['SemanticSearchDocuments'](arg1, arg2);
+export function SemanticSearchDocuments(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SemanticSearchDocuments'](arg1, arg2, arg3);
 }
 
 export function SetActiveDocument(arg1) {

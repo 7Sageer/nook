@@ -4,7 +4,6 @@ export type DocumentMeta = document.Meta;
 export type DocumentIndex = document.Index;
 
 export type SearchResult = handlers.SearchResult;
-export type SemanticSearchResult = handlers.SemanticSearchResult;
 export type ChunkMatch = handlers.ChunkMatch;
 export type DocumentSearchResult = handlers.DocumentSearchResult;
 export type TagInfo = handlers.TagInfo;

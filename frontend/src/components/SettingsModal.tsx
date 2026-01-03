@@ -13,15 +13,14 @@ import { AboutPanel } from './settings/AboutPanel';
 import { useToast } from './Toast';
 import './SettingsModal.css';
 
-export type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
-
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    initialTab?: SettingsTab;
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab = 'appearance' }) => {
+type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
+
+export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
     const { showToast } = useToast();
     const STRINGS = getStrings(language);
@@ -55,12 +54,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
     useEffect(() => {
         if (isOpen) {
             loadData();
-            // 如果提供了 initialTab，则切换到该 tab
-            if (initialTab) {
-                setActiveTab(initialTab);
-            }
         }
-    }, [isOpen, initialTab]);
+    }, [isOpen]);
 
     // 订阅索引状态更新事件，实时刷新状态
     useEffect(() => {
@@ -211,9 +206,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                             className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
                             onClick={() => setActiveTab('mcp')}
                         >
+                            <Terminal size={18} />
                             <span>{STRINGS.MCP.TITLE}</span>
                         </button>
-                        <div className="settings-nav-divider"></div>
                         <button
                             className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
                             onClick={() => setActiveTab('about')}

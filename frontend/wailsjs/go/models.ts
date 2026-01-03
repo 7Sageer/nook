@@ -193,28 +193,6 @@ export namespace handlers {
 	        this.snippet = source["snippet"];
 	    }
 	}
-	export class SemanticSearchResult {
-	    docId: string;
-	    docTitle: string;
-	    blockId: string;
-	    content: string;
-	    blockType: string;
-	    score: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new SemanticSearchResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.docId = source["docId"];
-	        this.docTitle = source["docTitle"];
-	        this.blockId = source["blockId"];
-	        this.content = source["content"];
-	        this.blockType = source["blockType"];
-	        this.score = source["score"];
-	    }
-	}
 	export class Settings {
 	    theme: string;
 	    language: string;
@@ -258,6 +236,24 @@ export namespace handlers {
 
 export namespace main {
 	
+	export class AppInfo {
+	    name: string;
+	    version: string;
+	    author: string;
+	    copyright: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AppInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.version = source["version"];
+	        this.author = source["author"];
+	        this.copyright = source["copyright"];
+	    }
+	}
 	export class MCPInfo {
 	    binaryPath: string;
 	    configJson: string;

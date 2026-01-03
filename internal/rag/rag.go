@@ -74,28 +74,12 @@ func (s *Service) IndexDocument(docID string) error {
 	return s.indexer.IndexDocument(docID)
 }
 
-// Search 语义搜索（Chunk 级别）
-func (s *Service) Search(query string, limit int) ([]SemanticSearchResult, error) {
-	if err := s.init(); err != nil {
-		return nil, err
-	}
-	return s.searcher.Search(query, limit)
-}
-
 // SearchDocuments 文档级语义搜索（聚合 chunks）
-func (s *Service) SearchDocuments(query string, limit int) ([]DocumentSearchResult, error) {
+func (s *Service) SearchDocuments(query string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
 	if err := s.init(); err != nil {
 		return nil, err
 	}
-	return s.searcher.SearchDocuments(query, limit)
-}
-
-// FindRelatedDocuments 查找相关文档（基于内容片段的 chunk → doc 推荐）
-func (s *Service) FindRelatedDocuments(content string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
-	if err := s.init(); err != nil {
-		return nil, err
-	}
-	return s.searcher.FindRelatedDocuments(content, limit, excludeDocID)
+	return s.searcher.SearchDocuments(query, limit, excludeDocID)
 }
 
 // ReindexAll 重建所有文档索引

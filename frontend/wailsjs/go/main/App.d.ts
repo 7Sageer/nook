@@ -3,8 +3,8 @@
 import {document} from '../models';
 import {opengraph} from '../models';
 import {handlers} from '../models';
-import {rag} from '../models';
 import {main} from '../models';
+import {rag} from '../models';
 import {markdown} from '../models';
 
 export function AddDocumentTag(arg1:string,arg2:string):Promise<void>;
@@ -25,9 +25,9 @@ export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function FetchLinkMetadata(arg1:string):Promise<opengraph.LinkMetadata>;
 
-export function FindRelatedDocuments(arg1:string,arg2:number,arg3:string):Promise<Array<handlers.DocumentSearchResult>>;
-
 export function GetAllTags():Promise<Array<handlers.TagInfo>>;
+
+export function GetAppInfo():Promise<main.AppInfo>;
 
 export function GetDocumentList():Promise<document.Index>;
 
@@ -97,9 +97,7 @@ export function SaveSettings(arg1:handlers.Settings):Promise<void>;
 
 export function SearchDocuments(arg1:string):Promise<Array<handlers.SearchResult>>;
 
-export function SemanticSearch(arg1:string,arg2:number):Promise<Array<handlers.SemanticSearchResult>>;
-
-export function SemanticSearchDocuments(arg1:string,arg2:number):Promise<Array<handlers.DocumentSearchResult>>;
+export function SemanticSearchDocuments(arg1:string,arg2:number,arg3:string):Promise<Array<handlers.DocumentSearchResult>>;
 
 export function SetActiveDocument(arg1:string):Promise<void>;
 

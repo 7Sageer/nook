@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { FetchLinkMetadata, IndexBookmarkContent, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
-import { BrowserOpenURL } from "../../../wailsjs/runtime/runtime";
 
 // Module-level state to track fetching bookmarks to prevent duplicate requests
 const fetchingBookmarks = new Set<string>();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useBookmarkState = (block: any, editor: any, activeId: string | null) => {
-    const { url, title, loading, error, indexed, indexing, indexError } = block.props;
+    const { url, title, loading } = block.props;
 
     const [inputValue, setInputValue] = useState(url || "");
     const [isEditing, setIsEditing] = useState(!url);

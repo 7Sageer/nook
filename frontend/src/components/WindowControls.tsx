@@ -6,7 +6,7 @@ interface WindowControlsProps {
     theme?: 'light' | 'dark';
 }
 
-export function WindowControls({ theme }: WindowControlsProps) {
+export function WindowControls({ theme: _theme }: WindowControlsProps) {
     const [isMaximized, setIsMaximized] = useState(false);
 
     useEffect(() => {
