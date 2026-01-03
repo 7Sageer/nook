@@ -89,11 +89,6 @@ jobs:
         env:
           CGO_ENABLED: 1
 
-      - name: Build MCP server
-        run: go build -o build/bin/nook-mcp.exe ./cmd/mcp-server
-        env:
-          CGO_ENABLED: 1
-
       - name: Create ZIP
         run: |
           Compress-Archive -Path build/bin/Nook.exe, build/bin/nook-mcp.exe -DestinationPath build/bin/Nook-${{ github.ref_name }}-windows.zip
@@ -135,10 +130,7 @@ jobs:
         run: cd frontend && npm ci
 
       - name: Build application
-        run: wails build
-
-      - name: Build MCP server
-        run: go build -o build/bin/nook-mcp ./cmd/mcp-server
+        run: ./scripts/build.sh
 
       - name: Create tarball
         run: |

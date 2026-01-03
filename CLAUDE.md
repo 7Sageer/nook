@@ -14,8 +14,11 @@ Nook is a local-first note-taking desktop application built with Wails (Go backe
 ## Development Commands
 
 ```bash
-# Run in development mode with hot reload
-wails dev
+# Run in development mode with hot reload (with version info)
+./scripts/dev.sh                # 推荐：开发模式 + 版本号注入
+
+# Run in development mode (without version info)
+wails dev                       # 版本号显示为 "dev"
 
 # Build production binary (recommended)
 ./scripts/build.sh              # 构建主程序 + MCP，自动打包到 .app

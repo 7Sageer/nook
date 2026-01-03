@@ -46,6 +46,40 @@ if ($env:GITHUB_ENV) {
     Write-Host "Exported CGO_CFLAGS to GITHUB_ENV"
 }
 
+# 获取版本信息
+Write-Host "Reading version info..."
+$version = git describe --tags --always --dirty 2>$null
+if (-not $version) { $version = "dev" }
+
+$buildTime = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC")
+$gitCommit = git rev-parse --short HEAD 2>$null
+if (-not $gitCommit) { $gitCommit = "unknown" }
+
+Write-Host "Version:    $version"
+Write-Host "BuildTime:  $buildTime"
+Write-Host "GitCommit:  $gitCommit"
+
+# 构建 ldflags
+$ldflags = "-X 'main.Version=$version' -X 'main.BuildTime=$buildTime' -X 'main.GitCommit=$gitCommit'"
+
+# 同步版本号到 wails.json
+Write-Host "Syncing version to wails.json..."
+try {
+    $wailsConfig = Get-Content "wails.json" -Raw | ConvertFrom-Json
+    $wailsConfig.info.productVersion = $version
+    $wailsConfig | ConvertTo-Json -Depth 10 | Set-Content "wails.json"
+    Write-Host "✓ wails.json updated to version: $version"
+}
+catch {
+    Write-Host "⚠ Warning: Failed to update wails.json: $_"
+}
+Write-Host ""
+
 # run wails build
-Write-Host "Running wails build..."
-wails build
+Write-Host "Running wails build with version info..."
+wails build -ldflags $ldflags
+
+# Build MCP server
+Write-Host "Building MCP server..."
+go build -ldflags $ldflags -o build/bin/nook-mcp.exe ./cmd/mcp-server
+Write-Host "MCP server built successfully"

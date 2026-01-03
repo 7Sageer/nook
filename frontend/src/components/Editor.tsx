@@ -123,6 +123,31 @@ export function Editor({
     docId,
   });
 
+  useEffect(() => {
+    const container = editorContainerRef.current;
+    if (!container) return;
+
+    const shouldBlockDefaultDrop = (event: DragEvent) =>
+      event.dataTransfer?.types?.includes("Files") ?? false;
+
+    const handleDragOver = (event: DragEvent) => {
+      if (!shouldBlockDefaultDrop(event)) return;
+      event.preventDefault();
+    };
+
+    const handleDrop = (event: DragEvent) => {
+      if (!shouldBlockDefaultDrop(event)) return;
+      event.preventDefault();
+    };
+
+    container.addEventListener("dragover", handleDragOver);
+    container.addEventListener("drop", handleDrop);
+    return () => {
+      container.removeEventListener("dragover", handleDragOver);
+      container.removeEventListener("drop", handleDrop);
+    };
+  }, []);
+
   // Inject plugins after editor is created (only once)
   useEffect(() => {
     if (editor && editor._tiptapEditor && !pluginInjectedRef.current) {

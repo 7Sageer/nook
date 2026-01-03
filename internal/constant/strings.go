@@ -28,6 +28,9 @@ const (
 	// App Info
 	AppTitle = "Nook"
 
+	// Logs
+	LogFailedToStatDroppedPath = "Failed to stat dropped path: "
+
 	// Menu - File
 	MenuFile           = "File"
 	MenuFileNewDoc     = "New Document"

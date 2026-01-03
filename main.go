@@ -177,7 +177,7 @@ func main() {
 		},
 		DragAndDrop: &options.DragAndDrop{
 			EnableFileDrop:     true,
-			DisableWebViewDrop: true, // 禁用 WebView 默认拖拽，由 Go 端统一处理
+			DisableWebViewDrop: false,
 		},
 		Mac: &mac.Options{
 			TitleBar:   mac.TitleBarHiddenInset(),

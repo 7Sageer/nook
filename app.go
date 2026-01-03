@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"notion-lite/handlers"
+	"notion-lite/internal/constant"
 	"notion-lite/internal/document"
 	"notion-lite/internal/folder"
 	"notion-lite/internal/markdown"
@@ -175,11 +176,21 @@ func (a *App) handleFileDrop(x, y int, paths []string) {
 		return
 	}
 
-	// 只处理第一个拖入的项目
-	path := paths[0]
+	path := ""
+	for _, candidate := range paths {
+		candidate = strings.TrimSpace(candidate)
+		if candidate != "" {
+			path = candidate
+			break
+		}
+	}
+	if path == "" {
+		return
+	}
+
 	info, err := os.Stat(path)
 	if err != nil {
-		runtime.LogError(a.ctx, "Failed to stat dropped path: "+err.Error())
+		runtime.LogError(a.ctx, constant.LogFailedToStatDroppedPath+err.Error())
 		return
 	}
 

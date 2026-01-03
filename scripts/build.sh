@@ -28,6 +28,18 @@ echo ""
 # 构建 ldflags
 LDFLAGS="-X 'main.Version=${VERSION}' -X 'main.BuildTime=${BUILD_TIME}' -X 'main.GitCommit=${GIT_COMMIT}'"
 
+# 同步版本号到 wails.json
+echo -e "${BLUE}同步版本号到 wails.json...${NC}"
+if command -v jq &> /dev/null; then
+    jq ".info.productVersion = \"${VERSION}\"" wails.json > wails.json.tmp && mv wails.json.tmp wails.json
+    echo -e "${GREEN}✓${NC} wails.json 已更新为 ${YELLOW}${VERSION}${NC}"
+else
+    echo -e "${YELLOW}警告: 未安装 jq，使用 sed 更新版本号${NC}"
+    sed -i.bak "s/\"productVersion\": \"[^\"]*\"/\"productVersion\": \"${VERSION}\"/" wails.json && rm -f wails.json.bak
+    echo -e "${GREEN}✓${NC} wails.json 已更新为 ${YELLOW}${VERSION}${NC}"
+fi
+echo ""
+
 echo -e "${BLUE}[1/3]${NC} 构建 Wails 应用..."
 wails build -ldflags "$LDFLAGS"
 
