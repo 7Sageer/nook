@@ -10,6 +10,8 @@ export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
 
+// Duplicate removed
+
 export function Cleanup() {
   return window['go']['main']['App']['Cleanup']();
 }

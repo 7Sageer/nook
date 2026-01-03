@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { ExternalLink, Github, Heart } from 'lucide-react';
 import { getStrings } from '../../constants/strings';
-import { GetAppInfo } from '../../../wailsjs/go/main/App';
+import { GetAppInfo, CheckForUpdates } from '../../../wailsjs/go/main/App';
 import { BrowserOpenURL } from '../../../wailsjs/runtime/runtime';
+import { main } from '../../../wailsjs/go/models';
 import logoImage from '../../assets/images/logo-universal.png';
+import { Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react';
 
 interface AboutPanelProps {
     strings: ReturnType<typeof getStrings>;
@@ -18,6 +20,9 @@ interface AppInfo {
 
 export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
     const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
+    const [checking, setChecking] = useState(false);
+    const [updateInfo, setUpdateInfo] = useState<main.UpdateInfo | null>(null);
+    const [checkError, setCheckError] = useState<string | null>(null);
 
     useEffect(() => {
         GetAppInfo().then(setAppInfo).catch(console.error);
@@ -25,6 +30,21 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
 
     const openLink = (url: string) => {
         BrowserOpenURL(url);
+    };
+
+    const handleCheckUpdate = async () => {
+        setChecking(true);
+        setUpdateInfo(null);
+        setCheckError(null);
+        try {
+            const info = await CheckForUpdates();
+            setUpdateInfo(info);
+        } catch (err) {
+            console.error(err);
+            setCheckError('Failed to check for updates');
+        } finally {
+            setChecking(false);
+        }
     };
 
     return (
@@ -36,7 +56,41 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
                 </div>
                 <div className="about-title">
                     <h2>{appInfo?.name || strings.ABOUT.APP_NAME}</h2>
-                    <span className="about-version">v{appInfo?.version || '1.0.0'}</span>
+                    <div className="about-version-container">
+                        <span className="about-version">v{appInfo?.version || '1.0.0'}</span>
+                        <button
+                            className={`check-update-btn ${checking ? 'loading' : ''}`}
+                            onClick={handleCheckUpdate}
+                            disabled={checking}
+                            title="Check for updates"
+                        >
+                            {checking ? <Loader2 className="animate-spin" size={14} /> : "Check for updates"}
+                        </button>
+                    </div>
+                    {/* Update Result Display */}
+                    {(updateInfo || checkError) && (
+                        <div className={`update-status ${checkError ? 'error' : (updateInfo?.hasUpdate ? 'available' : 'latest')}`}>
+                            {checkError ? (
+                                <>
+                                    <AlertCircle size={14} />
+                                    <span>{checkError}</span>
+                                </>
+                            ) : updateInfo?.hasUpdate ? (
+                                <div className="update-available-msg">
+                                    <AlertCircle size={14} />
+                                    <span>New version available: {updateInfo.latestVersion}</span>
+                                    <button className="view-release-btn" onClick={() => openLink(updateInfo.releaseURL)}>
+                                        View <ArrowRight size={12} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <CheckCircle size={14} />
+                                    <span>You are using the latest version</span>
+                                </>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
