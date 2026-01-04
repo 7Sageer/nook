@@ -211,15 +211,15 @@ function ChangeFileButton({ block }: { block: any }) {
     const handleClick = async () => {
         try {
             const fileInfo = await OpenFileDialog();
-            if (!fileInfo || !fileInfo.path) return;
+            if (!fileInfo || !fileInfo.filePath) return;
 
             editor.updateBlock(block.id, {
                 props: {
                     ...block.props,
-                    filePath: fileInfo.path,
-                    fileName: fileInfo.name,
-                    fileSize: fileInfo.size,
-                    fileType: fileInfo.ext?.replace(".", "") || "",
+                    filePath: fileInfo.filePath,
+                    fileName: fileInfo.fileName,
+                    fileSize: fileInfo.fileSize,
+                    fileType: fileInfo.fileType?.replace(".", "") || "",
                     mimeType: fileInfo.mimeType || "",
                     indexed: false,
                     indexError: "",

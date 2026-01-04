@@ -44,7 +44,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     const handleSelectFile = useCallback(async () => {
         try {
             const fileInfo = await OpenFileDialog();
-            if (!fileInfo || !fileInfo.path) return;
+            if (!fileInfo || !fileInfo.filePath) return;
 
             const currentBlock = editor.getBlock(block.id);
             if (!currentBlock) return;
@@ -52,10 +52,10 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
             editor.updateBlock(currentBlock, {
                 props: {
                     ...currentBlock.props,
-                    filePath: fileInfo.path,
-                    fileName: fileInfo.name,
-                    fileSize: fileInfo.size,
-                    fileType: fileInfo.ext?.replace(".", "") || "",
+                    filePath: fileInfo.filePath,
+                    fileName: fileInfo.fileName,
+                    fileSize: fileInfo.fileSize,
+                    fileType: fileInfo.fileType?.replace(".", "") || "",
                     mimeType: fileInfo.mimeType || "",
                     indexed: false,
                     indexError: "",
