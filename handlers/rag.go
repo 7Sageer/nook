@@ -42,6 +42,11 @@ func NewRAGHandler(
 	}
 }
 
+// Warmup 预热 RAG 服务（初始化组件，不做搜索）
+func (h *RAGHandler) Warmup() error {
+	return h.ragService.Warmup()
+}
+
 // EmbeddingConfig 嵌入模型配置（前端用）
 // Note: This type aliases rag.EmbeddingConfig to avoid breaking the Wails bindings.
 // Wails generates TypeScript types from Go structs, and the frontend expects this name.

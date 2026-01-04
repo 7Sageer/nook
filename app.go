@@ -304,6 +304,11 @@ func (a *App) GetDocumentGraph(threshold float32) (*handlers.GraphData, error) {
 	return a.ragHandler.GetDocumentGraph(threshold)
 }
 
+// WarmupRAG 预热 RAG 服务（用于空闲时初始化，减少冷启动延迟）
+func (a *App) WarmupRAG() error {
+	return a.ragHandler.Warmup()
+}
+
 // IndexBookmarkContent 索引书签网页内容
 func (a *App) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	return a.ragHandler.IndexBookmarkContent(url, sourceDocID, blockID)

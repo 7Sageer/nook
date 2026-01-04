@@ -21,14 +21,31 @@ import { useExternalLinks } from "./hooks/useExternalLinks";
 import { useFileWatcher } from "./hooks/useFileWatcher";
 import { useKeyboardNavigation, useFocusZone } from "./hooks/useKeyboardNavigation";
 import { useExternalFileHandler } from "./hooks/useExternalFileHandler";
+import { WarmupRAG } from "../wailsjs/go/main/App";
 
 import { getStrings } from "./constants/strings";
 import "./App.css";
 import "./styles/print.css";
 
+// 空闲时预热 RAG 服务，减少首次使用 tag 建议时的冷启动延迟
+function useRAGWarmup() {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      WarmupRAG().catch(() => {
+        // 静默忽略预热失败（不影响正常功能）
+      });
+    }, 2000); // 应用启动 2 秒后预热
+
+    return () => clearTimeout(timer);
+  }, []);
+}
+
 function AppContent() {
   const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
+
+  // 空闲时预热 RAG 服务
+  useRAGWarmup();
 
   const {
     documents,

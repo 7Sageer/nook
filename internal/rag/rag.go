@@ -67,6 +67,12 @@ func (s *Service) init() error {
 	return nil
 }
 
+// Warmup 预热初始化（只加载组件，不做实际搜索）
+// 用于在应用空闲时提前初始化，避免首次使用时的冷启动延迟
+func (s *Service) Warmup() error {
+	return s.init()
+}
+
 // IndexDocument 索引单个文档
 func (s *Service) IndexDocument(docID string) error {
 	if err := s.init(); err != nil {
