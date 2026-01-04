@@ -497,6 +497,20 @@ export namespace tag {
 	        this.order = source["order"];
 	    }
 	}
+	export class TagSuggestion {
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TagSuggestion(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
 
 }
 

@@ -67,8 +67,8 @@ func NewApp() *App {
 	settingsService := settings.NewService(paths)
 	markdownService := markdown.NewService()
 	tagStore := tag.NewStore(paths)
-	tagService := tag.NewService(docRepo, tagStore, folderRepo)
 	ragService := rag.NewService(paths, docRepo, docStorage)
+	tagService := tag.NewService(docRepo, tagStore, folderRepo, &ragAdapter{ragService})
 
 	// 创建文件监听服务
 	watcherService, err := watcher.NewService(paths)
@@ -418,6 +418,10 @@ func (a *App) DeleteTag(name string) error {
 	return a.tagHandler.DeleteTag(name)
 }
 
+func (a *App) SuggestTags(docId string) ([]handlers.TagSuggestion, error) {
+	return a.tagHandler.SuggestTags(docId)
+}
+
 // ========== 文件 API (委托给 FileHandler) ==========
 
 func (a *App) ImportMarkdownFile() (*markdown.ImportResult, error) {
@@ -606,4 +610,25 @@ func (a *App) CheckForUpdates() (UpdateInfo, error) {
 		ReleaseURL:     release.HTMLURL,
 		PublishedAt:    release.PublishedAt,
 	}, nil
+}
+
+// ========== RAG Adapter for Tag Service ==========
+
+// ragAdapter 适配器，让 rag.Service 实现 tag.RAGSearcher 接口
+type ragAdapter struct {
+	ragService *rag.Service
+}
+
+// SearchSimilarDocuments 实现 tag.RAGSearcher 接口
+func (a *ragAdapter) SearchSimilarDocuments(docId string, limit int) ([]tag.RAGDocumentResult, error) {
+	results, err := a.ragService.SearchSimilarDocuments(docId, limit)
+	if err != nil {
+		return nil, err
+	}
+	// 转换结果类型
+	tagResults := make([]tag.RAGDocumentResult, len(results))
+	for i, r := range results {
+		tagResults[i] = tag.RAGDocumentResult{DocID: r.DocID}
+	}
+	return tagResults, nil
 }

@@ -116,4 +116,6 @@ export function SetPinnedTagCollapsed(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetTagColor(arg1:string,arg2:string):Promise<void>;
 
+export function SuggestTags(arg1:string):Promise<Array<tag.TagSuggestion>>;
+
 export function UnpinTag(arg1:string):Promise<void>;

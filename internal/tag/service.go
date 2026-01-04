@@ -4,6 +4,7 @@ import (
 	"notion-lite/internal/document"
 	"notion-lite/internal/folder"
 	"os"
+	"sort"
 )
 
 // Service 标签业务逻辑服务
@@ -11,7 +12,8 @@ type Service struct {
 	docRepo    *document.Repository
 	store      *Store
 	folderRepo *folder.Repository
-	paths      PathProvider // Optional, for cleaning up migration
+	ragService RAGSearcher           // 用于语义搜索推荐 tag
+	paths      PathProvider          // Optional, for cleaning up migration
 }
 
 // PathProvider defines methods to get paths
@@ -19,16 +21,28 @@ type PathProvider interface {
 	Folders() string
 }
 
+// RAGSearcher RAG 搜索接口（避免循环依赖）
+type RAGSearcher interface {
+	SearchSimilarDocuments(docId string, limit int) ([]RAGDocumentResult, error)
+}
+
+// RAGDocumentResult 文档搜索结果
+type RAGDocumentResult struct {
+	DocID string
+}
+
 // NewService 创建标签服务
 func NewService(
 	docRepo *document.Repository,
 	store *Store,
 	folderRepo *folder.Repository,
+	ragService RAGSearcher,
 ) *Service {
 	return &Service{
 		docRepo:    docRepo,
 		store:      store,
 		folderRepo: folderRepo,
+		ragService: ragService,
 	}
 }
 
@@ -215,4 +229,77 @@ func (s *Service) GetPinnedTags() []TagInfo {
 // ReorderPinnedTags 重新排序固定标签
 func (s *Service) ReorderPinnedTags(names []string) error {
 	return s.store.ReorderPinnedTags(names)
+}
+
+// TagSuggestion 推荐的标签
+type TagSuggestion struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"` // 出现在多少个相似文档中
+}
+
+// SuggestTags 根据文档内容推荐标签
+func (s *Service) SuggestTags(docId string, limit int) ([]TagSuggestion, error) {
+	if s.ragService == nil {
+		return nil, nil
+	}
+
+	// 获取当前文档信息
+	index, err := s.docRepo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	// 找到当前文档及其已有 tags
+	var currentTags []string
+	for _, doc := range index.Documents {
+		if doc.ID == docId {
+			currentTags = doc.Tags
+			break
+		}
+	}
+	currentTagSet := make(map[string]bool)
+	for _, t := range currentTags {
+		currentTagSet[t] = true
+	}
+
+	// 搜索相似文档（排除当前文档）
+	results, err := s.ragService.SearchSimilarDocuments(docId, 10)
+	if err != nil {
+		return nil, err
+	}
+
+	// 统计相似文档的 tags 频率
+	tagCounts := make(map[string]int)
+	for _, result := range results {
+		for _, doc := range index.Documents {
+			if doc.ID == result.DocID {
+				for _, t := range doc.Tags {
+					// 排除当前文档已有的 tags
+					if !currentTagSet[t] {
+						tagCounts[t]++
+					}
+				}
+				break
+			}
+		}
+	}
+
+	// 转换为切片并按频率排序
+	suggestions := make([]TagSuggestion, 0, len(tagCounts))
+	for name, count := range tagCounts {
+		suggestions = append(suggestions, TagSuggestion{
+			Name:  name,
+			Count: count,
+		})
+	}
+	sort.Slice(suggestions, func(i, j int) bool {
+		return suggestions[i].Count > suggestions[j].Count
+	})
+
+	// 限制返回数量
+	if limit > 0 && len(suggestions) > limit {
+		suggestions = suggestions[:limit]
+	}
+
+	return suggestions, nil
 }

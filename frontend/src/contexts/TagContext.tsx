@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
-import { TagInfo } from '../types/document';
+import { TagInfo, TagSuggestion } from '../types/document';
 import {
   GetAllTags,
   GetTagColors,
@@ -11,6 +11,7 @@ import {
   ReorderPinnedTags,
   RenameTag,
   DeleteTag,
+  SuggestTags,
 } from '../../wailsjs/go/main/App';
 
 interface TagContextType {
@@ -19,6 +20,8 @@ interface TagContextType {
   pinnedTags: TagInfo[];
   selectedTag: string | null;
   tagColors: Record<string, string>;
+  suggestedTags: TagSuggestion[];
+  isLoadingSuggestions: boolean;
 
   // 固定标签操作
   pinTag: (name: string) => Promise<void>;
@@ -32,6 +35,8 @@ interface TagContextType {
   setSelectedTag: (tag: string | null) => void;
   setTagColor: (tagName: string, color: string) => Promise<void>;
   refreshTags: () => Promise<void>;
+  fetchSuggestedTags: (docId: string) => Promise<void>;
+  clearSuggestedTags: () => void;
 
   // 内部方法（供 DocumentContext 调用）
   incrementTagCount: (tagName: string) => void;
@@ -55,6 +60,8 @@ export function TagProvider({ children, onTagRenamed, onTagDeleted }: TagProvide
   const [pinnedTags, setPinnedTags] = useState<TagInfo[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [tagColors, setTagColors] = useState<Record<string, string>>({});
+  const [suggestedTags, setSuggestedTags] = useState<TagSuggestion[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const pinnedTagsRef = useRef<TagInfo[]>([]);
   useEffect(() => {
@@ -169,6 +176,23 @@ export function TagProvider({ children, onTagRenamed, onTagDeleted }: TagProvide
     setTagColors(colors || {});
   }, []);
 
+  const fetchSuggestedTags = useCallback(async (docId: string) => {
+    setIsLoadingSuggestions(true);
+    try {
+      const suggestions = await SuggestTags(docId);
+      setSuggestedTags(suggestions || []);
+    } catch (e) {
+      console.error('获取推荐标签失败:', e);
+      setSuggestedTags([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  }, []);
+
+  const clearSuggestedTags = useCallback(() => {
+    setSuggestedTags([]);
+  }, []);
+
   // ========== 内部方法（供 DocumentContext 调用） ==========
 
   const incrementTagCount = useCallback((tagName: string) => {
@@ -213,6 +237,8 @@ export function TagProvider({ children, onTagRenamed, onTagDeleted }: TagProvide
     pinnedTags,
     selectedTag,
     tagColors,
+    suggestedTags,
+    isLoadingSuggestions,
 
     // 固定标签操作
     pinTag: pinTagFn,
@@ -226,6 +252,8 @@ export function TagProvider({ children, onTagRenamed, onTagDeleted }: TagProvide
     setSelectedTag,
     setTagColor: setTagColorFn,
     refreshTags,
+    fetchSuggestedTags,
+    clearSuggestedTags,
 
     // 内部方法
     incrementTagCount,
@@ -233,9 +261,9 @@ export function TagProvider({ children, onTagRenamed, onTagDeleted }: TagProvide
     updateTagInDocuments,
     removeTagFromAllDocs,
   }), [
-    allTags, pinnedTags, selectedTag, tagColors,
+    allTags, pinnedTags, selectedTag, tagColors, suggestedTags, isLoadingSuggestions,
     pinTagFn, unpinTagFn, renameTagFn, deleteTagFn, togglePinnedTagCollapsed, reorderPinnedTagsFn,
-    setTagColorFn, refreshTags,
+    setTagColorFn, refreshTags, fetchSuggestedTags, clearSuggestedTags,
     incrementTagCount, decrementTagCount, updateTagInDocuments, removeTagFromAllDocs,
   ]);
 

@@ -96,7 +96,7 @@ func (h *DocumentHandler) LoadDocumentContent(id string) (string, error) {
 func (h *DocumentHandler) SaveDocumentContent(id string, content string) error {
 	// 标记文件路径，避免触发自己的文件监听事件
 	h.MarkDocumentWrite(id)
-	h.MarkIndexWrite() // UpdateTimestamp 会修改 index.json
+	h.MarkIndexWrite()                // UpdateTimestamp 会修改 index.json
 	_ = h.docRepo.UpdateTimestamp(id) // 忽略时间戳更新失败
 	err := h.docStorage.Save(id, content)
 	if err == nil {

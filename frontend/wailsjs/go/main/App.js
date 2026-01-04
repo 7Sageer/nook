@@ -218,6 +218,10 @@ export function SetTagColor(arg1, arg2) {
   return window['go']['main']['App']['SetTagColor'](arg1, arg2);
 }
 
+export function SuggestTags(arg1) {
+  return window['go']['main']['App']['SuggestTags'](arg1);
+}
+
 export function UnpinTag(arg1) {
   return window['go']['main']['App']['UnpinTag'](arg1);
 }

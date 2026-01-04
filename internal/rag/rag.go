@@ -2,10 +2,12 @@ package rag
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"notion-lite/internal/document"
 	"notion-lite/internal/utils"
 	"os"
+	"strings"
 )
 
 // Service RAG 服务统一入口
@@ -260,4 +262,104 @@ func (s *Service) IndexFolderContent(folderPath, sourceDocID, blockID string) (*
 		return nil, err
 	}
 	return s.externalIndexer.IndexFolderContent(folderPath, sourceDocID, blockID, 10)
+}
+
+// SearchSimilarDocuments 搜索与指定文档相似的文档（用于 tag 推荐）
+func (s *Service) SearchSimilarDocuments(docID string, limit int) ([]SimilarDocResult, error) {
+	if err := s.init(); err != nil {
+		return nil, err
+	}
+
+	// 获取文档内容
+	content, err := s.docStorage.Load(docID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 提取纯文本作为查询（最多 500 字）
+	query := extractPlainText([]byte(content), 500)
+	if query == "" {
+		return nil, nil
+	}
+
+	// 搜索相似文档（排除当前文档）
+	filter := &SearchFilter{ExcludeDocID: docID}
+	results, err := s.searcher.SearchDocuments(query, limit, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换结果
+	similar := make([]SimilarDocResult, len(results))
+	for i, r := range results {
+		similar[i] = SimilarDocResult{DocID: r.DocID}
+	}
+	return similar, nil
+}
+
+// SimilarDocResult 相似文档结果
+type SimilarDocResult struct {
+	DocID string `json:"docId"`
+}
+
+// extractPlainText 从文档内容提取纯文本（用于语义搜索查询）
+func extractPlainText(content []byte, maxChars int) string {
+	var blocks []interface{}
+	if err := json.Unmarshal(content, &blocks); err != nil {
+		return ""
+	}
+
+	var texts []string
+	extractTextsFromBlocks(blocks, &texts)
+
+	result := strings.Join(texts, " ")
+	if maxChars > 0 && len(result) > maxChars {
+		result = result[:maxChars]
+	}
+	return strings.TrimSpace(result)
+}
+
+// extractTextsFromBlocks 递归提取所有块的文本
+func extractTextsFromBlocks(blocks []interface{}, texts *[]string) {
+	for _, block := range blocks {
+		blockMap, ok := block.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// 提取当前块的文本内容
+		if content, ok := blockMap["content"].([]interface{}); ok {
+			text := extractTextFromContentItems(content)
+			if text != "" {
+				*texts = append(*texts, text)
+			}
+		}
+
+		// 递归处理子块
+		if children, ok := blockMap["children"].([]interface{}); ok {
+			extractTextsFromBlocks(children, texts)
+		}
+	}
+}
+
+// extractTextFromContentItems 从 content 数组提取文本
+func extractTextFromContentItems(content []interface{}) string {
+	var parts []string
+	for _, item := range content {
+		itemMap, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if itemMap["type"] == "text" {
+			if text, ok := itemMap["text"].(string); ok {
+				parts = append(parts, text)
+			}
+		}
+		if itemMap["type"] == "link" {
+			if linkContent, ok := itemMap["content"].([]interface{}); ok {
+				parts = append(parts, extractTextFromContentItems(linkContent))
+			}
+		}
+	}
+	return strings.Join(parts, "")
 }

@@ -286,3 +286,13 @@
     color: var(--text-muted);
     flex-shrink: 0;
 }
+
+/* Suggestion badge for recommended tags */
+.editor-tag-suggestion-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background-color: var(--primary-alpha-15);
+    color: var(--primary);
+    flex-shrink: 0;
+}

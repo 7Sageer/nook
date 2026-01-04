@@ -25,6 +25,9 @@ func NewTagHandler(
 // Note: Aliasing internal type for Wails
 type TagInfo = tag.TagInfo
 
+// TagSuggestion 推荐的标签
+type TagSuggestion = tag.TagSuggestion
+
 // AddDocumentTag 为文档添加标签
 func (h *TagHandler) AddDocumentTag(docId string, tagName string) error {
 	h.MarkIndexWrite()
@@ -96,4 +99,9 @@ func (h *TagHandler) MigrateFoldersToTagGroups() {
 	// I added `SetPathProvider` to Service.
 	h.tagService.SetPathProvider(h.Paths())
 	h.tagService.MigrateFoldersToTagGroups()
+}
+
+// SuggestTags 根据文档内容推荐标签
+func (h *TagHandler) SuggestTags(docId string) ([]TagSuggestion, error) {
+	return h.tagService.SuggestTags(docId, 5)
 }

@@ -20,7 +20,7 @@ export const EditorTagInput = memo(function EditorTagInput({
     onRemoveTag,
     onTagClick,
 }: EditorTagInputProps) {
-    const { allTags, tagColors } = useTagContext();
+    const { allTags, tagColors, suggestedTags, isLoadingSuggestions, fetchSuggestedTags, clearSuggestedTags } = useTagContext();
     const [isAdding, setIsAdding] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
@@ -38,16 +38,45 @@ export const EditorTagInput = memo(function EditorTagInput({
         }, 150); // Match CSS animation duration
     }, [docId, onRemoveTag]);
 
-    // Filter suggestions based on input
-    const suggestions = allTags
-        .filter(t => {
-            const matchesInput = inputValue.trim()
-                ? t.name.toLowerCase().includes(inputValue.toLowerCase())
-                : true;
-            const notAlreadySelected = !tags.includes(t.name);
-            return matchesInput && notAlreadySelected;
-        })
-        .slice(0, 5);
+    // Filter suggestions based on input, prioritize suggested tags when no input
+    const suggestions = (() => {
+        const notAlreadySelected = (name: string) => !tags.includes(name);
+
+        if (!inputValue.trim()) {
+            // No input: show suggested tags first, then other tags
+            const suggestedMap = new Map(suggestedTags.map(s => [s.name, s.count]));
+            const suggested = suggestedTags
+                .filter(s => notAlreadySelected(s.name))
+                .map(s => {
+                    const tagInfo = allTags.find(t => t.name === s.name);
+                    const count = tagInfo?.count ?? 0;
+                    return {
+                        name: s.name,
+                        count,
+                        color: tagColors[s.name],
+                        relevance: s.count,
+                        // 计算百分比用于排序
+                        percent: count > 0 ? s.count / count : 0,
+                    };
+                })
+                // 按百分比降序排序
+                .sort((a, b) => b.percent - a.percent);
+            const others = allTags
+                .filter(t => notAlreadySelected(t.name) && !suggestedMap.has(t.name))
+                .slice(0, 5 - suggested.length)
+                .map(t => ({ ...t, relevance: 0 }));
+            return [...suggested, ...others].slice(0, 5);
+        } else {
+            // Has input: filter all tags normally
+            return allTags
+                .filter(t => {
+                    const matchesInput = t.name.toLowerCase().includes(inputValue.toLowerCase());
+                    return matchesInput && notAlreadySelected(t.name);
+                })
+                .slice(0, 5)
+                .map(t => ({ ...t, relevance: 0 }));
+        }
+    })();
 
     // Reset highlighted index when suggestions change
     useEffect(() => {
@@ -64,6 +93,18 @@ export const EditorTagInput = memo(function EditorTagInput({
             });
         }
     }, [isAdding, suggestions.length]);
+
+    // Fetch suggested tags when entering add mode
+    useEffect(() => {
+        if (isAdding && docId) {
+            fetchSuggestedTags(docId);
+        }
+        return () => {
+            if (!isAdding) {
+                clearSuggestedTags();
+            }
+        };
+    }, [isAdding, docId, fetchSuggestedTags, clearSuggestedTags]);
 
     const handleAddClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -215,7 +256,7 @@ export const EditorTagInput = memo(function EditorTagInput({
                         aria-autocomplete="list"
                         aria-controls={suggestions.length > 0 ? "editor-tag-suggestions" : undefined}
                     />
-                    {suggestions.length > 0 && dropdownPosition && createPortal(
+                    {!isLoadingSuggestions && suggestions.length > 0 && dropdownPosition && createPortal(
                         <ListBox
                             id="editor-tag-suggestions"
                             aria-label="Tag suggestions"
@@ -244,6 +285,14 @@ export const EditorTagInput = memo(function EditorTagInput({
                                         />
                                     )}
                                     <span className="editor-tag-suggestion-name">{item.name}</span>
+                                    {item.relevance > 0 && item.count > 0 && (
+                                        <span
+                                            className="editor-tag-suggestion-badge"
+                                            title={`${item.relevance}/${item.count} 篇相似`}
+                                        >
+                                            {Math.round((item.relevance / item.count) * 100)}%
+                                        </span>
+                                    )}
                                     <span className="editor-tag-suggestion-count" aria-label={`${item.count} documents`}>
                                         {item.count}
                                     </span>
