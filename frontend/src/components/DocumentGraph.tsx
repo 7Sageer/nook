@@ -63,6 +63,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     const [loading, setLoading] = useState(true);
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
     const graphRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(undefined);
+    const isInitialLoad = useRef(true);
 
     // 计算有连接的节点 ID 集合（用于 fitToView 时排除孤儿节点）
     const connectedNodeIds = useMemo(() => {
@@ -102,6 +103,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     }, [threshold]);
 
     useEffect(() => {
+        isInitialLoad.current = true; // 数据变化时重置，以便新数据加载后居中
         loadGraphData();
     }, [loadGraphData]);
 
@@ -329,11 +331,14 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                         backgroundColor={theme === 'dark' ? '#1a1a2e' : '#f8fafc'}
                         cooldownTicks={150}
                         onEngineStop={() => {
-                            // 初始加载时也只对有连接的节点进行 fitToView
-                            if (connectedNodeIds.size > 0) {
-                                graphRef.current?.zoomToFit(400, 50, (node: GraphNode) => connectedNodeIds.has(node.id));
-                            } else {
-                                graphRef.current?.zoomToFit(400, 50);
+                            // 只在初始加载时自动居中，避免用户拖动后强制重新居中
+                            if (isInitialLoad.current) {
+                                isInitialLoad.current = false;
+                                if (connectedNodeIds.size > 0) {
+                                    graphRef.current?.zoomToFit(400, 50, (node: GraphNode) => connectedNodeIds.has(node.id));
+                                } else {
+                                    graphRef.current?.zoomToFit(400, 50);
+                                }
                             }
                         }}
                         nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {

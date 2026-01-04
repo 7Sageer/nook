@@ -72,6 +72,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
     }, [sidebarWidth]);
 
+    // Sync theme to body for portal elements (dropdowns, modals, etc.)
+    useEffect(() => {
+        document.body.classList.remove('light', 'dark');
+        document.body.classList.add(resolvedTheme);
+    }, [resolvedTheme]);
+
     const toggleTheme = () => {
         const nextTheme: ThemeSetting =
             themeSetting === 'light' ? 'dark' :

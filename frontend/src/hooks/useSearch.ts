@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
 import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
@@ -18,9 +18,11 @@ interface UseSearchReturn {
 export function useSearch(): UseSearchReturn {
     const { query, setQuery: setContextQuery, excludeCurrentDoc } = useSearchContext();
     const { activeId } = useDocumentContext();
-    // 使用 ref 保存 activeId，避免 activeId 变化时触发重新搜索
-    const activeIdRef = useRef(activeId);
-    activeIdRef.current = activeId;
+
+    // 精细化的排除ID逻辑：
+    // - 只有当 excludeCurrentDoc 开启时，activeId 变化才应触发重新搜索
+    // - 普通搜索时（excludeCurrentDoc = false），点击结果跳转不应重新搜索
+    const effectiveExcludeId = excludeCurrentDoc ? activeId : null;
 
     // 存储原始搜索结果（未过滤）
     const [rawResults, setRawResults] = useState<SearchResult[]>([]);
@@ -60,8 +62,8 @@ export function useSearch(): UseSearchReturn {
                 .finally(() => setIsSearching(false));
 
             // 2. Debounced Semantic Search (Document-level)
-            // 使用 ref 获取最新的 activeId，避免 activeId 变化时重新触发搜索
-            const currentExcludeId = (excludeCurrentDoc && activeIdRef.current) ? activeIdRef.current : "";
+            // effectiveExcludeId 已经包含了精细化逻辑
+            const currentExcludeId = effectiveExcludeId || "";
             performSemanticSearch(query, currentExcludeId);
         } else {
             setRawResults([]);
@@ -69,10 +71,10 @@ export function useSearch(): UseSearchReturn {
             setIsSearching(false);
             setIsLoadingSemantic(false);
         }
-    }, [query, excludeCurrentDoc, performSemanticSearch]);
-    // 注意：activeId 被故意从依赖项中移除
-    // 当点击搜索结果跳转到文档时，activeId 会改变，但我们不希望这触发重新搜索
-    // 使用 activeIdRef.current 可以在需要时获取最新值，同时避免不必要的 effect 重新执行
+    }, [query, effectiveExcludeId, performSemanticSearch]);
+    // effectiveExcludeId 精细化依赖：
+    // - excludeCurrentDoc=false 时：effectiveExcludeId=null（不变）→ activeId 变化不触发搜索
+    // - excludeCurrentDoc=true 时：effectiveExcludeId=activeId → activeId 变化触发搜索
 
     // 前端过滤：根据 excludeCurrentDoc 和 activeId 过滤关键词搜索结果
     const results = useMemo(() => {

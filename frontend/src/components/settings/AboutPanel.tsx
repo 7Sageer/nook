@@ -105,7 +105,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
                 </div>
                 <div className="about-info-row">
                     <span className="about-info-label">{strings.ABOUT.LICENSE}</span>
-                    <span className="about-info-value">MIT License</span>
+                    <span className="about-info-value">AGPL-3.0 license</span>
                 </div>
                 <div className="about-info-row">
                     <span className="about-info-label">{strings.ABOUT.COPYRIGHT}</span>
