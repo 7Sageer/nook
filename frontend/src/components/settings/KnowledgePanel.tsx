@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Network } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { getStrings } from '../../constants/strings';
 import type { RAGStatus } from '../../types/settings';
 
@@ -14,7 +14,6 @@ interface KnowledgePanelProps {
     isRebuilding: boolean;
     progress: ReindexProgress | null;
     onRebuild: () => void;
-    onViewGraph: () => void;
     strings: ReturnType<typeof getStrings>;
 }
 
@@ -23,7 +22,6 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
     isRebuilding,
     progress,
     onRebuild,
-    onViewGraph,
     strings,
 }) => {
     // 获取进度显示文本
@@ -103,16 +101,6 @@ export const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
                             ? getProgressText()
                             : strings.SETTINGS.REBUILD_INDEX}
                     </span>
-                </button>
-
-                <button
-                    className="settings-action-btn secondary"
-                    onClick={onViewGraph}
-                    disabled={status.indexedDocs === 0}
-                    title={status.indexedDocs === 0 ? 'No indexed documents' : 'View document relationships'}
-                >
-                    <Network size={16} />
-                    <span>View Graph</span>
                 </button>
             </div>
         </div>

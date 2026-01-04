@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSettings } from '../contexts/SettingsContext';
-import { X, Database, Bot, Palette, Terminal, Info } from 'lucide-react';
+import { X, Database, Bot, Palette, Terminal, Info, Network } from 'lucide-react';
 import { GetRAGConfig, SaveRAGConfig, GetRAGStatus, RebuildIndex, GetMCPInfo } from '../../wailsjs/go/main/App';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 import { getStrings } from '../constants/strings';
@@ -20,7 +20,7 @@ interface SettingsModalProps {
     initialTab?: SettingsTab;
 }
 
-export type SettingsTab = 'appearance' | 'knowledge' | 'embedding' | 'mcp' | 'about';
+export type SettingsTab = 'appearance' | 'knowledge' | 'graph' | 'embedding' | 'mcp' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
@@ -52,7 +52,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
     const [hasChanges, setHasChanges] = useState(false);
     const [originalConfig, setOriginalConfig] = useState<EmbeddingConfig | null>(null);
     const [mcpInfo, setMcpInfo] = useState<MCPInfo>({ binaryPath: '', configJson: '' });
-    const [showGraph, setShowGraph] = useState(false);
 
     // 加载配置和状态
     useEffect(() => {
@@ -180,7 +179,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                 {/* 标题栏 */}
                 <div className="settings-header">
                     <h2 id="settings-title">
-                        {showGraph ? 'Document Graph' : STRINGS.SETTINGS.TITLE}
+                        {STRINGS.SETTINGS.TITLE}
                     </h2>
                     <button className="settings-close" onClick={onClose} aria-label="Close">
                         <X size={18} />
@@ -188,27 +187,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                 </div>
 
                 <div className="settings-body">
-                    {/* 图谱视图 - 全屏显示 */}
-                    {showGraph ? (
-                        <div className="settings-main graph-view">
-                            <div className="settings-content">
-                                <DocumentGraph
-                                    onBack={() => setShowGraph(false)}
-                                    onNodeClick={(docId, blockId) => {
-                                        // 关闭设置并导航到文档（可选定位到特定块）
-                                        onClose();
-                                        // 触发文档导航事件，包含可选的 blockId
-                                        window.dispatchEvent(new CustomEvent('navigate-to-doc', {
-                                            detail: { docId, blockId }
-                                        }));
-                                    }}
-                                />
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            {/* 侧边栏 */}
-                            <nav className="settings-sidebar">
+                    {/* 侧边栏 */}
+                    <nav className="settings-sidebar">
                                 <button
                                     className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('appearance')}
@@ -222,6 +202,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                                 >
                                     <Database size={18} />
                                     <span>{STRINGS.SETTINGS.KNOWLEDGE_BASE}</span>
+                                </button>
+                                <button
+                                    className={`settings-nav-item ${activeTab === 'graph' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('graph')}
+                                >
+                                    <Network size={18} />
+                                    <span>Graph</span>
                                 </button>
                                 <button
                                     className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
@@ -265,8 +252,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                                             isRebuilding={isRebuilding}
                                             progress={rebuildProgress}
                                             onRebuild={handleRebuild}
-                                            onViewGraph={() => setShowGraph(true)}
                                             strings={STRINGS}
+                                        />
+                                    )}
+                                    {activeTab === 'graph' && (
+                                        <DocumentGraph
+                                            onNodeClick={(docId, blockId) => {
+                                                onClose();
+                                                window.dispatchEvent(new CustomEvent('navigate-to-doc', {
+                                                    detail: { docId, blockId }
+                                                }));
+                                            }}
                                         />
                                     )}
                                     {activeTab === 'embedding' && (
@@ -289,22 +285,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                                     )}
                                 </div>
 
-                                {/* 底部按钮 */}
-                                <div className="settings-footer">
-                                    <button className="settings-btn cancel" onClick={onClose}>
-                                        {STRINGS.BUTTONS.CANCEL}
-                                    </button>
-                                    <button
-                                        className="settings-btn save"
-                                        onClick={handleSave}
-                                        disabled={!hasChanges || isSaving}
-                                    >
-                                        {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
-                                    </button>
-                                </div>
+                                {/* 底部按钮 - Graph tab 不需要 */}
+                                {activeTab !== 'graph' && (
+                                    <div className="settings-footer">
+                                        <button className="settings-btn cancel" onClick={onClose}>
+                                            {STRINGS.BUTTONS.CANCEL}
+                                        </button>
+                                        <button
+                                            className="settings-btn save"
+                                            onClick={handleSave}
+                                            disabled={!hasChanges || isSaving}
+                                        >
+                                            {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        </>
-                    )}
                 </div>
             </div>
         </div>

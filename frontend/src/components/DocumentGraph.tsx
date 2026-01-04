@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
-import { ArrowLeft, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, HelpCircle } from 'lucide-react';
+import { forceX, forceY } from 'd3-force';
 import { GetDocumentGraph } from '../../wailsjs/go/main/App';
 import { useSettings } from '../contexts/SettingsContext';
 import './DocumentGraph.css';
@@ -35,7 +36,6 @@ interface GraphData {
 }
 
 interface DocumentGraphProps {
-    onBack: () => void;
     onNodeClick: (docId: string, blockId?: string) => void;
 }
 
@@ -55,7 +55,6 @@ const LINK_TYPE_COLORS = {
 };
 
 export const DocumentGraph: React.FC<DocumentGraphProps> = ({
-    onBack,
     onNodeClick,
 }) => {
     const { theme } = useSettings();
@@ -64,6 +63,18 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     const [loading, setLoading] = useState(true);
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
     const graphRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(undefined);
+
+    // 计算有连接的节点 ID 集合（用于 fitToView 时排除孤儿节点）
+    const connectedNodeIds = useMemo(() => {
+        const ids = new Set<string>();
+        graphData.links.forEach(link => {
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            ids.add(sourceId);
+            ids.add(targetId);
+        });
+        return ids;
+    }, [graphData.links]);
 
     // 加载图谱数据
     const loadGraphData = useCallback(async () => {
@@ -104,8 +115,10 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             });
             // 适中的排斥力
             graphRef.current.d3Force('charge')?.strength(-120);
-            // 添加向心力，防止孤儿节点飞走
-            graphRef.current.d3Force('center')?.strength(0.05);
+            // 使用 forceX 和 forceY 添加向心力（比 forceCenter 更有效）
+            // 孤儿节点会被拉向中心，有连接的节点受链接力影响更大
+            graphRef.current.d3Force('x', forceX(0).strength(0.08));
+            graphRef.current.d3Force('y', forceY(0).strength(0.08));
             // 重新加热模拟
             graphRef.current.d3ReheatSimulation();
         }
@@ -203,19 +216,17 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     };
 
     const handleZoomToFit = () => {
-        graphRef.current?.zoomToFit(400, 40);
+        // 只对有连接的节点进行 fitToView，排除孤儿节点
+        // 如果所有节点都是孤儿，则包含所有节点
+        if (connectedNodeIds.size > 0) {
+            graphRef.current?.zoomToFit(400, 40, (node: GraphNode) => connectedNodeIds.has(node.id));
+        } else {
+            graphRef.current?.zoomToFit(400, 40);
+        }
     };
 
     return (
         <div className="graph-panel">
-            {/* 头部 - 返回按钮 */}
-            <div className="graph-panel-header">
-                <button className="graph-back-btn" onClick={onBack}>
-                    <ArrowLeft size={16} />
-                    <span>Back to Settings</span>
-                </button>
-            </div>
-
             {/* 工具栏 */}
             <div className="graph-toolbar">
                 <div className="threshold-control">
@@ -240,6 +251,52 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                     <button onClick={handleZoomIn} title="Zoom In">
                         <ZoomIn size={16} />
                     </button>
+                </div>
+                {/* 图例 help 图标 */}
+                <div className="legend-help-wrapper">
+                    <button className="legend-help-btn" title="Legend">
+                        <HelpCircle size={16} />
+                    </button>
+                    <div className="legend-tooltip">
+                        <div className="legend-section">
+                            <span className="legend-title">Nodes</span>
+                            <div className="legend-items">
+                                <span className="legend-item">
+                                    <span className="legend-dot" style={{ backgroundColor: NODE_TYPE_CONFIG.document.color }}></span>
+                                    Document
+                                </span>
+                                <span className="legend-item">
+                                    <span className="legend-dot" style={{ backgroundColor: NODE_TYPE_CONFIG.bookmark.color }}></span>
+                                    Bookmark
+                                </span>
+                                <span className="legend-item">
+                                    <span className="legend-dot" style={{ backgroundColor: NODE_TYPE_CONFIG.file.color }}></span>
+                                    File
+                                </span>
+                                <span className="legend-item">
+                                    <span className="legend-dot" style={{ backgroundColor: NODE_TYPE_CONFIG.folder.color }}></span>
+                                    Folder
+                                </span>
+                            </div>
+                        </div>
+                        <div className="legend-section">
+                            <span className="legend-title">Links</span>
+                            <div className="legend-items">
+                                <span className="legend-item">
+                                    <span className="legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(99, 102, 241)' : 'rgb(79, 70, 229)' }}></span>
+                                    Semantic
+                                </span>
+                                <span className="legend-item">
+                                    <span className="legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(16, 185, 129)' : 'rgb(5, 150, 105)' }}></span>
+                                    Tags
+                                </span>
+                                <span className="legend-item">
+                                    <span className="legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(168, 85, 247)' : 'rgb(147, 51, 234)' }}></span>
+                                    Both
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -271,7 +328,14 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                         onNodeHover={(node: GraphNode | null) => setHoveredNode(node)}
                         backgroundColor={theme === 'dark' ? '#1a1a2e' : '#f8fafc'}
                         cooldownTicks={150}
-                        onEngineStop={() => graphRef.current?.zoomToFit(400, 50)}
+                        onEngineStop={() => {
+                            // 初始加载时也只对有连接的节点进行 fitToView
+                            if (connectedNodeIds.size > 0) {
+                                graphRef.current?.zoomToFit(400, 50, (node: GraphNode) => connectedNodeIds.has(node.id));
+                            } else {
+                                graphRef.current?.zoomToFit(400, 50);
+                            }
+                        }}
                         nodeCanvasObject={(node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
                             const label = node.title;
                             const fontSize = 12 / globalScale;
@@ -354,47 +418,6 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                         }}
                     />
                 )}
-            </div>
-
-            {/* 图例 */}
-            <div className="graph-legend">
-                <div className="legend-group">
-                    <div className="legend-group-title">Nodes</div>
-                    <div className="legend-item">
-                        <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.document.color, borderRadius: '50%' }}></span>
-                        <span>Document</span>
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-shape legend-hexagon" style={{ backgroundColor: NODE_TYPE_CONFIG.bookmark.color }}></span>
-                        <span>Bookmark</span>
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-shape" style={{ backgroundColor: NODE_TYPE_CONFIG.file.color }}></span>
-                        <span>File</span>
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-shape legend-diamond" style={{ backgroundColor: NODE_TYPE_CONFIG.folder.color }}></span>
-                        <span>Folder</span>
-                    </div>
-                </div>
-
-                <div className="legend-separator"></div>
-
-                <div className="legend-group">
-                    <div className="legend-group-title">Links</div>
-                    <div className="legend-item">
-                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(99, 102, 241)' : 'rgb(79, 70, 229)' }}></span>
-                        <span>Semantic</span>
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(16, 185, 129)' : 'rgb(5, 150, 105)' }}></span>
-                        <span>Shared Tags</span>
-                    </div>
-                    <div className="legend-item">
-                        <span className="legend-shape legend-line" style={{ backgroundColor: theme === 'dark' ? 'rgb(168, 85, 247)' : 'rgb(147, 51, 234)' }}></span>
-                        <span>Both</span>
-                    </div>
-                </div>
             </div>
         </div>
     );
