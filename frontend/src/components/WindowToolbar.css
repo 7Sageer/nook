@@ -242,3 +242,8 @@
 .expand-sidebar-btn:hover svg {
     transform: translateX(2px);
 }
+
+/* Windows 平台：折叠时不需要为交通灯按钮预留空间 */
+.window-toolbar.is-windows .toolbar-collapsed {
+    padding-left: var(--space-2);
+}

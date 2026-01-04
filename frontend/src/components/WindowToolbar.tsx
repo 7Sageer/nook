@@ -73,7 +73,7 @@ export function WindowToolbar({
     }, []);
 
     return (
-        <div className={`window-toolbar ${theme} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''}`}>
+        <div className={`window-toolbar ${theme} ${sidebarCollapsed ? 'sidebar-is-collapsed' : ''} ${isWindows ? 'is-windows' : ''}`}>
             {/* Window Controls (Top Right) - Only for Windows */}
             {isWindows && (
                 <div style={{
