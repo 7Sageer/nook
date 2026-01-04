@@ -1,14 +1,18 @@
 import { useState, useCallback } from 'react';
 import {
     pointerWithin,
+    closestCenter,
     PointerSensor,
     useSensor,
     useSensors,
     type DragStartEvent,
+    type DragOverEvent,
     type DragEndEvent,
     type CollisionDetection,
 } from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import type { DocumentMeta } from '../types/document';
+import type { DocDropIndicator, PinnedTagDropIndicator } from '../types/dnd';
 import { isDocInstanceDndId } from '../utils/dnd';
 import { DND_CONSTANTS } from '../constants/strings';
 
@@ -26,7 +30,23 @@ const {
  * only match (i.e., pointer is directly on the collapsed group's header).
  */
 export const collisionDetectionWithExpandedPriority: CollisionDetection = (args) => {
-    const collisions = pointerWithin(args);
+    const activeType = args.active?.data?.current?.type;
+    let collisions = pointerWithin(args);
+
+    if (activeType === 'pinned-tag') {
+        const pinnedTagTargets = closestCenter(args).filter(collision => {
+            const data = collision.data?.droppableContainer?.data?.current;
+            return data?.type === 'pinned-tag';
+        });
+        return pinnedTagTargets.length > 0 ? pinnedTagTargets : collisions;
+    }
+
+    if (activeType === 'document') {
+        collisions = collisions.filter(collision => {
+            const data = collision.data?.droppableContainer?.data?.current;
+            return data?.type !== 'pinned-tag';
+        });
+    }
 
     if (collisions.length <= 1) {
         return collisions;
@@ -77,6 +97,8 @@ interface UseSidebarDnDOptions {
     addTag: (docId: string, tag: string) => Promise<void>;
     removeTag: (docId: string, tag: string) => Promise<void>;
     reorderDocuments: (ids: string[]) => Promise<void>;
+    pinnedTagOrder: string[];
+    reorderPinnedTags: (names: string[]) => Promise<void>;
 }
 
 export function useSidebarDnD({
@@ -86,10 +108,14 @@ export function useSidebarDnD({
     addTag,
     removeTag,
     reorderDocuments,
+    pinnedTagOrder,
+    reorderPinnedTags,
 }: UseSidebarDnDOptions) {
     const [isDragging, setIsDragging] = useState(false);
     const [activeDragDocId, setActiveDragDocId] = useState<string | null>(null);
     const [sourceGroupName, setSourceGroupName] = useState<string | null>(null);
+    const [docDropIndicator, setDocDropIndicator] = useState<DocDropIndicator | null>(null);
+    const [pinnedTagDropIndicator, setPinnedTagDropIndicator] = useState<PinnedTagDropIndicator | null>(null);
 
     // DnD sensors
     const sensors = useSensors(
@@ -101,6 +127,8 @@ export function useSidebarDnD({
     // Handle DnD start - track which doc is being dragged and from which group
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setIsDragging(true);
+        setDocDropIndicator(null);
+        setPinnedTagDropIndicator(null);
         const activeData = event.active.data.current;
         if (activeData?.type === 'document') {
             setActiveDragDocId(activeData.docId);
@@ -114,17 +142,92 @@ export function useSidebarDnD({
         }
     }, [groupNameSet]);
 
+    const handleDragOver = useCallback((event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) {
+            setDocDropIndicator(null);
+            setPinnedTagDropIndicator(null);
+            return;
+        }
+
+        const activeData = active.data.current;
+        const overData = over.data.current;
+
+        if (activeData?.type === 'document') {
+            setPinnedTagDropIndicator(null);
+            if (overData?.type === 'document' && !overData.hidden) {
+                const activeRect = active.rect.current.translated ?? active.rect.current.initial;
+                const overRect = over.rect;
+                if (!activeRect || !overRect) {
+                    setDocDropIndicator(null);
+                    return;
+                }
+                const activeCenterY = activeRect.top + activeRect.height / 2;
+                const overCenterY = overRect.top + overRect.height / 2;
+                const position = activeCenterY < overCenterY ? 'before' : 'after';
+                setDocDropIndicator({
+                    docId: overData.docId,
+                    containerId: overData.containerId,
+                    position,
+                });
+                return;
+            }
+            setDocDropIndicator(null);
+            return;
+        }
+
+        if (activeData?.type === 'pinned-tag') {
+            setDocDropIndicator(null);
+            if (overData?.type === 'pinned-tag') {
+                const activeRect = active.rect.current.translated ?? active.rect.current.initial;
+                const overRect = over.rect;
+                if (!activeRect || !overRect) {
+                    setPinnedTagDropIndicator(null);
+                    return;
+                }
+                const activeCenterY = activeRect.top + activeRect.height / 2;
+                const overCenterY = overRect.top + overRect.height / 2;
+                const position = activeCenterY < overCenterY ? 'before' : 'after';
+                setPinnedTagDropIndicator({
+                    tagName: overData.tagName,
+                    position,
+                });
+                return;
+            }
+            setPinnedTagDropIndicator(null);
+            return;
+        }
+
+        setDocDropIndicator(null);
+        setPinnedTagDropIndicator(null);
+    }, []);
+
     // Handle DnD end - move by default (remove source, add target), Alt+drag to copy
     const handleDragEnd = useCallback(async (event: DragEndEvent) => {
         const { active, over } = event;
         setIsDragging(false);
         setActiveDragDocId(null);
+        setDocDropIndicator(null);
+        setPinnedTagDropIndicator(null);
         const currentSourceGroup = sourceGroupName;
         setSourceGroupName(null);
 
         if (!over) return;
 
         const activeData = active.data.current;
+        if (activeData?.type === 'pinned-tag') {
+            const overData = over.data.current;
+            if (overData?.type !== 'pinned-tag') return;
+            const activeName = activeData.tagName;
+            const overName = overData.tagName;
+            if (!activeName || !overName || activeName === overName) return;
+            const oldIndex = pinnedTagOrder.indexOf(activeName);
+            const newIndex = pinnedTagOrder.indexOf(overName);
+            if (oldIndex < 0 || newIndex < 0) return;
+            const newOrder = arrayMove(pinnedTagOrder, oldIndex, newIndex);
+            await reorderPinnedTags(newOrder);
+            return;
+        }
         if (activeData?.type !== 'document') return;
 
         const docId = activeData.docId;
@@ -210,20 +313,25 @@ export function useSidebarDnD({
                 }
             }
         }
-    }, [sourceGroupName, addTag, removeTag, ungroupedDocs, filteredDocsByGroup, reorderDocuments]);
+    }, [sourceGroupName, addTag, removeTag, ungroupedDocs, filteredDocsByGroup, reorderDocuments, pinnedTagOrder, reorderPinnedTags]);
 
     const handleDragCancel = useCallback(() => {
         setIsDragging(false);
         setActiveDragDocId(null);
         setSourceGroupName(null);
+        setDocDropIndicator(null);
+        setPinnedTagDropIndicator(null);
     }, []);
 
     return {
         isDragging,
         activeDragDocId,
+        docDropIndicator,
+        pinnedTagDropIndicator,
         sensors,
         collisionDetection: collisionDetectionWithExpandedPriority,
         handleDragStart,
+        handleDragOver,
         handleDragEnd,
         handleDragCancel,
     };

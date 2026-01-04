@@ -62,7 +62,7 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
     };
 
     const dropClass =
-        dropIndicator?.docId === item.id
+        dropIndicator?.docId === item.id && dropIndicator.containerId === containerId
             ? dropIndicator.position === 'before'
                 ? 'drop-before'
                 : 'drop-after'

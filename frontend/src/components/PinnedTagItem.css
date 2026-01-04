@@ -3,6 +3,34 @@
     margin: 0 var(--space-2) 2px;
     border-radius: var(--radius-md);
     transition: background-color var(--transition-fast);
+    position: relative;
+}
+
+.folder-item.is-dragging {
+    opacity: 0.6;
+    background-color: var(--primary-alpha-8);
+    border: 1px dashed var(--primary-alpha-30);
+}
+
+.folder-item.drop-before::before,
+.folder-item.drop-after::before {
+    content: '';
+    position: absolute;
+    left: var(--space-3);
+    right: var(--space-3);
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+    border-radius: 2px;
+    pointer-events: none;
+    animation: dropIndicatorFadeIn 0.15s ease-out forwards, dropIndicatorPulse 1s ease-in-out 0.15s infinite;
+}
+
+.folder-item.drop-before::before {
+    top: 2px;
+}
+
+.folder-item.drop-after::before {
+    bottom: 2px;
 }
 
 /* Drop target highlight for entire group */
@@ -23,6 +51,31 @@
     user-select: none;
     touch-action: none;
     position: relative;
+}
+
+.tag-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-left: -4px;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    cursor: grab;
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.tag-drag-handle:hover {
+    color: var(--text-tertiary);
+    background-color: var(--black-alpha-5);
+}
+
+.tag-drag-handle:active {
+    cursor: grabbing;
+    transform: scale(0.95);
 }
 
 .folder-header:hover {

@@ -1,13 +1,14 @@
-import { Plus } from 'lucide-react';
+import { ArrowUpDown, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { PinnedTagItem } from './PinnedTagItem';
 import { DocumentList } from './DocumentList';
 import type { DocumentMeta, TagInfo } from '../types/document';
+import type { DocDropIndicator, PinnedTagDropIndicator } from '../types/dnd';
 import { DND_CONSTANTS } from '../constants/strings';
 
-const { UNCATEGORIZED_CONTAINER_ID, DOC_CONTAINER_LIST_PREFIX } = DND_CONSTANTS;
+const { UNCATEGORIZED_CONTAINER_ID, DOC_CONTAINER_LIST_PREFIX, PINNED_TAG_PREFIX } = DND_CONSTANTS;
 
 
 interface SidebarPinnedTagsProps {
@@ -19,6 +20,10 @@ interface SidebarPinnedTagsProps {
     isDragging: boolean;
     editingTagName: string | null;
     hasQuery: boolean;
+    isReorderMode: boolean;
+    onToggleReorderMode: () => void;
+    docDropIndicator: DocDropIndicator | null;
+    pinnedTagDropIndicator: PinnedTagDropIndicator | null;
     onToggleCollapsed: (name: string) => Promise<void>;
     onRenameTag: (oldName: string, newName: string) => Promise<void>;
     onDeleteTag: (name: string) => void;
@@ -37,6 +42,8 @@ interface SidebarPinnedTagsProps {
         };
         TOOLTIPS: {
             NEW_PINNED_TAG: string;
+            REORDER_PINNED_TAGS: string;
+            REORDER_PINNED_TAGS_DONE: string;
             NEW_DOC: string;
         };
     };
@@ -54,6 +61,10 @@ export function SidebarPinnedTags({
     isDragging,
     editingTagName,
     hasQuery,
+    isReorderMode,
+    onToggleReorderMode,
+    docDropIndicator,
+    pinnedTagDropIndicator,
     onToggleCollapsed,
     onRenameTag,
     onDeleteTag,
@@ -73,6 +84,11 @@ export function SidebarPinnedTags({
         disabled: hasQuery,
     });
 
+    const showReorderToggle = pinnedTags.length > 1;
+    const reorderTooltip = isReorderMode
+        ? strings.TOOLTIPS.REORDER_PINNED_TAGS_DONE
+        : strings.TOOLTIPS.REORDER_PINNED_TAGS;
+
     return (
         <>
             {/* Pinned Tags Section */}
@@ -80,17 +96,30 @@ export function SidebarPinnedTags({
                 <div className="folders-section" role="tree" aria-label={strings.LABELS.PINNED_TAGS}>
                     <div className="section-label-row">
                         <span className="section-label">{strings.LABELS.PINNED_TAGS}</span>
-                        <button
-                            className="section-add-btn"
-                            onClick={onCreatePinnedTag}
-                            title={strings.TOOLTIPS.NEW_PINNED_TAG}
-                            aria-label={strings.TOOLTIPS.NEW_PINNED_TAG}
-                        >
-                            <Plus size={14} aria-hidden="true" />
-                        </button>
+                        <div className="section-actions">
+                            {showReorderToggle && (
+                                <button
+                                    className={`section-add-btn ${isReorderMode ? 'active' : ''}`}
+                                    onClick={onToggleReorderMode}
+                                    title={reorderTooltip}
+                                    aria-label={reorderTooltip}
+                                    aria-pressed={isReorderMode}
+                                >
+                                    <ArrowUpDown size={14} aria-hidden="true" />
+                                </button>
+                            )}
+                            <button
+                                className="section-add-btn"
+                                onClick={onCreatePinnedTag}
+                                title={strings.TOOLTIPS.NEW_PINNED_TAG}
+                                aria-label={strings.TOOLTIPS.NEW_PINNED_TAG}
+                            >
+                                <Plus size={14} aria-hidden="true" />
+                            </button>
+                        </div>
                     </div>
                     <SortableContext
-                        items={pinnedTags.map(t => t.name)}
+                        items={pinnedTags.map(t => `${PINNED_TAG_PREFIX}${t.name}`)}
                         strategy={verticalListSortingStrategy}
                     >
                         <AnimatePresence mode="popLayout">
@@ -101,6 +130,9 @@ export function SidebarPinnedTags({
                                     index={index}
                                     documents={filteredDocsByTag.get(tag.name) || []}
                                     disabled={editingTagName === tag.name}
+                                    isReorderMode={isReorderMode}
+                                    docDropIndicator={docDropIndicator}
+                                    pinnedTagDropIndicator={pinnedTagDropIndicator}
                                     activeDocId={activeExternalPath ? null : activeDocId}
                                     onToggle={onToggleCollapsed}
                                     onRename={onRenameTag}
@@ -149,6 +181,7 @@ export function SidebarPinnedTags({
                             onDelete={onDeleteDocument}
                             sortable={true}
                             containerId={UNCATEGORIZED_CONTAINER_ID}
+                            dropIndicator={docDropIndicator}
                         />
                     </ul>
                 </motion.div>

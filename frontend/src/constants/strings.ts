@@ -4,6 +4,7 @@ export const DND_CONSTANTS = {
     DOC_CONTAINER_PREFIX: 'doc-container:',
     DOC_CONTAINER_HEADER_PREFIX: 'doc-container-header:',
     DOC_CONTAINER_LIST_PREFIX: 'doc-container-list:',
+    PINNED_TAG_PREFIX: 'pinned-tag:',
 } as const;
 
 export const EN = {
@@ -34,6 +35,9 @@ export const EN = {
     TOOLTIPS: {
         NEW_DOC: "New Document",
         NEW_PINNED_TAG: "New Pinned Tag",
+        REORDER_PINNED_TAGS: "Reorder pinned tags",
+        REORDER_PINNED_TAGS_DONE: "Done reordering pinned tags",
+        PINNED_TAG_DRAG: "Drag to reorder pinned tags",
         OPEN_FILE: "Open File",
         IMPORT: "Import Markdown",
         EXPORT: "Export Markdown",

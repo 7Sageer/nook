@@ -225,3 +225,7 @@ export function SuggestTags(arg1) {
 export function UnpinTag(arg1) {
   return window['go']['main']['App']['UnpinTag'](arg1);
 }
+
+export function WarmupRAG() {
+  return window['go']['main']['App']['WarmupRAG']();
+}

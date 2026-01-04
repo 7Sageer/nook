@@ -52,6 +52,7 @@ export function Sidebar({
     deleteTag,
     renameTag,
     togglePinnedTagCollapsed,
+    reorderPinnedTags,
     allTags,
     selectedTag,
     setSelectedTag,
@@ -65,6 +66,7 @@ export function Sidebar({
 
   const searchRef = useRef<SidebarSearchRef>(null);
   const [editingTagName, setEditingTagName] = useState<string | null>(null);
+  const [isPinnedTagReorderMode, setIsPinnedTagReorderMode] = useState(false);
 
   // Sort pinned tags by order and merge colors
   const sortedPinnedTags = useMemo(() => {
@@ -138,9 +140,12 @@ export function Sidebar({
   const {
     isDragging,
     activeDragDocId,
+    docDropIndicator,
+    pinnedTagDropIndicator,
     sensors,
     collisionDetection,
     handleDragStart,
+    handleDragOver,
     handleDragEnd,
     handleDragCancel,
   } = useSidebarDnD({
@@ -150,6 +155,8 @@ export function Sidebar({
     addTag,
     removeTag,
     reorderDocuments,
+    pinnedTagOrder: sortedPinnedTags.map(tag => tag.name),
+    reorderPinnedTags,
   });
 
   // Event handlers
@@ -232,6 +239,7 @@ export function Sidebar({
           sensors={sensors}
           collisionDetection={collisionDetection}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
         >
@@ -260,6 +268,10 @@ export function Sidebar({
                   isDragging={isDragging}
                   editingTagName={editingTagName}
                   hasQuery={!!query}
+                  isReorderMode={isPinnedTagReorderMode}
+                  onToggleReorderMode={() => setIsPinnedTagReorderMode(prev => !prev)}
+                  docDropIndicator={docDropIndicator}
+                  pinnedTagDropIndicator={pinnedTagDropIndicator}
                   onToggleCollapsed={togglePinnedTagCollapsed}
                   onRenameTag={renameTag}
                   onDeleteTag={handleDeleteTagClick}

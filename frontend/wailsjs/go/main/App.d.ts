@@ -119,3 +119,5 @@ export function SetTagColor(arg1:string,arg2:string):Promise<void>;
 export function SuggestTags(arg1:string):Promise<Array<tag.TagSuggestion>>;
 
 export function UnpinTag(arg1:string):Promise<void>;
+
+export function WarmupRAG():Promise<void>;

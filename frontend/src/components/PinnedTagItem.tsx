@@ -1,22 +1,27 @@
 import { memo, useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import type { DocumentMeta, TagInfo } from '../types/document';
-import { ChevronRight, Tag, Pencil, Trash2, Plus, PinOff, Palette, MoreVertical } from 'lucide-react';
+import { ChevronRight, Tag, Pencil, Trash2, Plus, PinOff, Palette, MoreVertical, GripVertical } from 'lucide-react';
 import { getStrings } from '../constants/strings';
 import { useSettings } from '../contexts/SettingsContext';
 import { TagColorPicker } from './TagColorPicker';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { docInstanceDndId } from '../utils/dnd';
 import { DND_CONSTANTS } from '../constants/strings';
 import { SortableDocItem } from './SortableDocItem';
 import './PinnedTagItem.css';
+import type { DocDropIndicator, PinnedTagDropIndicator } from '../types/dnd';
 
 interface PinnedTagItemProps {
     tag: TagInfo;
     index: number;
     documents: DocumentMeta[];
     disabled: boolean;
+    isReorderMode: boolean;
+    docDropIndicator: DocDropIndicator | null;
+    pinnedTagDropIndicator: PinnedTagDropIndicator | null;
     activeDocId: string | null;
     onToggle: (name: string) => void;
     onRename: (oldName: string, newName: string) => void;
@@ -34,6 +39,10 @@ export const PinnedTagItem = memo(function PinnedTagItem({
 
     documents,
 
+    disabled,
+    isReorderMode,
+    docDropIndicator,
+    pinnedTagDropIndicator,
     activeDocId,
     onToggle,
     onRename,
@@ -45,7 +54,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     onEditingChange,
     onAddDocument,
 }: PinnedTagItemProps) {
-    const { DOC_CONTAINER_HEADER_PREFIX, DOC_CONTAINER_LIST_PREFIX } = DND_CONSTANTS;
+    const { DOC_CONTAINER_HEADER_PREFIX, DOC_CONTAINER_LIST_PREFIX, PINNED_TAG_PREFIX } = DND_CONSTANTS;
     const { language } = useSettings();
     const STRINGS = getStrings(language);
     const [isEditing, setIsEditing] = useState(false);
@@ -60,6 +69,27 @@ export const PinnedTagItem = memo(function PinnedTagItem({
 
     const isCollapsed = tag.collapsed ?? false;
     const hasDocuments = documents.length > 0;
+    const tagDropIndicator = isReorderMode && pinnedTagDropIndicator?.tagName === tag.name
+        ? pinnedTagDropIndicator.position
+        : null;
+
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({
+        id: `${PINNED_TAG_PREFIX}${tag.name}`,
+        data: { type: 'pinned-tag', tagName: tag.name },
+        disabled: !isReorderMode || disabled || isEditing,
+    });
+
+    const style: React.CSSProperties = {
+        transform: CSS.Translate.toString(transform ? { ...transform, x: 0 } : null),
+        transition,
+    };
 
     const handleColorClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -134,8 +164,10 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     return (
         <>
             <motion.div
-                className={`folder-item ${(isHeaderOver || isListOver) ? 'drop-target' : ''}`}
-                layout
+                ref={setNodeRef}
+                style={style}
+                className={`folder-item ${(isHeaderOver || isListOver) ? 'drop-target' : ''} ${isReorderMode ? 'sortable' : ''} ${isDragging ? 'is-dragging' : ''} ${tagDropIndicator ? `drop-${tagDropIndicator}` : ''}`}
+                layout={!isDragging}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
@@ -160,6 +192,18 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                         }
                     }}
                 >
+                    {isReorderMode && (
+                        <button
+                            className="tag-drag-handle"
+                            aria-label={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
+                            title={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
+                            onClick={(e) => e.stopPropagation()}
+                            {...attributes}
+                            {...listeners}
+                        >
+                            <GripVertical size={14} aria-hidden="true" />
+                        </button>
+                    )}
                     <span className={`folder-chevron ${isCollapsed ? 'collapsed' : 'expanded'}`}>
                         <ChevronRight size={16} aria-hidden="true" />
                     </span>
@@ -285,6 +329,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                                         index={index}
                                         containerId={tag.name}
                                         activeId={activeDocId}
+                                        dropIndicator={docDropIndicator}
                                         onSelect={onSelectDocument}
                                         onDelete={onDeleteDocument}
                                         inFolder
