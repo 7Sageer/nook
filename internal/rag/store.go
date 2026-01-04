@@ -43,6 +43,13 @@ type SearchResult struct {
 	Distance       float32 `json:"distance"`
 }
 
+// SearchFilter 搜索过滤条件
+type SearchFilter struct {
+	DocID         string // 限定在某篇文档内搜索
+	SourceBlockID string // 限定在某个块（如 FileBlock/FolderBlock）内搜索
+	ExcludeDocID  string // 排除特定文档
+}
+
 // ExternalBlockContent 外部块完整内容（bookmark/file 的提取文本）
 type ExternalBlockContent struct {
 	ID          string `json:"id"`          // {doc_id}_{block_id}

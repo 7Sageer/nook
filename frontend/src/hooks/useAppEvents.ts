@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
+import { useWailsEvents } from './useWailsEvents';
 import { useDebounce } from './useDebounce';
-import { EventsEmit, EventsOn } from '../../wailsjs/runtime/runtime';
+import { EventsEmit } from '../../wailsjs/runtime/runtime';
 import { Block, BlockNoteEditor } from '@blocknote/core';
 import { ExternalFileInfo } from '../contexts/ExternalFileContext';
 
@@ -51,31 +52,34 @@ export function useAppEvents({
   statusSavedText,
 }: UseAppEventsOptions) {
 
-  // 监听系统文件打开事件（macOS Finder 双击打开）
+  // 外部文件打开处理函数
+  const handleOpenExternal = useCallback(async (filePath: string) => {
+    setContentLoading(true);
+    try {
+      const { LoadExternalFile } = await import('../../wailsjs/go/main/App');
+      const fileContent = await LoadExternalFile(filePath);
+
+      openExternalByPath(filePath, fileContent);
+
+      const blocks = await parseMarkdownToBlocks(fileContent);
+      setContent(blocks);
+      setEditorKey(`external-${filePath}`);
+    } catch (e) {
+      console.error('打开文件失败:', e);
+    } finally {
+      setContentLoading(false);
+    }
+  }, [setContentLoading, openExternalByPath, parseMarkdownToBlocks, setContent, setEditorKey]);
+
+  // 使用通用 hook 监听 Wails 事件
+  useWailsEvents({
+    'file:open-external': handleOpenExternal,
+  }, [handleOpenExternal]);
+
+  // 通知后端：前端已注册文件打开事件监听器
   useEffect(() => {
-    const unsubscribe = EventsOn('file:open-external', async (filePath: string) => {
-      setContentLoading(true);
-      try {
-        const { LoadExternalFile } = await import('../../wailsjs/go/main/App');
-        const fileContent = await LoadExternalFile(filePath);
-
-        openExternalByPath(filePath, fileContent);
-
-        const blocks = await parseMarkdownToBlocks(fileContent);
-        setContent(blocks);
-        setEditorKey(`external-${filePath}`);
-      } catch (e) {
-        console.error('打开文件失败:', e);
-      } finally {
-        setContentLoading(false);
-      }
-    });
-
-    // 通知后端：前端已注册文件打开事件监听器
     EventsEmit('app:frontend-ready');
-
-    return () => unsubscribe();
-  }, [openExternalByPath, parseMarkdownToBlocks, setContent, setContentLoading, setEditorKey]);
+  }, []);
 
   // 内部文档保存逻辑（抽离出来以便防抖）
   const debouncedSaveInternal = useDebounce(async (id: string, blocks: Block[]) => {

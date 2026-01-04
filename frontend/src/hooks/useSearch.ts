@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
 import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
@@ -87,9 +87,7 @@ export function useSearch(): UseSearchReturn {
         setRawResults([]);
         setRawSemanticResults([]);
         setIsLoadingSemantic(false);
-        if (debounceRef.current) {
-            clearTimeout(debounceRef.current);
-        }
+        performSemanticSearch.cancel();
     }, [setContextQuery]);
 
     return {

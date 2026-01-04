@@ -25,16 +25,6 @@ type Store struct {
 	Tags  map[string]TagMeta `json:"tags"`
 }
 
-// TagInfo represents a tag with its usage count
-type TagInfo struct {
-	Name      string `json:"name"`
-	Count     int    `json:"count"`
-	Color     string `json:"color,omitempty"`
-	IsPinned  bool   `json:"isPinned,omitempty"`
-	Collapsed bool   `json:"collapsed,omitempty"`
-	Order     int    `json:"order,omitempty"`
-}
-
 // NewStore creates a new tag store
 func NewStore(paths *utils.PathBuilder) *Store {
 	s := &Store{

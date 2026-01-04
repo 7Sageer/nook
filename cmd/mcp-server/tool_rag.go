@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"notion-lite/internal/rag"
 )
 
 func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
@@ -10,6 +11,8 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 		Query       string `json:"query"`
 		Limit       int    `json:"limit"`
 		Granularity string `json:"granularity"`
+		DocID       string `json:"doc_id"`
+		BlockID     string `json:"block_id"`
 	}
 	if err := json.Unmarshal(args, &params); err != nil {
 		return errorResult("Invalid arguments: " + err.Error())
@@ -27,8 +30,17 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 		params.Granularity = "documents"
 	}
 
+	// Build filter from parameters
+	var filter *rag.SearchFilter
+	if params.DocID != "" || params.BlockID != "" {
+		filter = &rag.SearchFilter{
+			DocID:         params.DocID,
+			SourceBlockID: params.BlockID,
+		}
+	}
+
 	if params.Granularity == "chunks" {
-		results, err := s.ragService.SearchChunks(params.Query, params.Limit)
+		results, err := s.ragService.SearchChunks(params.Query, params.Limit, filter)
 		if err != nil {
 			return errorResult("Semantic search failed: " + err.Error())
 		}
@@ -37,7 +49,7 @@ func (s *MCPServer) toolSemanticSearch(args json.RawMessage) ToolCallResult {
 	}
 
 	// Default: document-level search
-	results, err := s.ragService.SearchDocuments(params.Query, params.Limit, "")
+	results, err := s.ragService.SearchDocuments(params.Query, params.Limit, filter)
 	if err != nil {
 		return errorResult("Semantic search failed: " + err.Error())
 	}

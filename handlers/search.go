@@ -10,6 +10,7 @@ import (
 
 // SearchHandler 搜索处理器
 type SearchHandler struct {
+	*BaseHandler
 	docRepo       *document.Repository
 	searchService *search.Service
 	ragService    *rag.Service
@@ -17,11 +18,13 @@ type SearchHandler struct {
 
 // NewSearchHandler 创建搜索处理器
 func NewSearchHandler(
+	base *BaseHandler,
 	docRepo *document.Repository,
 	searchService *search.Service,
 	ragService *rag.Service,
 ) *SearchHandler {
 	return &SearchHandler{
+		BaseHandler:   base,
 		docRepo:       docRepo,
 		searchService: searchService,
 		ragService:    ragService,
@@ -80,7 +83,12 @@ func (h *SearchHandler) SemanticSearchDocuments(query string, limit int, exclude
 	if limit <= 0 {
 		limit = 10
 	}
-	results, err := h.ragService.SearchDocuments(query, limit, excludeDocID)
+	// 构建过滤器
+	var filter *rag.SearchFilter
+	if excludeDocID != "" {
+		filter = &rag.SearchFilter{ExcludeDocID: excludeDocID}
+	}
+	results, err := h.ragService.SearchDocuments(query, limit, filter)
 	if err != nil {
 		return nil, err
 	}

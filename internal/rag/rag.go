@@ -74,19 +74,19 @@ func (s *Service) IndexDocument(docID string) error {
 }
 
 // SearchDocuments 文档级语义搜索（聚合 chunks）
-func (s *Service) SearchDocuments(query string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
+func (s *Service) SearchDocuments(query string, limit int, filter *SearchFilter) ([]DocumentSearchResult, error) {
 	if err := s.init(); err != nil {
 		return nil, err
 	}
-	return s.searcher.SearchDocuments(query, limit, excludeDocID)
+	return s.searcher.SearchDocuments(query, limit, filter)
 }
 
 // SearchChunks 块级语义搜索
-func (s *Service) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
+func (s *Service) SearchChunks(query string, limit int, filter *SearchFilter) ([]ChunkMatch, error) {
 	if err := s.init(); err != nil {
 		return nil, err
 	}
-	return s.searcher.SearchChunks(query, limit)
+	return s.searcher.SearchChunks(query, limit, filter)
 }
 
 // ReindexAll 重建所有文档索引

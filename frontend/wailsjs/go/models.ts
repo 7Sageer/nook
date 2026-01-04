@@ -215,28 +215,6 @@ export namespace handlers {
 	        this.sidebarWidth = source["sidebarWidth"];
 	    }
 	}
-	export class TagInfo {
-	    name: string;
-	    count: number;
-	    color?: string;
-	    isPinned?: boolean;
-	    collapsed?: boolean;
-	    order?: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new TagInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.count = source["count"];
-	        this.color = source["color"];
-	        this.isPinned = source["isPinned"];
-	        this.collapsed = source["collapsed"];
-	        this.order = source["order"];
-	    }
-	}
 
 }
 
@@ -492,6 +470,33 @@ export namespace rag {
 		}
 	}
 	
+
+}
+
+export namespace tag {
+	
+	export class TagInfo {
+	    name: string;
+	    count: number;
+	    color?: string;
+	    isPinned?: boolean;
+	    collapsed?: boolean;
+	    order?: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TagInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	        this.color = source["color"];
+	        this.isPinned = source["isPinned"];
+	        this.collapsed = source["collapsed"];
+	        this.order = source["order"];
+	    }
+	}
 
 }
 

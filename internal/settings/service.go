@@ -1,9 +1,7 @@
 package settings
 
 import (
-	"encoding/json"
-	"os"
-
+	"notion-lite/internal/repository"
 	"notion-lite/internal/utils"
 )
 
@@ -15,12 +13,11 @@ type Settings struct {
 }
 
 // Service 设置服务
-// Service 设置服务
 type Service struct {
+	repository.BaseRepository
 	paths *utils.PathBuilder
 }
 
-// NewService 创建设置服务
 // NewService 创建设置服务
 func NewService(paths *utils.PathBuilder) *Service {
 	return &Service{paths: paths}
@@ -29,27 +26,19 @@ func NewService(paths *utils.PathBuilder) *Service {
 // Get 获取设置
 func (s *Service) Get() (*Settings, error) {
 	path := s.paths.Settings()
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return &Settings{Theme: "light", Language: "zh"}, nil
-		}
-		return nil, err
-	}
 	var settings Settings
-	if err := json.Unmarshal(data, &settings); err != nil {
-		return nil, err
+	err := s.LoadJSON(path, &settings)
+	if err != nil {
+		return &Settings{Theme: "light", Language: "zh"}, nil
+	}
+	if settings.Theme == "" {
+		return &Settings{Theme: "light", Language: "zh"}, nil
 	}
 	return &settings, nil
 }
 
 // Save 保存设置
-// Save 保存设置
 func (s *Service) Save(settings Settings) error {
 	path := s.paths.Settings()
-	data, err := json.MarshalIndent(settings, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(path, data, 0644)
+	return s.SaveJSON(path, settings)
 }

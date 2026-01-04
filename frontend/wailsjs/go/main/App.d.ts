@@ -4,6 +4,7 @@ import {main} from '../models';
 import {handlers} from '../models';
 import {document} from '../models';
 import {opengraph} from '../models';
+import {tag} from '../models';
 import {rag} from '../models';
 import {markdown} from '../models';
 
@@ -29,7 +30,7 @@ export function ExportMarkdownFile(arg1:string,arg2:string):Promise<void>;
 
 export function FetchLinkMetadata(arg1:string):Promise<opengraph.LinkMetadata>;
 
-export function GetAllTags():Promise<Array<handlers.TagInfo>>;
+export function GetAllTags():Promise<Array<tag.TagInfo>>;
 
 export function GetAppInfo():Promise<main.AppInfo>;
 
@@ -43,7 +44,7 @@ export function GetMCPInfo():Promise<main.MCPInfo>;
 
 export function GetOS():Promise<string>;
 
-export function GetPinnedTags():Promise<Array<handlers.TagInfo>>;
+export function GetPinnedTags():Promise<Array<tag.TagInfo>>;
 
 export function GetRAGConfig():Promise<rag.EmbeddingConfig>;
 

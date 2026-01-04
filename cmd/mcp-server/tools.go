@@ -183,20 +183,22 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 		// RAG tools
 		{
 			Name:        "semantic_search",
-			Description: "Search by semantic similarity using natural language. Use granularity='documents' to find relevant documents, or 'chunks' to find specific text blocks within documents.",
+			Description: "Search by semantic similarity using natural language. Use granularity='documents' to find relevant documents, or 'chunks' to find specific text blocks within documents. Use doc_id to search within a specific document, or block_id to search within a specific bookmark/file/folder block (e.g., search within a specific PDF).",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
 					"query":       {Type: "string", Description: "Natural language search query"},
 					"limit":       {Type: "number", Description: "Maximum results to return (default: 5)"},
 					"granularity": {Type: "string", Description: "Result granularity: 'documents' for document-level results (default), 'chunks' for text blocks"},
+					"doc_id":      {Type: "string", Description: "Optional: limit search to a specific document"},
+					"block_id":    {Type: "string", Description: "Optional: limit search to a specific block (e.g., a FileBlock containing a PDF, or a FolderBlock)"},
 				},
 				Required: []string{"query"},
 			},
 		},
 		{
 			Name:        "get_block_content",
-			Description: "Get the extracted text content of a bookmark or file block. Returns the full readable content that was indexed for RAG search. Use this to read the actual content of bookmarked webpages or uploaded files.",
+			Description: "Get the extracted text content of a bookmark, file, or folder block. Returns the full readable content that was indexed for RAG search. Use this to read the actual content of bookmarked webpages, uploaded files, or get folder path information.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{

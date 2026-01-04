@@ -45,7 +45,7 @@ func NewSearcher(store *VectorStore, embedder EmbeddingClient, docRepo *document
 }
 
 // SearchDocuments 执行文档级语义搜索（聚合 chunks）
-func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
+func (s *Searcher) SearchDocuments(query string, limit int, filter *SearchFilter) ([]DocumentSearchResult, error) {
 	// 1. 生成查询向量
 	queryVec, err := s.embedder.Embed(query)
 	if err != nil {
@@ -53,9 +53,9 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 	}
 
 	// 2. 扩大召回量以确保覆盖更多文档
-	// 如果需要排除文档，召回更多以避免过滤后结果不足
+	// 如果有过滤条件可能需要召回更多
 	multiplier := 5
-	if excludeDocID != "" {
+	if filter != nil && filter.ExcludeDocID != "" {
 		multiplier = 8
 	}
 	expandedLimit := limit * multiplier
@@ -63,7 +63,7 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 		expandedLimit = 30
 	}
 
-	results, err := s.store.Search(queryVec, expandedLimit)
+	results, err := s.store.Search(queryVec, expandedLimit, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -75,13 +75,9 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 		titleMap[doc.ID] = doc.Title
 	}
 
-	// 4. 按 DocID 聚合 chunks
+	// 4. 按 DocID 聚合 chunks（过滤已在 store 层完成）
 	docMap := make(map[string]*DocumentSearchResult)
 	for _, r := range results {
-		// 排除特定文档
-		if excludeDocID != "" && r.DocID == excludeDocID {
-			continue
-		}
 
 		score := 1 - r.Distance // 距离转相似度
 
@@ -140,7 +136,7 @@ func (s *Searcher) SearchDocuments(query string, limit int, excludeDocID string)
 }
 
 // SearchChunks 执行块级语义搜索（不聚合）
-func (s *Searcher) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
+func (s *Searcher) SearchChunks(query string, limit int, filter *SearchFilter) ([]ChunkMatch, error) {
 	// 1. 生成查询向量
 	queryVec, err := s.embedder.Embed(query)
 	if err != nil {
@@ -148,7 +144,7 @@ func (s *Searcher) SearchChunks(query string, limit int) ([]ChunkMatch, error) {
 	}
 
 	// 2. 搜索
-	results, err := s.store.Search(queryVec, limit)
+	results, err := s.store.Search(queryVec, limit, filter)
 	if err != nil {
 		return nil, err
 	}

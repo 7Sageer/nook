@@ -6,12 +6,17 @@ import (
 
 // SettingsHandler 设置处理器
 type SettingsHandler struct {
+	*BaseHandler
 	settingsService *settings.Service
 }
 
 // NewSettingsHandler 创建设置处理器
-func NewSettingsHandler(settingsService *settings.Service) *SettingsHandler {
+func NewSettingsHandler(
+	base *BaseHandler,
+	settingsService *settings.Service,
+) *SettingsHandler {
 	return &SettingsHandler{
+		BaseHandler:     base,
 		settingsService: settingsService,
 	}
 }

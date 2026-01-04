@@ -89,9 +89,9 @@ func NewApp() *App {
 	app.documentHandler = handlers.NewDocumentHandler(
 		baseHandler, docRepo, docStorage, searchService, ragService,
 	)
-	app.searchHandler = handlers.NewSearchHandler(docRepo, searchService, ragService)
+	app.searchHandler = handlers.NewSearchHandler(baseHandler, docRepo, searchService, ragService)
 	app.ragHandler = handlers.NewRAGHandler(baseHandler, docRepo, ragService)
-	app.settingsHandler = handlers.NewSettingsHandler(settingsService)
+	app.settingsHandler = handlers.NewSettingsHandler(baseHandler, settingsService)
 	app.tagHandler = handlers.NewTagHandler(baseHandler, tagService)
 	app.fileHandler = handlers.NewFileHandler(baseHandler, markdownService)
 
