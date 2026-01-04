@@ -1,7 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useCallback } from "react";
-import { Folder, Loader2, Check, AlertCircle, RefreshCw, Replace, Plus, ExternalLink } from "lucide-react";
+import { Folder, Loader2, Check, AlertCircle, RefreshCw, Replace, Plus, ExternalLink, Eye } from "lucide-react";
 import { IndexFolderContent, SelectFolderDialog, RevealInFinder, OpenFileWithSystem } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/ExternalBlock.css";
@@ -199,6 +199,17 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
                     }}
                 >
                     <ExternalLink size={14} />
+                </button>
+                <button
+                    className="external-action-btn"
+                    title="Reveal in Finder"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRevealInFinder();
+                    }}
+                >
+                    <Eye size={14} />
                 </button>
             </div>
         </div>

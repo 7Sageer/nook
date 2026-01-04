@@ -64,12 +64,13 @@ export function useSearch(): UseSearchReturn {
             setIsSearching(false);
             setIsLoadingSemantic(false);
         }
-    }, [query, excludeCurrentDoc, performSemanticSearch]); // activeId is used inside performSemanticSearch which is stable but arguments matter.
+    }, [query, excludeCurrentDoc, performSemanticSearch, activeId]); // activeId is used inside performSemanticSearch which is stable but arguments matter.
     // Actually performSemanticSearch is stable from useDebounce.
     // But we need to pass activeId when calling it.
     // If activeId changes, we might want to re-search?
     // Original effect: `[query, excludeCurrentDoc]` - explicitly excluded activeId.
     // So if activeId changes, we don't re-search. This behavior is preserved.
+    // UPDATE: We include activeId now to ensure exclusion logic updates when active doc changes.
 
     // 前端过滤：根据 excludeCurrentDoc 和 activeId 过滤关键词搜索结果
     const results = useMemo(() => {
@@ -88,7 +89,7 @@ export function useSearch(): UseSearchReturn {
         setRawSemanticResults([]);
         setIsLoadingSemantic(false);
         performSemanticSearch.cancel();
-    }, [setContextQuery]);
+    }, [setContextQuery, performSemanticSearch]);
 
     return {
         query,

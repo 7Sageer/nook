@@ -221,10 +221,7 @@ export function SearchResultItem({
         setIsExpanded(!isExpanded);
     };
 
-    const handleChunkClick = (e: React.MouseEvent, blockId: string) => {
-        e.stopPropagation();
-        onChunkClick?.(blockId);
-    };
+
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === ' ') {

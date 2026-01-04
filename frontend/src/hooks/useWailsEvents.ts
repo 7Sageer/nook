@@ -2,6 +2,7 @@ import { useEffect, DependencyList } from 'react';
 import { EventsOn } from '../../wailsjs/runtime/runtime';
 
 // 事件处理器类型
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EventHandler = (...args: any[]) => void;
 
 // 事件映射类型

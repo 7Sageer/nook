@@ -38,7 +38,7 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
             container.removeEventListener("dragover", handleDragOver);
             container.removeEventListener("drop", handleDrop);
         };
-    }, []); // Empty dependency array as containerRef.current logic usually inside effect needs ref in deps or assume stable? 
+    }, [containerRef]); // Empty dependency array as containerRef.current logic usually inside effect needs ref in deps or assume stable? 
     // Usually ref.current is mutable so effect running once is typically fine if ref attached initially.
     // However, if strict mode/react behavior, better safe. 
     // But ref updates don't trigger re-render. 
