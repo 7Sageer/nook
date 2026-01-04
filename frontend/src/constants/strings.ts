@@ -2,6 +2,8 @@
 export const DND_CONSTANTS = {
     UNCATEGORIZED_CONTAINER_ID: '__uncategorized__',
     DOC_CONTAINER_PREFIX: 'doc-container:',
+    DOC_CONTAINER_HEADER_PREFIX: 'doc-container-header:',
+    DOC_CONTAINER_LIST_PREFIX: 'doc-container-list:',
 } as const;
 
 export const EN = {

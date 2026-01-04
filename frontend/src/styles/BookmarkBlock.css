@@ -93,9 +93,8 @@
 .bookmark-image {
     flex-shrink: 0;
     width: 180px;
-    height: 100%;
-    /* Fill height */
     min-height: 108px;
+    max-height: 120px;
     overflow: hidden;
     background: var(--bn-colors-hovered-background, #f5f5f5);
     border-left: 1px solid var(--bn-colors-menu-background, #e5e5e5);

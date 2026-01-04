@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { docInstanceDndId } from '../utils/dnd';
+import { DND_CONSTANTS } from '../constants/strings';
 import { SortableDocItem } from './SortableDocItem';
 import './PinnedTagItem.css';
 
@@ -44,6 +45,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     onEditingChange,
     onAddDocument,
 }: PinnedTagItemProps) {
+    const { DOC_CONTAINER_HEADER_PREFIX, DOC_CONTAINER_LIST_PREFIX } = DND_CONSTANTS;
     const { language } = useSettings();
     const STRINGS = getStrings(language);
     const [isEditing, setIsEditing] = useState(false);
@@ -57,6 +59,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     }, [documents]);
 
     const isCollapsed = tag.collapsed ?? false;
+    const hasDocuments = documents.length > 0;
 
     const handleColorClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -79,13 +82,22 @@ export const PinnedTagItem = memo(function PinnedTagItem({
         setColorPickerPos(null);
     }, [onColorSelect]);
 
-    // Droppable only on header to allow precise drop targeting
     const {
         setNodeRef: setHeaderDroppableRef,
-        isOver,
+        isOver: isHeaderOver,
     } = useDroppable({
-        id: `doc-container:${tag.name}`,
-        data: { type: 'doc-container', containerId: tag.name, collapsed: isCollapsed },
+        id: `${DOC_CONTAINER_HEADER_PREFIX}${tag.name}`,
+        data: { type: 'doc-container', containerId: tag.name, collapsed: isCollapsed, role: 'header' },
+        disabled: !isCollapsed && hasDocuments,
+    });
+
+    const {
+        setNodeRef: setListDroppableRef,
+        isOver: isListOver,
+    } = useDroppable({
+        id: `${DOC_CONTAINER_LIST_PREFIX}${tag.name}`,
+        data: { type: 'doc-container', containerId: tag.name, collapsed: isCollapsed, role: 'list' },
+        disabled: isCollapsed || hasDocuments,
     });
 
     const handleRenameSubmit = () => {
@@ -122,7 +134,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     return (
         <>
             <motion.div
-                className={`folder-item ${isOver ? 'drop-target' : ''}`}
+                className={`folder-item ${(isHeaderOver || isListOver) ? 'drop-target' : ''}`}
                 layout
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -258,6 +270,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                     )}
                 </div>
                 <div
+                    ref={setListDroppableRef}
                     className={`folder-documents ${isCollapsed ? 'collapsed' : ''}`}
                     role="group"
                     aria-label={`${tag.name} 中的文档`}

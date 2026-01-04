@@ -52,7 +52,7 @@ export const SortableDocItem = memo(forwardRef<HTMLLIElement | HTMLDivElement, S
         isDragging,
     } = useSortable({
         id: docInstanceDndId(containerId, item.id),
-        data: { type: 'document', containerId, docId: item.id },
+        data: { type: 'document', containerId, docId: item.id, hidden },
         disabled: hidden, // Prevent collapsed folder items from being droppable targets
     });
 

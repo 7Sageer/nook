@@ -59,7 +59,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
 }) => {
     const { theme } = useSettings();
     const [graphData, setGraphData] = useState<GraphData>({ nodes: [], links: [] });
-    const [threshold, setThreshold] = useState(0.7);
+    const [threshold, setThreshold] = useState(0.75);
     const [loading, setLoading] = useState(true);
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
     const graphRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(undefined);
@@ -117,8 +117,8 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             graphRef.current.d3Force('charge')?.strength(-120);
             // 使用 forceX 和 forceY 添加向心力（比 forceCenter 更有效）
             // 孤儿节点会被拉向中心，有连接的节点受链接力影响更大
-            graphRef.current.d3Force('x', forceX(0).strength(0.08));
-            graphRef.current.d3Force('y', forceY(0).strength(0.08));
+            graphRef.current.d3Force('x', forceX(0).strength(0.05));
+            graphRef.current.d3Force('y', forceY(0).strength(0.05));
             // 重新加热模拟
             graphRef.current.d3ReheatSimulation();
         }

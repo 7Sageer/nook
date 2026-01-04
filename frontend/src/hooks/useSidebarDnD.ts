@@ -9,9 +9,15 @@ import {
     type CollisionDetection,
 } from '@dnd-kit/core';
 import type { DocumentMeta } from '../types/document';
+import { isDocInstanceDndId } from '../utils/dnd';
 import { DND_CONSTANTS } from '../constants/strings';
 
-const { UNCATEGORIZED_CONTAINER_ID, DOC_CONTAINER_PREFIX } = DND_CONSTANTS;
+const {
+    UNCATEGORIZED_CONTAINER_ID,
+    DOC_CONTAINER_PREFIX,
+    DOC_CONTAINER_HEADER_PREFIX,
+    DOC_CONTAINER_LIST_PREFIX,
+} = DND_CONSTANTS;
 
 
 /**
@@ -24,6 +30,16 @@ export const collisionDetectionWithExpandedPriority: CollisionDetection = (args)
 
     if (collisions.length <= 1) {
         return collisions;
+    }
+
+    const documentTargets = collisions.filter(collision => {
+        if (!isDocInstanceDndId(String(collision.id))) return false;
+        const data = collision.data?.droppableContainer?.data?.current;
+        return data?.type === 'document' && !data?.hidden;
+    });
+
+    if (documentTargets.length > 0) {
+        return documentTargets;
     }
 
     // Check if any collision is with an expanded (non-collapsed) doc-container
@@ -39,6 +55,19 @@ export const collisionDetectionWithExpandedPriority: CollisionDetection = (args)
 
     // Otherwise return original collisions
     return collisions;
+};
+
+const getContainerInfo = (id: string) => {
+    if (id.startsWith(DOC_CONTAINER_HEADER_PREFIX)) {
+        return { containerId: id.slice(DOC_CONTAINER_HEADER_PREFIX.length), role: 'header' as const };
+    }
+    if (id.startsWith(DOC_CONTAINER_LIST_PREFIX)) {
+        return { containerId: id.slice(DOC_CONTAINER_LIST_PREFIX.length), role: 'list' as const };
+    }
+    if (id.startsWith(DOC_CONTAINER_PREFIX)) {
+        return { containerId: id.slice(DOC_CONTAINER_PREFIX.length), role: 'container' as const };
+    }
+    return null;
 };
 
 interface UseSidebarDnDOptions {
@@ -101,13 +130,19 @@ export function useSidebarDnD({
         const docId = activeData.docId;
         const overId = over.id as string;
         const overData = over.data.current;
+        const containerInfo = getContainerInfo(overId);
 
         // Check if Alt/Option key is held (copy mode)
         const isCopyMode = (event.activatorEvent as MouseEvent | undefined)?.altKey ?? false;
 
         // Case 1: Dropping on a group container (move/copy between groups)
-        if (overId.startsWith(DOC_CONTAINER_PREFIX)) {
-            const targetGroup = overId.replace(DOC_CONTAINER_PREFIX, '');
+        if (containerInfo) {
+            const targetGroup = containerInfo.containerId;
+            const targetDocs = targetGroup === UNCATEGORIZED_CONTAINER_ID
+                ? ungroupedDocs
+                : (filteredDocsByGroup.get(targetGroup) || []);
+
+            if (targetDocs.length > 0 && !(overData?.role === 'header' && overData?.collapsed)) return;
 
             // Skip if dropping on the same group
             if (targetGroup === currentSourceGroup) return;
@@ -129,7 +164,7 @@ export function useSidebarDnD({
         }
 
         // Case 2: Dropping on another document
-        if (overData?.type === 'document') {
+        if (overData?.type === 'document' && !overData.hidden) {
             const sourceContainerId = activeData.containerId;
             const targetContainerId = overData.containerId;
 

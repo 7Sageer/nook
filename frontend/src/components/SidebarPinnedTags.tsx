@@ -7,7 +7,7 @@ import { DocumentList } from './DocumentList';
 import type { DocumentMeta, TagInfo } from '../types/document';
 import { DND_CONSTANTS } from '../constants/strings';
 
-const { UNCATEGORIZED_CONTAINER_ID } = DND_CONSTANTS;
+const { UNCATEGORIZED_CONTAINER_ID, DOC_CONTAINER_LIST_PREFIX } = DND_CONSTANTS;
 
 
 interface SidebarPinnedTagsProps {
@@ -68,8 +68,8 @@ export function SidebarPinnedTags({
     strings,
 }: SidebarPinnedTagsProps) {
     const { setNodeRef: setUncategorizedDroppableRef } = useDroppable({
-        id: `doc-container:${UNCATEGORIZED_CONTAINER_ID}`,
-        data: { type: 'doc-container', containerId: UNCATEGORIZED_CONTAINER_ID },
+        id: `${DOC_CONTAINER_LIST_PREFIX}${UNCATEGORIZED_CONTAINER_ID}`,
+        data: { type: 'doc-container', containerId: UNCATEGORIZED_CONTAINER_ID, role: 'list' },
         disabled: hasQuery,
     });
 
