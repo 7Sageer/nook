@@ -146,19 +146,15 @@ export function createBookmarkPreview(blockElement: Element, isDark: boolean): H
     overlay.style.cssText = `
         position: fixed;
         z-index: 99999;
-        padding: 10px 14px;
-        background: ${isDark ? 'rgba(45, 45, 45, 0.98)' : 'rgba(255, 255, 255, 0.98)'};
-        border: 1px solid ${isDark ? '#505050' : '#e0e0e0'};
-        border-radius: 10px;
-        box-shadow: 0 8px 32px ${isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)'}, 0 2px 8px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.08)'};
+        padding: 4px 8px;
+        background: ${isDark ? '#2d2d2d' : '#ffffff'};
+        border-radius: 6px;
+        box-shadow: 0 4px 12px ${isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)'};
         pointer-events: none;
         color: ${isDark ? '#e5e5e5' : '#333333'};
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         opacity: 0;
-        transition: opacity 0.15s ease-out;
-        transform: scale(1.02);
+        transition: opacity 0.1s ease-out;
     `;
 
     return overlay;
@@ -248,19 +244,15 @@ function getOverlayBaseStyle(isDark: boolean): string {
     return `
         position: fixed;
         z-index: 99999;
-        padding: 10px 14px;
-        background: ${isDark ? 'rgba(45, 45, 45, 0.98)' : 'rgba(255, 255, 255, 0.98)'};
-        border: 1px solid ${isDark ? '#505050' : '#e0e0e0'};
-        border-radius: 10px;
-        box-shadow: 0 8px 32px ${isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)'}, 0 2px 8px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.08)'};
+        padding: 4px 8px;
+        background: ${isDark ? '#2d2d2d' : '#ffffff'};
+        border-radius: 6px;
+        box-shadow: 0 4px 12px ${isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)'};
         pointer-events: none;
         color: ${isDark ? '#e5e5e5' : '#333333'};
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         opacity: 0;
-        transition: opacity 0.15s ease-out;
-        transform: scale(1.02);
+        transition: opacity 0.1s ease-out;
     `;
 }
 
@@ -300,11 +292,10 @@ export function createOverlay(blockElement: Element): HTMLDivElement | null {
     overlay.style.cssText = `
         position: fixed;
         z-index: 99999;
-        padding: 10px 14px;
-        background: ${isDark ? 'rgba(45, 45, 45, 0.98)' : 'rgba(255, 255, 255, 0.98)'};
-        border: 1px solid ${isDark ? '#505050' : '#e0e0e0'};
-        border-radius: 10px;
-        box-shadow: 0 8px 32px ${isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.2)'}, 0 2px 8px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.08)'};
+        padding: 4px 8px;
+        background: ${isDark ? '#2d2d2d' : '#ffffff'};
+        border-radius: 6px;
+        box-shadow: 0 4px 12px ${isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)'};
         max-width: 350px;
         max-height: 120px;
         overflow: hidden;
@@ -313,11 +304,8 @@ export function createOverlay(blockElement: Element): HTMLDivElement | null {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         font-size: 14px;
         line-height: 1.5;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         opacity: 0;
-        transition: opacity 0.15s ease-out;
-        transform: scale(1.02);
+        transition: opacity 0.1s ease-out;
     `;
 
     // Clone content
