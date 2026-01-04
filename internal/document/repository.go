@@ -68,7 +68,7 @@ func (r *Repository) Create(title string) (Meta, error) {
 	// 创建空文档文件
 	docPath := r.paths.Document(doc.ID)
 	// Empty doc is "[]".
-	var emptyContent []interface{} = make([]interface{}, 0)
+	emptyContent := make([]interface{}, 0)
 	if err := r.SaveJSON(docPath, emptyContent); err != nil {
 		return Meta{}, err
 	}

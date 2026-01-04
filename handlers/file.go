@@ -304,17 +304,29 @@ func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
 }
 
 // OpenFileWithSystem 使用系统默认应用打开文件
-func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
-	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(relativePath, "/"))
+func (h *FileHandler) OpenFileWithSystem(pathOrRelative string) error {
+	var fullPath string
+	if filepath.IsAbs(pathOrRelative) {
+		// 绝对路径（如 FolderBlock 的 folderPath）
+		fullPath = pathOrRelative
+	} else {
+		// 相对路径（如 /files/xxx.md）
+		fullPath = filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(pathOrRelative, "/"))
+	}
 
 	return openWithSystemApp(fullPath)
 }
 
 // RevealInFinder 在文件管理器中显示文件
-func (h *FileHandler) RevealInFinder(relativePath string) error {
-	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(relativePath, "/"))
+func (h *FileHandler) RevealInFinder(pathOrRelative string) error {
+	var fullPath string
+	if filepath.IsAbs(pathOrRelative) {
+		// 绝对路径（如 FolderBlock 的 folderPath）
+		fullPath = pathOrRelative
+	} else {
+		// 相对路径（如 /files/xxx.md）
+		fullPath = filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(pathOrRelative, "/"))
+	}
 
 	return revealInFileManager(fullPath)
 }

@@ -13,12 +13,15 @@ import {
     Pencil,
     Trash2,
     Sparkles,
+    Replace,
 } from "lucide-react";
 import { BrowserOpenURL } from "../../wailsjs/runtime/runtime";
 import {
     OpenFileWithSystem,
     RevealInFinder,
     GetExternalBlockContent,
+    OpenFileDialog,
+    SelectFolderDialog,
 } from "../../wailsjs/go/main/App";
 import { useDocumentContext } from "../contexts/DocumentContext";
 import { useSearchContext } from "../contexts/SearchContext";
@@ -199,6 +202,99 @@ function RevealInFinderButton({ filePath }: { filePath: string }) {
     );
 }
 
+// 更换文件按钮
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ChangeFileButton({ block }: { block: any }) {
+    const editor = useBlockNoteEditor();
+    const Components = useComponentsContext()!;
+
+    const handleClick = async () => {
+        try {
+            const fileInfo = await OpenFileDialog();
+            if (!fileInfo || !fileInfo.path) return;
+
+            editor.updateBlock(block.id, {
+                props: {
+                    ...block.props,
+                    filePath: fileInfo.path,
+                    fileName: fileInfo.name,
+                    fileSize: fileInfo.size,
+                    fileType: fileInfo.ext?.replace(".", "") || "",
+                    mimeType: fileInfo.mimeType || "",
+                    indexed: false,
+                    indexError: "",
+                },
+            });
+        } catch (err) {
+            console.error("Failed to select file:", err);
+        }
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Change File"
+            onClick={handleClick}
+            icon={<Replace size={18} />}
+            label="Change File"
+        />
+    );
+}
+
+// 更换文件夹按钮
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ChangeFolderButton({ block }: { block: any }) {
+    const editor = useBlockNoteEditor();
+    const Components = useComponentsContext()!;
+
+    const handleClick = async () => {
+        try {
+            const path = await SelectFolderDialog();
+            if (!path) return;
+
+            const name = path.split("/").pop() || path;
+
+            editor.updateBlock(block.id, {
+                props: {
+                    ...block.props,
+                    folderPath: path,
+                    folderName: name,
+                    indexed: false,
+                    indexError: "",
+                },
+            });
+        } catch (err) {
+            console.error("Failed to select folder:", err);
+        }
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Change Folder"
+            onClick={handleClick}
+            icon={<Replace size={18} />}
+            label="Change Folder"
+        />
+    );
+}
+
+// 打开文件夹按钮
+function OpenFolderButton({ folderPath }: { folderPath: string }) {
+    const Components = useComponentsContext()!;
+
+    const handleClick = () => {
+        if (folderPath) OpenFileWithSystem(folderPath);
+    };
+
+    return (
+        <Components.FormattingToolbar.Button
+            mainTooltip="Open Folder"
+            onClick={handleClick}
+            icon={<ExternalLink size={18} />}
+            label="Open Folder"
+        />
+    );
+}
+
 // 打开链接按钮
 function OpenLinkButton({ url }: { url: string }) {
     const Components = useComponentsContext()!;
@@ -280,6 +376,7 @@ function FileBlockToolbar() {
     return (
         <FormattingToolbar>
             <OpenFileButton filePath={filePath} />
+            <ChangeFileButton block={block} />
             <RevealInFinderButton filePath={filePath} />
             {indexed && (
                 <ViewContentButton
@@ -379,6 +476,8 @@ function FolderBlockToolbar() {
 
     return (
         <FormattingToolbar>
+            <OpenFolderButton folderPath={folderPath} />
+            <ChangeFolderButton block={block} />
             <RevealInFinderButton filePath={folderPath} />
             <DeleteBlockButton block={block} />
             <FindRelatedButton />

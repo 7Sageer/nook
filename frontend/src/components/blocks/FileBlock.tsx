@@ -1,8 +1,8 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useCallback, useState } from "react";
-import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye } from "lucide-react";
-import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent } from "../../../wailsjs/go/main/App";
+import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace } from "lucide-react";
+import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent, OpenFileDialog } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import { ContentViewerModal } from "../ContentViewerModal";
 import "../../styles/ExternalBlock.css";
@@ -39,6 +39,32 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     const [contentLoading, setContentLoading] = useState(false);
     const [contentError, setContentError] = useState("");
     const [extractedContent, setExtractedContent] = useState("");
+
+    // 选择新文件替换
+    const handleSelectFile = useCallback(async () => {
+        try {
+            const fileInfo = await OpenFileDialog();
+            if (!fileInfo || !fileInfo.path) return;
+
+            const currentBlock = editor.getBlock(block.id);
+            if (!currentBlock) return;
+
+            editor.updateBlock(currentBlock, {
+                props: {
+                    ...currentBlock.props,
+                    filePath: fileInfo.path,
+                    fileName: fileInfo.name,
+                    fileSize: fileInfo.size,
+                    fileType: fileInfo.ext?.replace(".", "") || "",
+                    mimeType: fileInfo.mimeType || "",
+                    indexed: false,
+                    indexError: "",
+                },
+            });
+        } catch (err) {
+            console.error("Failed to select file:", err);
+        }
+    }, [block.id, editor]);
 
     // 索引文件内容
     const handleIndex = useCallback(async () => {
@@ -163,6 +189,17 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         <Eye size={14} />
                     </button>
                 )}
+                <button
+                    className="external-action-btn"
+                    title="Change file"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSelectFile();
+                    }}
+                >
+                    <Replace size={14} />
+                </button>
                 <button
                     className="external-action-btn"
                     title="Open file"

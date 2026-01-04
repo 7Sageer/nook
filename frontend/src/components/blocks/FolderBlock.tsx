@@ -1,8 +1,8 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useCallback } from "react";
-import { Folder, Loader2, Check, AlertCircle, RefreshCw, FolderOpen, Plus } from "lucide-react";
-import { IndexFolderContent, SelectFolderDialog } from "../../../wailsjs/go/main/App";
+import { Folder, Loader2, Check, AlertCircle, RefreshCw, Replace, Plus, ExternalLink } from "lucide-react";
+import { IndexFolderContent, SelectFolderDialog, RevealInFinder, OpenFileWithSystem } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import "../../styles/ExternalBlock.css";
 import "../../styles/FolderBlock.css";
@@ -48,6 +48,20 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
             console.error("Failed to select folder:", err);
         }
     }, [block.id, editor]);
+
+    // 在 Finder 中打开
+    const handleRevealInFinder = useCallback(() => {
+        if (folderPath) {
+            RevealInFinder(folderPath);
+        }
+    }, [folderPath]);
+
+    // 打开文件夹
+    const handleOpenFolder = useCallback(() => {
+        if (folderPath) {
+            OpenFileWithSystem(folderPath);
+        }
+    }, [folderPath]);
 
     // 索引文件夹内容
     const handleIndex = useCallback(async () => {
@@ -173,7 +187,18 @@ const FolderBlockComponent = (props: { block: any, editor: any }) => {
                         handleSelectFolder();
                     }}
                 >
-                    <FolderOpen size={14} />
+                    <Replace size={14} />
+                </button>
+                <button
+                    className="external-action-btn"
+                    title="Open folder"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleOpenFolder();
+                    }}
+                >
+                    <ExternalLink size={14} />
                 </button>
             </div>
         </div>
