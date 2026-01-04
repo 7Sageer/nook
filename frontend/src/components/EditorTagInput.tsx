@@ -2,7 +2,7 @@ import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Tag } from 'lucide-react';
 import { Button, ListBox, ListBoxItem } from 'react-aria-components';
-import { useDocumentContext } from '../contexts/DocumentContext';
+import { useTagContext } from '../contexts/TagContext';
 import './EditorTagInput.css';
 
 interface EditorTagInputProps {
@@ -20,7 +20,7 @@ export const EditorTagInput = memo(function EditorTagInput({
     onRemoveTag,
     onTagClick,
 }: EditorTagInputProps) {
-    const { allTags, tagColors } = useDocumentContext();
+    const { allTags, tagColors } = useTagContext();
     const [isAdding, setIsAdding] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);

@@ -13,6 +13,7 @@
     --bg-secondary: #fbfaf8;
     --bg-tertiary: #f5f4f2;
     --bg-hover: rgba(55, 53, 47, 0.06);
+    --bg-active: rgba(55, 53, 47, 0.1);
     --bg-modal: #fffdf9;
     --bg-input: #fffef9;
     --bg-overlay: rgba(0, 0, 0, 0.4);
@@ -106,6 +107,7 @@
     --bg-secondary: #161b22;
     --bg-tertiary: #252d3a;
     --bg-hover: #2a3545;
+    --bg-active: #323e50;
     --bg-modal: #1a2030;
     --bg-input: #252d3a;
     --bg-overlay: rgba(0, 0, 0, 0.6);

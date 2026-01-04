@@ -13,8 +13,6 @@ import { BlockNoteSchema, defaultBlockSpecs, Block } from "@blocknote/core";
 import { useEffect, useRef, useMemo } from "react";
 import { getStrings } from "../constants/strings";
 import { useSettings } from "../contexts/SettingsContext";
-import { createSmoothCaretPlugin } from "../plugins/smoothCaret";
-import { createBookmarkSelectionPlugin } from "../plugins/bookmarkSelection";
 import { PasteLinkMenu } from "./PasteLinkMenu";
 import "../plugins/smoothCaret.css";
 import { OpenFileDialog, SelectFolderDialog } from "../../wailsjs/go/main/App";
@@ -24,7 +22,6 @@ import { FolderBlock } from "./blocks/FolderBlock";
 import { useDragPreviewFix } from "../hooks/useDragPreviewFix";
 import { EditorTagInput } from "./EditorTagInput";
 import {
-  createChineseIMEPlugin,
   bookmarkAtomExtension,
   createBookmarkMenuItem,
   createFileMenuItem,
@@ -32,9 +29,10 @@ import {
 } from "../utils/editorExtensions";
 import { useImageUpload } from "../hooks/useImageUpload";
 import { usePasteHandler } from "../hooks/usePasteHandler";
-import { useFileDrop } from "../hooks/useFileDrop";
 import { CustomDragHandleMenu } from "./CustomDragHandleMenu";
 import { CustomFormattingToolbar } from "./CustomFormattingToolbar";
+import { useEditorPlugins } from "../hooks/useEditorPlugins";
+import { useEditorFileHandling } from "../hooks/useEditorFileHandling";
 
 // Re-export getIsComposing for external use
 export { getIsComposing } from "../utils/editorExtensions";
@@ -70,7 +68,6 @@ export function Editor({
 }: EditorProps) {
   const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
-  const pluginInjectedRef = useRef(false);
 
   // Determine if tags should be shown
   const showTags = !isExternalMode && docId && onAddTag && onRemoveTag;
@@ -117,79 +114,14 @@ export function Editor({
     containerRef: editorContainerRef,
   });
 
-  // Hook for file drop handling (Wails events)
-  useFileDrop({
+  // Decoupled hooks
+  useEditorFileHandling({
     editor,
     docId,
+    containerRef: editorContainerRef,
   });
 
-  useEffect(() => {
-    const container = editorContainerRef.current;
-    if (!container) return;
-
-    const shouldBlockDefaultDrop = (event: DragEvent) =>
-      event.dataTransfer?.types?.includes("Files") ?? false;
-
-    const handleDragOver = (event: DragEvent) => {
-      if (!shouldBlockDefaultDrop(event)) return;
-      event.preventDefault();
-    };
-
-    const handleDrop = (event: DragEvent) => {
-      if (!shouldBlockDefaultDrop(event)) return;
-      event.preventDefault();
-    };
-
-    container.addEventListener("dragover", handleDragOver);
-    container.addEventListener("drop", handleDrop);
-    return () => {
-      container.removeEventListener("dragover", handleDragOver);
-      container.removeEventListener("drop", handleDrop);
-    };
-  }, []);
-
-  // Inject plugins after editor is created (only once)
-  useEffect(() => {
-    if (editor && editor._tiptapEditor && !pluginInjectedRef.current) {
-      const view = editor._tiptapEditor.view;
-      if (view) {
-        try {
-          // Set bookmark node as atomic to prevent selecting internal content
-          const bookmarkNodeType = view.state.schema.nodes.bookmark;
-          if (bookmarkNodeType) {
-            // Directly modify the node type spec to make it atomic
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (bookmarkNodeType.spec as any).atom = true;
-          }
-
-          // Create plugins
-          const smoothCaretPlugin = createSmoothCaretPlugin({
-            transitionDuration: 60,
-            cursorWidth: 2,
-            enableBlink: true,
-          });
-          const bookmarkSelectionPlugin = createBookmarkSelectionPlugin();
-          const chineseIMEPlugin = createChineseIMEPlugin(editor);
-
-          // Add plugins to the editor's state
-          // Note: pasteLinkPlugin is now registered via pasteLinkExtension in useCreateBlockNote
-          const { state } = view;
-          const newState = state.reconfigure({
-            plugins: [...state.plugins, smoothCaretPlugin, bookmarkSelectionPlugin, chineseIMEPlugin],
-          });
-          view.updateState(newState);
-          pluginInjectedRef.current = true;
-
-          // Auto-focus editor for immediate input
-          setTimeout(() => {
-            editor.focus();
-          }, 50);
-        } catch (err) {
-          console.warn("Failed to inject editor plugins:", err);
-        }
-      }
-    }
-  }, [editor]);
+  useEditorPlugins(editor);
 
   useEffect(() => {
     if (editorRef) {

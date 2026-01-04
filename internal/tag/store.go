@@ -1,10 +1,9 @@
 package tag
 
 import (
-	"encoding/json"
-	"os"
 	"sync"
 
+	"notion-lite/internal/repository"
 	"notion-lite/internal/utils"
 )
 
@@ -20,6 +19,7 @@ type TagMeta struct {
 
 // Store manages tag metadata (colors)
 type Store struct {
+	repository.BaseRepository
 	mu    sync.RWMutex
 	paths *utils.PathBuilder
 	Tags  map[string]TagMeta `json:"tags"`
@@ -36,7 +36,6 @@ type TagInfo struct {
 }
 
 // NewStore creates a new tag store
-// NewStore creates a new tag store
 func NewStore(paths *utils.PathBuilder) *Store {
 	s := &Store{
 		paths: paths,
@@ -51,14 +50,10 @@ func (s *Store) filePath() string {
 }
 
 func (s *Store) load() {
-	data, err := os.ReadFile(s.filePath())
-	if err != nil {
-		return
-	}
 	var store struct {
 		Tags map[string]TagMeta `json:"tags"`
 	}
-	if json.Unmarshal(data, &store) == nil && store.Tags != nil {
+	if err := s.LoadJSON(s.filePath(), &store); err == nil && store.Tags != nil {
 		s.Tags = store.Tags
 		// 迁移旧数据：IsGroup -> IsPinned
 		s.migrateIsGroupToIsPinned()
@@ -82,13 +77,9 @@ func (s *Store) migrateIsGroupToIsPinned() {
 }
 
 func (s *Store) save() error {
-	data, err := json.MarshalIndent(struct {
+	return s.SaveJSON(s.filePath(), struct {
 		Tags map[string]TagMeta `json:"tags"`
-	}{Tags: s.Tags}, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(s.filePath(), data, 0644)
+	}{Tags: s.Tags})
 }
 
 // GetColor returns the color for a tag

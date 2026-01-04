@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { EventsOn } from '../../wailsjs/runtime/runtime';
+import { useWailsEvents } from './useWailsEvents';
 
 interface MenuEventsOptions {
     onNewDocument: () => void;
@@ -32,49 +31,22 @@ export function useMenuEvents({
     onOpenExternal,
     onSettings,
 }: MenuEventsOptions) {
-    useEffect(() => {
-        const unsubscribers = [
-            EventsOn('menu:new-document', onNewDocument),
-            EventsOn('menu:import', onImport),
-            EventsOn('menu:export', onExport),
-            EventsOn('menu:toggle-sidebar', onToggleSidebar),
-            EventsOn('menu:about', onAbout),
-        ];
-
-        if (onNewFolder) {
-            unsubscribers.push(EventsOn('menu:new-folder', onNewFolder));
-        }
-
-        if (onOpenExternal) {
-            unsubscribers.push(EventsOn('menu:open-external', onOpenExternal));
-        }
-
-        if (onCopyImage) {
-            unsubscribers.push(EventsOn('menu:copy-image', onCopyImage));
-        }
-
-        if (onSaveImage) {
-            unsubscribers.push(EventsOn('menu:save-image', onSaveImage));
-        }
-
-        if (onExportHTML) {
-            unsubscribers.push(EventsOn('menu:export-html', onExportHTML));
-        }
-
-        if (onPrint) {
-            unsubscribers.push(EventsOn('menu:print', onPrint));
-        }
-
-        if (onSettings) {
-            unsubscribers.push(EventsOn('menu:settings', onSettings));
-        }
-
-        if (onToggleTheme) {
-            unsubscribers.push(EventsOn('menu:toggle-theme', onToggleTheme));
-        }
-
-        return () => {
-            unsubscribers.forEach((unsubscribe) => unsubscribe());
-        };
-    }, [onNewDocument, onNewFolder, onImport, onExport, onCopyImage, onSaveImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal, onSettings]);
+    useWailsEvents(
+        {
+            'menu:new-document': onNewDocument,
+            'menu:new-folder': onNewFolder,
+            'menu:import': onImport,
+            'menu:export': onExport,
+            'menu:copy-image': onCopyImage,
+            'menu:save-image': onSaveImage,
+            'menu:export-html': onExportHTML,
+            'menu:print': onPrint,
+            'menu:toggle-sidebar': onToggleSidebar,
+            'menu:toggle-theme': onToggleTheme,
+            'menu:about': onAbout,
+            'menu:open-external': onOpenExternal,
+            'menu:settings': onSettings,
+        },
+        [onNewDocument, onNewFolder, onImport, onExport, onCopyImage, onSaveImage, onExportHTML, onPrint, onToggleSidebar, onToggleTheme, onAbout, onOpenExternal, onSettings]
+    );
 }

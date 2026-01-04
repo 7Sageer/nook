@@ -5,7 +5,6 @@ import (
 
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
-	"notion-lite/internal/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -19,28 +18,27 @@ type ReindexProgress struct {
 
 // RAGHandler RAG 配置与索引处理器
 type RAGHandler struct {
-	ctx        context.Context
-	paths      *utils.PathBuilder
+	*BaseHandler
 	docRepo    *document.Repository
 	ragService *rag.Service
 }
 
 // SetContext 设置 Wails 上下文（用于发送事件）
 func (h *RAGHandler) SetContext(ctx context.Context) {
+	h.BaseHandler.SetContext(ctx)
 	h.ragService.SetContext(ctx)
-	h.ctx = ctx
 }
 
 // NewRAGHandler 创建 RAG 处理器
 func NewRAGHandler(
-	paths *utils.PathBuilder,
+	base *BaseHandler,
 	docRepo *document.Repository,
 	ragService *rag.Service,
 ) *RAGHandler {
 	return &RAGHandler{
-		paths:      paths,
-		docRepo:    docRepo,
-		ragService: ragService,
+		BaseHandler: base,
+		docRepo:     docRepo,
+		ragService:  ragService,
 	}
 }
 
@@ -62,7 +60,7 @@ type RAGStatus struct {
 
 // GetRAGConfig 获取 RAG 配置
 func (h *RAGHandler) GetRAGConfig() (EmbeddingConfig, error) {
-	config, err := rag.LoadConfig(h.paths)
+	config, err := rag.LoadConfig(h.Paths())
 	if err != nil {
 		return EmbeddingConfig{}, err
 	}
@@ -71,7 +69,7 @@ func (h *RAGHandler) GetRAGConfig() (EmbeddingConfig, error) {
 
 // SaveRAGConfig 保存 RAG 配置
 func (h *RAGHandler) SaveRAGConfig(config EmbeddingConfig) error {
-	if err := rag.SaveConfig(h.paths, &config); err != nil {
+	if err := rag.SaveConfig(h.Paths(), &config); err != nil {
 		return err
 	}
 	// 重新初始化 RAG 服务
@@ -100,8 +98,8 @@ func (h *RAGHandler) GetRAGStatus() RAGStatus {
 func (h *RAGHandler) RebuildIndex() (int, error) {
 	// 文档索引阶段
 	docCount, err := h.ragService.ReindexAllWithProgress(func(current, total int) {
-		if h.ctx != nil {
-			runtime.EventsEmit(h.ctx, "rag:reindex-progress", ReindexProgress{
+		if h.Context() != nil {
+			runtime.EventsEmit(h.Context(), "rag:reindex-progress", ReindexProgress{
 				Phase:   "documents",
 				Current: current,
 				Total:   total,
@@ -114,8 +112,8 @@ func (h *RAGHandler) RebuildIndex() (int, error) {
 
 	// 外部内容索引阶段（书签和文件）
 	extCount, err := h.ragService.ReindexExternalContentWithProgress(func(current, total int) {
-		if h.ctx != nil {
-			runtime.EventsEmit(h.ctx, "rag:reindex-progress", ReindexProgress{
+		if h.Context() != nil {
+			runtime.EventsEmit(h.Context(), "rag:reindex-progress", ReindexProgress{
 				Phase:   "external",
 				Current: current,
 				Total:   total,
@@ -132,8 +130,8 @@ func (h *RAGHandler) RebuildIndex() (int, error) {
 // IndexBookmarkContent 索引书签网页内容
 func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 	err := h.ragService.IndexBookmarkContent(url, sourceDocID, blockID)
-	if err == nil && h.ctx != nil {
-		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	if err == nil && h.Context() != nil {
+		runtime.EventsEmit(h.Context(), "rag:status-updated", nil)
 	}
 	return err
 }
@@ -141,8 +139,8 @@ func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) erro
 // IndexFileContent 索引文件内容
 func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	err := h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
-	if err == nil && h.ctx != nil {
-		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	if err == nil && h.Context() != nil {
+		runtime.EventsEmit(h.Context(), "rag:status-updated", nil)
 	}
 	return err
 }
@@ -169,8 +167,8 @@ type FolderIndexResult = rag.FolderIndexResult
 // IndexFolderContent 索引文件夹内容
 func (h *RAGHandler) IndexFolderContent(folderPath, sourceDocID, blockID string) (*FolderIndexResult, error) {
 	result, err := h.ragService.IndexFolderContent(folderPath, sourceDocID, blockID)
-	if err == nil && h.ctx != nil {
-		runtime.EventsEmit(h.ctx, "rag:status-updated", nil)
+	if err == nil && h.Context() != nil {
+		runtime.EventsEmit(h.Context(), "rag:status-updated", nil)
 	}
 	return result, err
 }

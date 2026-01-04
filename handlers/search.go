@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"fmt"
-
 	"notion-lite/internal/document"
+	"notion-lite/internal/errors"
 	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
+	"notion-lite/internal/utils"
 )
 
 // SearchHandler 搜索处理器
@@ -61,22 +61,20 @@ func (h *SearchHandler) SearchDocuments(query string) ([]SearchResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	// 转换为前端兼容的类型
-	searchResults := make([]SearchResult, len(results))
-	for i, r := range results {
-		searchResults[i] = SearchResult{
+	// 使用泛型转换为前端兼容的类型
+	return utils.ConvertSlice(results, func(r search.Result) SearchResult {
+		return SearchResult{
 			ID:      r.ID,
 			Title:   r.Title,
 			Snippet: r.Snippet,
 		}
-	}
-	return searchResults, nil
+	}), nil
 }
 
 // SemanticSearchDocuments 文档级语义搜索（聚合 chunks）
 func (h *SearchHandler) SemanticSearchDocuments(query string, limit int, excludeDocID string) ([]DocumentSearchResult, error) {
 	if h.ragService == nil {
-		return nil, fmt.Errorf("RAG service not initialized")
+		return nil, errors.New("RAG service not initialized")
 	}
 	// 默认限制 10 条
 	if limit <= 0 {
@@ -87,30 +85,26 @@ func (h *SearchHandler) SemanticSearchDocuments(query string, limit int, exclude
 		return nil, err
 	}
 
-	// 转换为前端兼容的类型
-	output := make([]DocumentSearchResult, len(results))
-	for i, r := range results {
-		chunks := make([]ChunkMatch, len(r.MatchedChunks))
-		for j, c := range r.MatchedChunks {
-			chunks[j] = ChunkMatch{
-				BlockID:        c.BlockID,
-				SourceBlockId:  c.SourceBlockId,
-				SourceType:     c.SourceType,
-				SourceTitle:    c.SourceTitle,
-				Content:        c.Content,
-				BlockType:      c.BlockType,
-				HeadingContext: c.HeadingContext,
-				Score:          c.Score,
-			}
+	// 使用泛型转换为前端兼容的类型
+	return utils.ConvertSlice(results, func(r rag.DocumentSearchResult) DocumentSearchResult {
+		return DocumentSearchResult{
+			DocID:    r.DocID,
+			DocTitle: r.DocTitle,
+			MaxScore: r.MaxScore,
+			MatchedChunks: utils.ConvertSlice(r.MatchedChunks, func(c rag.ChunkMatch) ChunkMatch {
+				return ChunkMatch{
+					BlockID:        c.BlockID,
+					SourceBlockId:  c.SourceBlockId,
+					SourceType:     c.SourceType,
+					SourceTitle:    c.SourceTitle,
+					Content:        c.Content,
+					BlockType:      c.BlockType,
+					HeadingContext: c.HeadingContext,
+					Score:          c.Score,
+				}
+			}),
 		}
-		output[i] = DocumentSearchResult{
-			DocID:         r.DocID,
-			DocTitle:      r.DocTitle,
-			MaxScore:      r.MaxScore,
-			MatchedChunks: chunks,
-		}
-	}
-	return output, nil
+	}), nil
 }
 
 // BuildSearchIndex 异步构建搜索索引（由 app.startup 调用）

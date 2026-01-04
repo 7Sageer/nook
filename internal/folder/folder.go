@@ -1,12 +1,11 @@
 package folder
 
 import (
-	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
 
+	"notion-lite/internal/repository"
 	"notion-lite/internal/utils"
 )
 
@@ -26,6 +25,7 @@ type Index struct {
 
 // Repository 文件夹仓库
 type Repository struct {
+	repository.BaseRepository
 	paths *utils.PathBuilder
 }
 
@@ -40,15 +40,8 @@ func (r *Repository) indexPath() string {
 
 // GetAll 获取所有文件夹
 func (r *Repository) GetAll() ([]Folder, error) {
-	data, err := os.ReadFile(r.indexPath())
-	if err != nil {
-		if os.IsNotExist(err) {
-			return []Folder{}, nil
-		}
-		return nil, err
-	}
 	var index Index
-	if err := json.Unmarshal(data, &index); err != nil {
+	if err := r.LoadJSON(r.indexPath(), &index); err != nil {
 		return []Folder{}, nil
 	}
 	if index.Folders == nil {
@@ -114,8 +107,7 @@ func (r *Repository) SetCollapsed(id string, collapsed bool) error {
 }
 
 func (r *Repository) saveIndex(index Index) error {
-	data, _ := json.MarshalIndent(index, "", "  ")
-	return os.WriteFile(r.indexPath(), data, 0644)
+	return r.SaveJSON(r.indexPath(), index)
 }
 
 // Reorder 重新排序文件夹

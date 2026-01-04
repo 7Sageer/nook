@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
-import { DocumentMeta, TagInfo } from '../types/document';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { DocumentMeta } from '../types/document';
 import { Block } from '@blocknote/core';
 import { getStrings } from '../constants/strings';
 import { useSettings } from './SettingsContext';
+import { useTagContext } from './TagContext';
 import {
   GetDocumentList,
   CreateDocument,
@@ -14,16 +15,6 @@ import {
   ReorderDocuments,
   AddDocumentTag,
   RemoveDocumentTag,
-  GetAllTags,
-  GetTagColors,
-  SetTagColor,
-  PinTag,
-  UnpinTag,
-  SetPinnedTagCollapsed,
-  GetPinnedTags,
-  ReorderPinnedTags,
-  RenameTag,
-  DeleteTag,
 } from '../../wailsjs/go/main/App';
 
 interface DocumentContextType {
@@ -32,12 +23,6 @@ interface DocumentContextType {
   activeId: string | null;
   isLoading: boolean;
 
-  // 标签状态
-  allTags: TagInfo[];
-  pinnedTags: TagInfo[];
-  selectedTag: string | null;
-  tagColors: Record<string, string>;
-
   // 文档操作
   createDoc: (title?: string, pinnedTagName?: string) => Promise<DocumentMeta>;
   deleteDoc: (id: string) => Promise<void>;
@@ -45,20 +30,9 @@ interface DocumentContextType {
   switchDoc: (id: string) => Promise<void>;
   reorderDocuments: (ids: string[]) => Promise<void>;
 
-  // 固定标签操作
-  pinTag: (name: string) => Promise<void>;
-  unpinTag: (name: string) => Promise<void>;
-  renameTag: (oldName: string, newName: string) => Promise<void>;
-  deleteTag: (name: string) => Promise<void>;
-  togglePinnedTagCollapsed: (name: string) => Promise<void>;
-  reorderPinnedTags: (names: string[]) => Promise<void>;
-
-  // 标签操作
+  // 文档标签操作（更新文档的 tags 字段）
   addTag: (docId: string, tag: string) => Promise<void>;
   removeTag: (docId: string, tag: string) => Promise<void>;
-  setSelectedTag: (tag: string | null) => void;
-  setTagColor: (tagName: string, color: string) => Promise<void>;
-  refreshTags: () => Promise<void>;
 
   // 内容操作
   loadContent: (id: string) => Promise<Block[] | undefined>;
@@ -66,6 +40,10 @@ interface DocumentContextType {
 
   // 刷新操作
   refreshDocuments: () => Promise<void>;
+
+  // 内部方法（供 TagContext 回调使用）
+  updateTagInDocuments: (oldName: string, newName: string) => void;
+  removeTagFromAllDocs: (tagName: string) => void;
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
@@ -73,38 +51,20 @@ const DocumentContext = createContext<DocumentContextType | undefined>(undefined
 export function DocumentProvider({ children }: { children: ReactNode }) {
   const { language } = useSettings();
   const STRINGS = getStrings(language);
+  const { incrementTagCount, decrementTagCount } = useTagContext();
 
   // 文档状态
   const [documents, setDocuments] = useState<DocumentMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 标签状态
-  const [allTags, setAllTags] = useState<TagInfo[]>([]);
-  const [pinnedTags, setPinnedTags] = useState<TagInfo[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [tagColors, setTagColors] = useState<Record<string, string>>({});
-
-  const pinnedTagsRef = useRef<TagInfo[]>([]);
-  useEffect(() => {
-    pinnedTagsRef.current = pinnedTags;
-  }, [pinnedTags]);
-
   // 初始化加载
   useEffect(() => {
     const init = async () => {
       try {
-        const [index, tags, pinned, colors] = await Promise.all([
-          GetDocumentList(),
-          GetAllTags(),
-          GetPinnedTags(),
-          GetTagColors(),
-        ]);
+        const index = await GetDocumentList();
         setDocuments(index.documents || []);
         setActiveId(index.activeId || null);
-        setAllTags(tags || []);
-        setPinnedTags(pinned || []);
-        setTagColors(colors || {});
       } catch (e) {
         console.error('初始化加载失败:', e);
       } finally {
@@ -114,19 +74,15 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     init();
   }, []);
 
-  // 刷新文档列表和固定标签
+  // 刷新文档列表
   const refreshDocuments = useCallback(async (): Promise<void> => {
     try {
-      const [index, pinned] = await Promise.all([
-        GetDocumentList(),
-        GetPinnedTags(),
-      ]);
+      const index = await GetDocumentList();
       setDocuments(index.documents || []);
       setActiveId(prev => {
         const exists = (index.documents || []).some(d => d.id === prev);
         return exists ? prev : (index.activeId || null);
       });
-      setPinnedTags(pinned || []);
     } catch (e) {
       console.error('刷新文档列表失败:', e);
     }
@@ -183,91 +139,7 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // ========== 固定标签操作 ==========
-
-  const pinTagFn = useCallback(async (name: string): Promise<void> => {
-    await PinTag(name);
-    // 增量更新 pinnedTags
-    setPinnedTags(prev => [...prev, {
-      name: name,
-      count: 0,
-      isPinned: true,
-      collapsed: false,
-      order: prev.length,
-    }]);
-    // 同时更新 allTags 中的 isPinned 状态
-    setAllTags(prev => prev.map(t => t.name === name ? { ...t, isPinned: true } : t));
-  }, []);
-
-  const unpinTagFn = useCallback(async (name: string): Promise<void> => {
-    await UnpinTag(name);
-    setPinnedTags(prev => prev.filter(t => t.name !== name));
-    // 同时更新 allTags 中的 isPinned 状态
-    setAllTags(prev => prev.map(t => t.name === name ? { ...t, isPinned: false } : t));
-  }, []);
-
-  const deleteTagFn = useCallback(async (name: string): Promise<void> => {
-    await DeleteTag(name);
-    // 从固定标签中移除
-    setPinnedTags(prev => prev.filter(t => t.name !== name));
-    // 从文档中移除该标签
-    setDocuments(prev =>
-      prev.map(d => ({
-        ...d,
-        tags: (d.tags || []).filter(t => t !== name),
-      }))
-    );
-    // 同时更新 allTags
-    setAllTags(prev => prev.filter(t => t.name !== name));
-  }, []);
-
-  const renameTagFn = useCallback(async (oldName: string, newName: string): Promise<void> => {
-    await RenameTag(oldName, newName);
-    // 增量更新固定标签
-    setPinnedTags(prev =>
-      prev.map(t => t.name === oldName ? { ...t, name: newName } : t)
-    );
-    // 更新文档中的标签
-    setDocuments(prev =>
-      prev.map(d => ({
-        ...d,
-        tags: (d.tags || []).map(t => t === oldName ? newName : t),
-      }))
-    );
-    // 更新 allTags
-    setAllTags(prev =>
-      prev.map(t => t.name === oldName ? { ...t, name: newName } : t)
-    );
-  }, []);
-
-  const togglePinnedTagCollapsed = useCallback(async (name: string): Promise<void> => {
-    const currentTag = pinnedTagsRef.current.find(t => t.name === name);
-    if (!currentTag) return;
-
-    const previousCollapsed = currentTag.collapsed ?? false;
-    const nextCollapsed = !previousCollapsed;
-
-    setPinnedTags(prev => prev.map(t => t.name === name ? { ...t, collapsed: nextCollapsed } : t));
-    try {
-      await SetPinnedTagCollapsed(name, nextCollapsed);
-    } catch (e) {
-      console.error('设置固定标签折叠状态失败:', e);
-      setPinnedTags(prev => prev.map(t => t.name === name ? { ...t, collapsed: previousCollapsed } : t));
-    }
-  }, []);
-
-  const reorderPinnedTagsFn = useCallback(async (names: string[]): Promise<void> => {
-    await ReorderPinnedTags(names);
-    setPinnedTags(prev => {
-      const orderMap = new Map(names.map((name, index) => [name, index]));
-      return [...prev].map(t => ({
-        ...t,
-        order: orderMap.get(t.name) ?? t.order,
-      })).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-    });
-  }, []);
-
-  // ========== 标签操作 ==========
+  // ========== 文档标签操作 ==========
 
   const addTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await AddDocumentTag(docId, tag);
@@ -277,15 +149,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         : d
       )
     );
-    setAllTags(prev => {
-      const existingTag = prev.find(t => t.name === tag);
-      if (existingTag) {
-        return prev.map(t => t.name === tag ? { ...t, count: t.count + 1 } : t);
-      } else {
-        return [...prev, { name: tag, count: 1 }];
-      }
-    });
-  }, []);
+    // 通知 TagContext 更新标签计数
+    incrementTagCount(tag);
+  }, [incrementTagCount]);
 
   const removeTag = useCallback(async (docId: string, tag: string): Promise<void> => {
     await RemoveDocumentTag(docId, tag);
@@ -295,19 +161,27 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
         : d
       )
     );
-    // 更新 allTags
-    setAllTags(prev => {
-      const existingTag = prev.find(t => t.name === tag);
-      // 不要移除 isPinned 的标签，即使 count 为 0
-      if (existingTag?.isPinned) {
-        return prev.map(t => t.name === tag ? { ...t, count: Math.max(0, t.count - 1) } : t);
-      }
-      if (existingTag && existingTag.count > 1) {
-        return prev.map(t => t.name === tag ? { ...t, count: t.count - 1 } : t);
-      } else {
-        return prev.filter(t => t.name !== tag);
-      }
-    });
+    // 通知 TagContext 更新标签计数
+    decrementTagCount(tag);
+  }, [decrementTagCount]);
+
+  // 内部方法：供 TagContext 回调使用
+  const updateTagInDocuments = useCallback((oldName: string, newName: string) => {
+    setDocuments(prev =>
+      prev.map(d => ({
+        ...d,
+        tags: (d.tags || []).map(t => t === oldName ? newName : t),
+      }))
+    );
+  }, []);
+
+  const removeTagFromAllDocs = useCallback((tagName: string) => {
+    setDocuments(prev =>
+      prev.map(d => ({
+        ...d,
+        tags: (d.tags || []).filter(t => t !== tagName),
+      }))
+    );
   }, []);
 
   // ========== 内容操作 ==========
@@ -328,30 +202,12 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     await SaveDocumentContent(id, JSON.stringify(content));
   }, []);
 
-  // 将 setTagColor 和 refreshTags 提取为 useCallback，以便 useMemo 正确追踪依赖
-  const setTagColorFn = useCallback(async (tagName: string, color: string) => {
-    await SetTagColor(tagName, color);
-    setTagColors(prev => ({ ...prev, [tagName]: color }));
-    setAllTags(prev => prev.map(t => t.name === tagName ? { ...t, color } : t));
-  }, []);
-
-  const refreshTags = useCallback(async () => {
-    const [tags, pinned, colors] = await Promise.all([GetAllTags(), GetPinnedTags(), GetTagColors()]);
-    setAllTags(tags || []);
-    setPinnedTags(pinned || []);
-    setTagColors(colors || {});
-  }, []);
-
   // 使用 useMemo 缓存 context value，避免不必要的重新渲染
   const value = useMemo<DocumentContextType>(() => ({
     // 状态
     documents,
     activeId,
     isLoading,
-    allTags,
-    pinnedTags,
-    selectedTag,
-    tagColors,
 
     // 文档操作
     createDoc,
@@ -360,20 +216,9 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
     switchDoc,
     reorderDocuments,
 
-    // 固定标签操作
-    pinTag: pinTagFn,
-    unpinTag: unpinTagFn,
-    renameTag: renameTagFn,
-    deleteTag: deleteTagFn,
-    togglePinnedTagCollapsed,
-    reorderPinnedTags: reorderPinnedTagsFn,
-
-    // 标签操作
+    // 文档标签操作
     addTag,
     removeTag,
-    setSelectedTag,
-    setTagColor: setTagColorFn,
-    refreshTags,
 
     // 内容操作
     loadContent,
@@ -381,14 +226,16 @@ export function DocumentProvider({ children }: { children: ReactNode }) {
 
     // 刷新操作
     refreshDocuments,
+
+    // 内部方法
+    updateTagInDocuments,
+    removeTagFromAllDocs,
   }), [
-    // 状态依赖
-    documents, activeId, isLoading, allTags, pinnedTags, selectedTag, tagColors,
-    // 操作依赖
+    documents, activeId, isLoading,
     createDoc, deleteDoc, renameDoc, switchDoc, reorderDocuments,
-    pinTagFn, unpinTagFn, renameTagFn, deleteTagFn, togglePinnedTagCollapsed, reorderPinnedTagsFn,
-    addTag, removeTag, setTagColorFn, refreshTags,
+    addTag, removeTag,
     loadContent, saveContent, refreshDocuments,
+    updateTagInDocuments, removeTagFromAllDocs,
   ]);
 
   return (

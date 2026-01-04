@@ -3,6 +3,7 @@ import { EditorContainer } from "./components/EditorContainer";
 import { SidebarContainer } from "./components/SidebarContainer";
 import { WindowToolbar } from "./components/WindowToolbar";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
+import { TagProvider, useTagContext } from "./contexts/TagContext";
 import { DocumentProvider, useDocumentContext } from "./contexts/DocumentContext";
 import { useImport } from "./hooks/useImport";
 import { useExport } from "./hooks/useExport";
@@ -40,12 +41,15 @@ function AppContent() {
     switchDoc,
     loadContent,
     saveContent,
-    pinTag,
     refreshDocuments,
     addTag,
     removeTag,
-    setSelectedTag,
   } = useDocumentContext();
+
+  const {
+    pinTag,
+    setSelectedTag,
+  } = useTagContext();
 
   const [status, setStatus] = useState<string>("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -341,15 +345,17 @@ function App() {
   return (
     <ErrorBoundary>
       <SettingsProvider>
-        <DocumentProvider>
-          <ExternalFileProvider>
-            <SearchProvider>
-              <ToastProvider>
-                <AppContent />
-              </ToastProvider>
-            </SearchProvider>
-          </ExternalFileProvider>
-        </DocumentProvider>
+        <TagProvider>
+          <DocumentProvider>
+            <ExternalFileProvider>
+              <SearchProvider>
+                <ToastProvider>
+                  <AppContent />
+                </ToastProvider>
+              </SearchProvider>
+            </ExternalFileProvider>
+          </DocumentProvider>
+        </TagProvider>
       </SettingsProvider>
     </ErrorBoundary>
   );

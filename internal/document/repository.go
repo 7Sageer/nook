@@ -1,13 +1,12 @@
 package document
 
 import (
-	"encoding/json"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
 
 	"notion-lite/internal/constant"
+	"notion-lite/internal/repository"
 	"notion-lite/internal/utils"
 )
 
@@ -30,10 +29,10 @@ type Index struct {
 
 // Repository 文档仓库
 type Repository struct {
+	repository.BaseRepository
 	paths *utils.PathBuilder
 }
 
-// NewRepository 创建文档仓库
 // NewRepository 创建文档仓库
 func NewRepository(paths *utils.PathBuilder) *Repository {
 	return &Repository{paths: paths}
@@ -42,19 +41,15 @@ func NewRepository(paths *utils.PathBuilder) *Repository {
 // GetAll 获取文档列表
 func (r *Repository) GetAll() (Index, error) {
 	indexPath := r.paths.Index()
-	data, err := os.ReadFile(indexPath)
+	var index Index
+	err := r.LoadJSON(indexPath, &index)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return Index{Documents: []Meta{}, ActiveID: ""}, nil
-		}
 		return Index{}, err
 	}
-	var index Index
-	err = json.Unmarshal(data, &index)
 	if index.Documents == nil {
 		index.Documents = []Meta{}
 	}
-	return index, err
+	return index, nil
 }
 
 // Create 创建新文档
@@ -71,9 +66,10 @@ func (r *Repository) Create(title string) (Meta, error) {
 	}
 
 	// 创建空文档文件
-	// 创建空文档文件
 	docPath := r.paths.Document(doc.ID)
-	if err := os.WriteFile(docPath, []byte("[]"), 0644); err != nil {
+	// Empty doc is "[]".
+	var emptyContent []interface{} = make([]interface{}, 0)
+	if err := r.SaveJSON(docPath, emptyContent); err != nil {
 		return Meta{}, err
 	}
 
@@ -95,7 +91,7 @@ func (r *Repository) Create(title string) (Meta, error) {
 func (r *Repository) Delete(id string) error {
 	// 删除文档文件
 	docPath := r.paths.Document(id)
-	if err := os.Remove(docPath); err != nil && !os.IsNotExist(err) {
+	if err := r.DeleteFile(docPath); err != nil {
 		return err
 	}
 
@@ -180,11 +176,7 @@ func (r *Repository) MoveToFolder(docId string, folderId string) error {
 
 func (r *Repository) saveIndex(index Index) error {
 	indexPath := r.paths.Index()
-	data, err := json.MarshalIndent(index, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(indexPath, data, 0644)
+	return r.SaveJSON(indexPath, index)
 }
 
 // Reorder 重新排序文档

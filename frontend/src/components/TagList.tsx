@@ -2,7 +2,7 @@ import { memo, useState, useCallback, useEffect } from 'react';
 import { Tag, MoreVertical } from 'lucide-react';
 import type { TagInfo } from '../types/document';
 import { TagContextMenu } from './TagContextMenu';
-import { useDocumentContext } from '../contexts/DocumentContext';
+import { useTagContext } from '../contexts/TagContext';
 import './TagList.css';
 
 interface TagListProps {
@@ -18,7 +18,7 @@ export const TagList = memo(function TagList({
     onSelectTag,
     tagColors,
 }: TagListProps) {
-    const { setTagColor, pinTag, unpinTag, pinnedTags, renameTag, deleteTag } = useDocumentContext();
+    const { setTagColor, pinTag, unpinTag, pinnedTags, renameTag, deleteTag } = useTagContext();
     const [contextMenu, setContextMenu] = useState<{
         tagName: string;
         position: { x: number; y: number };

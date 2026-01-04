@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { GetSettings, SaveSettings } from '../../wailsjs/go/main/App';
+import { usePersistentSettings } from '../hooks/usePersistentSettings';
 
 export type ThemeSetting = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -34,17 +34,23 @@ function getSystemLanguage(): LanguageSetting {
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
-    const [themeSetting, setThemeSettingState] = useState<ThemeSetting>('light');
+    const { settings, updateSettings, isLoaded } = usePersistentSettings();
+
+    // Local derived state for resolved theme (visual only)
     const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>('light');
-    const [language, setLanguageState] = useState<LanguageSetting>(getSystemLanguage());
-    const [sidebarWidth, setSidebarWidthState] = useState<number>(DEFAULT_SIDEBAR_WIDTH);
+
+    // Mapped state from persistent settings
+    // Default to 'light' / system lang if not loaded or empty
+    const themeSetting = (settings.theme as ThemeSetting) || 'light';
+    const language = (settings.language as LanguageSetting) || getSystemLanguage();
+    const sidebarWidth = (settings.sidebarWidth > 0) ? settings.sidebarWidth : DEFAULT_SIDEBAR_WIDTH;
 
     // Resolve theme based on setting and system preference
     useEffect(() => {
         if (themeSetting === 'system') {
             setResolvedTheme(getSystemTheme());
         } else {
-            setResolvedTheme(themeSetting);
+            setResolvedTheme(themeSetting as ResolvedTheme);
         }
     }, [themeSetting]);
 
@@ -66,44 +72,29 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
     }, [sidebarWidth]);
 
-    // Load initial settings from backend
-    useEffect(() => {
-        GetSettings().then((settings) => {
-            if (settings.theme) {
-                setThemeSettingState(settings.theme as ThemeSetting);
-            }
-            if (settings.language) {
-                setLanguageState(settings.language as LanguageSetting);
-            }
-            if (settings.sidebarWidth && settings.sidebarWidth > 0) {
-                setSidebarWidthState(settings.sidebarWidth);
-            }
-        });
-    }, []);
-
     const toggleTheme = () => {
         const nextTheme: ThemeSetting =
             themeSetting === 'light' ? 'dark' :
                 themeSetting === 'dark' ? 'system' : 'light';
-        setThemeSettingState(nextTheme);
-        SaveSettings({ theme: nextTheme, language, sidebarWidth });
+        updateSettings({ theme: nextTheme });
     };
 
     const setThemeSetting = (theme: ThemeSetting) => {
-        setThemeSettingState(theme);
-        SaveSettings({ theme, language, sidebarWidth });
+        updateSettings({ theme });
     };
 
     const handleSetLanguage = (lang: LanguageSetting) => {
-        setLanguageState(lang);
-        SaveSettings({ theme: themeSetting, language: lang, sidebarWidth });
+        updateSettings({ language: lang });
     };
 
     const handleSetSidebarWidth = (width: number) => {
         const clampedWidth = Math.max(MIN_SIDEBAR_WIDTH, Math.min(MAX_SIDEBAR_WIDTH, width));
-        setSidebarWidthState(clampedWidth);
-        SaveSettings({ theme: themeSetting, language, sidebarWidth: clampedWidth });
+        updateSettings({ sidebarWidth: clampedWidth });
     };
+
+    if (!isLoaded) {
+        return null; // or a loading spinner? returning null prevents flashing default styles incorrectly
+    }
 
     return (
         <SettingsContext.Provider value={{

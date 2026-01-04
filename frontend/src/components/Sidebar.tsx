@@ -3,6 +3,7 @@ import type { DocumentMeta } from '../types/document';
 import type { ExternalFileInfo } from '../types/external-file';
 import { useSettings } from '../contexts/SettingsContext';
 import { useDocumentContext } from '../contexts/DocumentContext';
+import { useTagContext } from '../contexts/TagContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import { useSearch } from '../hooks/useSearch';
 import { useSidebarDnD } from '../hooks/useSidebarDnD';
@@ -36,24 +37,27 @@ export function Sidebar({
   const {
     documents,
     activeId,
-    pinnedTags,
     createDoc,
     deleteDoc,
     switchDoc,
     reorderDocuments,
+    addTag,
+    removeTag,
+  } = useDocumentContext();
+
+  const {
+    pinnedTags,
     pinTag,
     unpinTag,
     deleteTag,
     renameTag,
     togglePinnedTagCollapsed,
-    addTag,
-    removeTag,
     allTags,
     selectedTag,
     setSelectedTag,
     tagColors,
     setTagColor,
-  } = useDocumentContext();
+  } = useTagContext();
   const { theme, language } = useSettings();
   const STRINGS = getStrings(language);
   const { query, results, semanticResults, isSearching, isLoadingSemantic, setQuery } = useSearch();

@@ -67,6 +67,7 @@ func NewApp() *App {
 	settingsService := settings.NewService(paths)
 	markdownService := markdown.NewService()
 	tagStore := tag.NewStore(paths)
+	tagService := tag.NewService(docRepo, tagStore, folderRepo)
 	ragService := rag.NewService(paths, docRepo, docStorage)
 
 	// 创建文件监听服务
@@ -81,15 +82,18 @@ func NewApp() *App {
 		watcherService:  watcherService,
 	}
 
+	// 创建 BaseHandler（共享给所有 handlers）
+	baseHandler := handlers.NewBaseHandler(paths, watcherService)
+
 	// 初始化 Handlers (services are injected but not stored in App)
 	app.documentHandler = handlers.NewDocumentHandler(
-		paths, docRepo, docStorage, searchService, ragService, watcherService,
+		baseHandler, docRepo, docStorage, searchService, ragService,
 	)
 	app.searchHandler = handlers.NewSearchHandler(docRepo, searchService, ragService)
-	app.ragHandler = handlers.NewRAGHandler(paths, docRepo, ragService)
+	app.ragHandler = handlers.NewRAGHandler(baseHandler, docRepo, ragService)
 	app.settingsHandler = handlers.NewSettingsHandler(settingsService)
-	app.tagHandler = handlers.NewTagHandler(paths, docRepo, tagStore, folderRepo, watcherService)
-	app.fileHandler = handlers.NewFileHandler(context.TODO(), paths, markdownService)
+	app.tagHandler = handlers.NewTagHandler(baseHandler, tagService)
+	app.fileHandler = handlers.NewFileHandler(baseHandler, markdownService)
 
 	return app
 }

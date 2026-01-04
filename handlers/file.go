@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/base64"
 	"fmt"
 	"math/rand"
@@ -16,7 +15,6 @@ import (
 	"notion-lite/internal/fileextract"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/opengraph"
-	"notion-lite/internal/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"golang.design/x/clipboard"
@@ -24,27 +22,19 @@ import (
 
 // FileHandler 文件与图片处理器
 type FileHandler struct {
-	ctx             context.Context
-	paths           *utils.PathBuilder
+	*BaseHandler
 	markdownService *markdown.Service
 }
 
 // NewFileHandler 创建文件处理器
 func NewFileHandler(
-	ctx context.Context,
-	paths *utils.PathBuilder,
+	base *BaseHandler,
 	markdownService *markdown.Service,
 ) *FileHandler {
 	return &FileHandler{
-		ctx:             ctx,
-		paths:           paths,
+		BaseHandler:     base,
 		markdownService: markdownService,
 	}
-}
-
-// SetContext 设置 context（用于启动后更新）
-func (h *FileHandler) SetContext(ctx context.Context) {
-	h.ctx = ctx
 }
 
 // ExternalFile 外部文件信息
@@ -71,7 +61,7 @@ func (h *FileHandler) ExportHTMLFile(content string, defaultName string) error {
 
 // OpenExternalFile 打开外部文件对话框并读取内容
 func (h *FileHandler) OpenExternalFile() (ExternalFile, error) {
-	filePath, err := runtime.OpenFileDialog(h.ctx, runtime.OpenDialogOptions{
+	filePath, err := runtime.OpenFileDialog(h.Context(), runtime.OpenDialogOptions{
 		Title: constant.DialogTitleOpenFile,
 		Filters: []runtime.FileFilter{
 			{DisplayName: constant.FilterTextAndMarkdown, Pattern: "*.txt;*.md"},
@@ -134,7 +124,7 @@ func (h *FileHandler) CopyImageToClipboard(base64Data string) error {
 
 // SaveImage 保存图片到本地并返回文件路径
 func (h *FileHandler) SaveImage(base64Data string, filename string) (string, error) {
-	imagesDir := h.paths.ImagesDir()
+	imagesDir := h.Paths().ImagesDir()
 	if err := os.MkdirAll(imagesDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create images directory: %w", err)
 	}
@@ -163,7 +153,7 @@ func (h *FileHandler) SaveImageFile(base64Data string, defaultName string) error
 	}
 
 	// Open save dialog
-	filePath, err := runtime.SaveFileDialog(h.ctx, runtime.SaveDialogOptions{
+	filePath, err := runtime.SaveFileDialog(h.Context(), runtime.SaveDialogOptions{
 		Title:           "Save as Image",
 		DefaultFilename: defaultName + ".png",
 		Filters: []runtime.FileFilter{
@@ -189,7 +179,7 @@ func (h *FileHandler) SaveImageFile(base64Data string, defaultName string) error
 // PrintHTML 保存 HTML 到临时文件并在浏览器中打开
 func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 	// 创建临时目录
-	tempDir := h.paths.TempDir()
+	tempDir := h.Paths().TempDir()
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		return fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -240,7 +230,7 @@ type FileInfo struct {
 
 // SaveFile 保存文件到 ~/.Nook/files/ 并返回文件信息
 func (h *FileHandler) SaveFile(base64Data string, originalName string) (*FileInfo, error) {
-	filesDir := h.paths.FilesDir()
+	filesDir := h.Paths().FilesDir()
 	if err := os.MkdirAll(filesDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create files directory: %w", err)
 	}
@@ -272,7 +262,7 @@ func (h *FileHandler) SaveFile(base64Data string, originalName string) (*FileInf
 
 // OpenFileDialog 打开文件选择对话框（支持 MD/TXT）
 func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
-	filePath, err := runtime.OpenFileDialog(h.ctx, runtime.OpenDialogOptions{
+	filePath, err := runtime.OpenFileDialog(h.Context(), runtime.OpenDialogOptions{
 		Title: constant.DialogTitleSelectFile,
 		Filters: []runtime.FileFilter{
 			{DisplayName: constant.FilterSupportedFiles, Pattern: "*.md;*.txt;*.pdf;*.docx;*.html;*.htm"},
@@ -316,7 +306,7 @@ func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
 // OpenFileWithSystem 使用系统默认应用打开文件
 func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.paths.DataPath(), strings.TrimPrefix(relativePath, "/"))
+	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(relativePath, "/"))
 
 	return openWithSystemApp(fullPath)
 }
@@ -324,7 +314,7 @@ func (h *FileHandler) OpenFileWithSystem(relativePath string) error {
 // RevealInFinder 在文件管理器中显示文件
 func (h *FileHandler) RevealInFinder(relativePath string) error {
 	// relativePath: /files/xxx.md
-	fullPath := filepath.Join(h.paths.DataPath(), strings.TrimPrefix(relativePath, "/"))
+	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(relativePath, "/"))
 
 	return revealInFileManager(fullPath)
 }
