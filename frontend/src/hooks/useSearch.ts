@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { SearchResult, DocumentSearchResult } from '../types/document';
 import { SearchDocuments, SemanticSearchDocuments } from '../../wailsjs/go/main/App';
 import { useSearchContext } from '../contexts/SearchContext';
@@ -18,6 +18,10 @@ interface UseSearchReturn {
 export function useSearch(): UseSearchReturn {
     const { query, setQuery: setContextQuery, excludeCurrentDoc } = useSearchContext();
     const { activeId } = useDocumentContext();
+    // 使用 ref 保存 activeId，避免 activeId 变化时触发重新搜索
+    const activeIdRef = useRef(activeId);
+    activeIdRef.current = activeId;
+
     // 存储原始搜索结果（未过滤）
     const [rawResults, setRawResults] = useState<SearchResult[]>([]);
     const [rawSemanticResults, setRawSemanticResults] = useState<DocumentSearchResult[]>([]);
@@ -56,7 +60,8 @@ export function useSearch(): UseSearchReturn {
                 .finally(() => setIsSearching(false));
 
             // 2. Debounced Semantic Search (Document-level)
-            const currentExcludeId = (excludeCurrentDoc && activeId) ? activeId : "";
+            // 使用 ref 获取最新的 activeId，避免 activeId 变化时重新触发搜索
+            const currentExcludeId = (excludeCurrentDoc && activeIdRef.current) ? activeIdRef.current : "";
             performSemanticSearch(query, currentExcludeId);
         } else {
             setRawResults([]);
@@ -64,13 +69,10 @@ export function useSearch(): UseSearchReturn {
             setIsSearching(false);
             setIsLoadingSemantic(false);
         }
-    }, [query, excludeCurrentDoc, performSemanticSearch, activeId]); // activeId is used inside performSemanticSearch which is stable but arguments matter.
-    // Actually performSemanticSearch is stable from useDebounce.
-    // But we need to pass activeId when calling it.
-    // If activeId changes, we might want to re-search?
-    // Original effect: `[query, excludeCurrentDoc]` - explicitly excluded activeId.
-    // So if activeId changes, we don't re-search. This behavior is preserved.
-    // UPDATE: We include activeId now to ensure exclusion logic updates when active doc changes.
+    }, [query, excludeCurrentDoc, performSemanticSearch]);
+    // 注意：activeId 被故意从依赖项中移除
+    // 当点击搜索结果跳转到文档时，activeId 会改变，但我们不希望这触发重新搜索
+    // 使用 activeIdRef.current 可以在需要时获取最新值，同时避免不必要的 effect 重新执行
 
     // 前端过滤：根据 excludeCurrentDoc 和 activeId 过滤关键词搜索结果
     const results = useMemo(() => {

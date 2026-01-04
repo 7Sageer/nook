@@ -66,7 +66,6 @@ export function Sidebar({
 
   const searchRef = useRef<SidebarSearchRef>(null);
   const [editingTagName, setEditingTagName] = useState<string | null>(null);
-  const [isPinnedTagReorderMode, setIsPinnedTagReorderMode] = useState(false);
 
   // Sort pinned tags by order and merge colors
   const sortedPinnedTags = useMemo(() => {
@@ -268,8 +267,6 @@ export function Sidebar({
                   isDragging={isDragging}
                   editingTagName={editingTagName}
                   hasQuery={!!query}
-                  isReorderMode={isPinnedTagReorderMode}
-                  onToggleReorderMode={() => setIsPinnedTagReorderMode(prev => !prev)}
                   docDropIndicator={docDropIndicator}
                   pinnedTagDropIndicator={pinnedTagDropIndicator}
                   onToggleCollapsed={togglePinnedTagCollapsed}

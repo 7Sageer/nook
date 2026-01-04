@@ -19,7 +19,6 @@ interface PinnedTagItemProps {
     index: number;
     documents: DocumentMeta[];
     disabled: boolean;
-    isReorderMode: boolean;
     docDropIndicator: DocDropIndicator | null;
     pinnedTagDropIndicator: PinnedTagDropIndicator | null;
     activeDocId: string | null;
@@ -40,7 +39,6 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     documents,
 
     disabled,
-    isReorderMode,
     docDropIndicator,
     pinnedTagDropIndicator,
     activeDocId,
@@ -69,7 +67,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
 
     const isCollapsed = tag.collapsed ?? false;
     const hasDocuments = documents.length > 0;
-    const tagDropIndicator = isReorderMode && pinnedTagDropIndicator?.tagName === tag.name
+    const tagDropIndicator = pinnedTagDropIndicator?.tagName === tag.name
         ? pinnedTagDropIndicator.position
         : null;
 
@@ -83,7 +81,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
     } = useSortable({
         id: `${PINNED_TAG_PREFIX}${tag.name}`,
         data: { type: 'pinned-tag', tagName: tag.name },
-        disabled: !isReorderMode || disabled || isEditing,
+        disabled: disabled || isEditing,
     });
 
     const style: React.CSSProperties = {
@@ -166,7 +164,7 @@ export const PinnedTagItem = memo(function PinnedTagItem({
             <motion.div
                 ref={setNodeRef}
                 style={style}
-                className={`folder-item ${(isHeaderOver || isListOver) ? 'drop-target' : ''} ${isReorderMode ? 'sortable' : ''} ${isDragging ? 'is-dragging' : ''} ${tagDropIndicator ? `drop-${tagDropIndicator}` : ''}`}
+                className={`folder-item ${(isHeaderOver || isListOver) ? 'drop-target' : ''} ${isDragging ? 'is-dragging' : ''} ${tagDropIndicator ? `drop-${tagDropIndicator}` : ''}`}
                 layout={!isDragging}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -192,18 +190,16 @@ export const PinnedTagItem = memo(function PinnedTagItem({
                         }
                     }}
                 >
-                    {isReorderMode && (
-                        <button
-                            className="tag-drag-handle"
-                            aria-label={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
-                            title={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
-                            onClick={(e) => e.stopPropagation()}
-                            {...attributes}
-                            {...listeners}
-                        >
-                            <GripVertical size={14} aria-hidden="true" />
-                        </button>
-                    )}
+                    <button
+                        className="tag-drag-handle"
+                        aria-label={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
+                        title={STRINGS.TOOLTIPS.PINNED_TAG_DRAG}
+                        onClick={(e) => e.stopPropagation()}
+                        {...attributes}
+                        {...listeners}
+                    >
+                        <GripVertical size={14} aria-hidden="true" />
+                    </button>
                     <span className={`folder-chevron ${isCollapsed ? 'collapsed' : 'expanded'}`}>
                         <ChevronRight size={16} aria-hidden="true" />
                     </span>

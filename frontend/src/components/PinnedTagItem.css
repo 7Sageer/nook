@@ -65,7 +65,12 @@
     background: transparent;
     cursor: grab;
     border-radius: var(--radius-sm);
-    transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    transition: background-color var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+    opacity: 0;
+}
+
+.folder-header:hover .tag-drag-handle {
+    opacity: 1;
 }
 
 .tag-drag-handle:hover {

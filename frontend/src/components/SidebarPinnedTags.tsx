@@ -1,4 +1,4 @@
-import { ArrowUpDown, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -20,8 +20,6 @@ interface SidebarPinnedTagsProps {
     isDragging: boolean;
     editingTagName: string | null;
     hasQuery: boolean;
-    isReorderMode: boolean;
-    onToggleReorderMode: () => void;
     docDropIndicator: DocDropIndicator | null;
     pinnedTagDropIndicator: PinnedTagDropIndicator | null;
     onToggleCollapsed: (name: string) => Promise<void>;
@@ -42,8 +40,6 @@ interface SidebarPinnedTagsProps {
         };
         TOOLTIPS: {
             NEW_PINNED_TAG: string;
-            REORDER_PINNED_TAGS: string;
-            REORDER_PINNED_TAGS_DONE: string;
             NEW_DOC: string;
         };
     };
@@ -61,8 +57,6 @@ export function SidebarPinnedTags({
     isDragging,
     editingTagName,
     hasQuery,
-    isReorderMode,
-    onToggleReorderMode,
     docDropIndicator,
     pinnedTagDropIndicator,
     onToggleCollapsed,
@@ -84,11 +78,6 @@ export function SidebarPinnedTags({
         disabled: hasQuery,
     });
 
-    const showReorderToggle = pinnedTags.length > 1;
-    const reorderTooltip = isReorderMode
-        ? strings.TOOLTIPS.REORDER_PINNED_TAGS_DONE
-        : strings.TOOLTIPS.REORDER_PINNED_TAGS;
-
     return (
         <>
             {/* Pinned Tags Section */}
@@ -97,17 +86,6 @@ export function SidebarPinnedTags({
                     <div className="section-label-row">
                         <span className="section-label">{strings.LABELS.PINNED_TAGS}</span>
                         <div className="section-actions">
-                            {showReorderToggle && (
-                                <button
-                                    className={`section-add-btn ${isReorderMode ? 'active' : ''}`}
-                                    onClick={onToggleReorderMode}
-                                    title={reorderTooltip}
-                                    aria-label={reorderTooltip}
-                                    aria-pressed={isReorderMode}
-                                >
-                                    <ArrowUpDown size={14} aria-hidden="true" />
-                                </button>
-                            )}
                             <button
                                 className="section-add-btn"
                                 onClick={onCreatePinnedTag}
@@ -130,7 +108,6 @@ export function SidebarPinnedTags({
                                     index={index}
                                     documents={filteredDocsByTag.get(tag.name) || []}
                                     disabled={editingTagName === tag.name}
-                                    isReorderMode={isReorderMode}
                                     docDropIndicator={docDropIndicator}
                                     pinnedTagDropIndicator={pinnedTagDropIndicator}
                                     activeDocId={activeExternalPath ? null : activeDocId}
