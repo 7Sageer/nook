@@ -189,120 +189,120 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                 <div className="settings-body">
                     {/* 侧边栏 */}
                     <nav className="settings-sidebar">
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('appearance')}
-                                >
-                                    <Palette size={18} />
-                                    <span>{STRINGS.SETTINGS.APPEARANCE}</span>
-                                </button>
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'knowledge' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('knowledge')}
-                                >
-                                    <Database size={18} />
-                                    <span>{STRINGS.SETTINGS.KNOWLEDGE_BASE}</span>
-                                </button>
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'graph' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('graph')}
-                                >
-                                    <Network size={18} />
-                                    <span>Graph</span>
-                                </button>
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('embedding')}
-                                >
-                                    <Bot size={18} />
-                                    <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
-                                </button>
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('mcp')}
-                                >
-                                    <Terminal size={18} />
-                                    <span>{STRINGS.MCP.TITLE}</span>
-                                </button>
-                                <button
-                                    className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
-                                    onClick={() => setActiveTab('about')}
-                                >
-                                    <Info size={18} />
-                                    <span>{STRINGS.ABOUT.TITLE}</span>
-                                </button>
-                            </nav>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('appearance')}
+                        >
+                            <Palette size={18} />
+                            <span>{STRINGS.SETTINGS.APPEARANCE}</span>
+                        </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'knowledge' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('knowledge')}
+                        >
+                            <Database size={18} />
+                            <span>{STRINGS.SETTINGS.KNOWLEDGE_BASE}</span>
+                        </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'graph' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('graph')}
+                        >
+                            <Network size={18} />
+                            <span>Graph</span>
+                        </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('embedding')}
+                        >
+                            <Bot size={18} />
+                            <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
+                        </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('mcp')}
+                        >
+                            <Terminal size={18} />
+                            <span>{STRINGS.MCP.TITLE}</span>
+                        </button>
+                        <button
+                            className={`settings-nav-item ${activeTab === 'about' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('about')}
+                        >
+                            <Info size={18} />
+                            <span>{STRINGS.ABOUT.TITLE}</span>
+                        </button>
+                    </nav>
 
-                            {/* 主内容区域 (包含内容和底部按钮) */}
-                            <div className="settings-main">
-                                {/* 内容区 */}
-                                <div className="settings-content">
-                                    {activeTab === 'appearance' && (
-                                        <AppearancePanel
-                                            themeSetting={themeSetting}
-                                            sidebarWidth={sidebarWidth}
-                                            onThemeChange={setThemeSetting}
-                                            onSidebarWidthChange={setSidebarWidth}
-                                            strings={STRINGS}
-                                        />
-                                    )}
-                                    {activeTab === 'knowledge' && (
-                                        <KnowledgePanel
-                                            status={status}
-                                            isRebuilding={isRebuilding}
-                                            progress={rebuildProgress}
-                                            onRebuild={handleRebuild}
-                                            strings={STRINGS}
-                                        />
-                                    )}
-                                    {activeTab === 'graph' && (
-                                        <DocumentGraph
-                                            onNodeClick={(docId, blockId) => {
-                                                onClose();
-                                                window.dispatchEvent(new CustomEvent('navigate-to-doc', {
-                                                    detail: { docId, blockId }
-                                                }));
-                                            }}
-                                        />
-                                    )}
-                                    {activeTab === 'embedding' && (
-                                        <EmbeddingPanel
-                                            config={config}
-                                            onChange={handleConfigChange}
-                                            strings={STRINGS}
-                                        />
-                                    )}
-                                    {activeTab === 'mcp' && (
-                                        <MCPPanel
-                                            mcpInfo={mcpInfo}
-                                            writingStyle={writingStyle}
-                                            onWritingStyleChange={setWritingStyle}
-                                            strings={STRINGS}
-                                        />
-                                    )}
-                                    {activeTab === 'about' && (
-                                        <AboutPanel
-                                            strings={STRINGS}
-                                        />
-                                    )}
-                                </div>
+                    {/* 主内容区域 (包含内容和底部按钮) */}
+                    <div className="settings-main">
+                        {/* 内容区 */}
+                        <div className="settings-content">
+                            {activeTab === 'appearance' && (
+                                <AppearancePanel
+                                    themeSetting={themeSetting}
+                                    sidebarWidth={sidebarWidth}
+                                    onThemeChange={setThemeSetting}
+                                    onSidebarWidthChange={setSidebarWidth}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'knowledge' && (
+                                <KnowledgePanel
+                                    status={status}
+                                    isRebuilding={isRebuilding}
+                                    progress={rebuildProgress}
+                                    onRebuild={handleRebuild}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'graph' && (
+                                <DocumentGraph
+                                    onNodeClick={(docId, blockId) => {
+                                        onClose();
+                                        window.dispatchEvent(new CustomEvent('navigate-to-doc', {
+                                            detail: { docId, blockId }
+                                        }));
+                                    }}
+                                />
+                            )}
+                            {activeTab === 'embedding' && (
+                                <EmbeddingPanel
+                                    config={config}
+                                    onChange={handleConfigChange}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'mcp' && (
+                                <MCPPanel
+                                    mcpInfo={mcpInfo}
+                                    writingStyle={writingStyle}
+                                    onWritingStyleChange={setWritingStyle}
+                                    strings={STRINGS}
+                                />
+                            )}
+                            {activeTab === 'about' && (
+                                <AboutPanel
+                                    strings={STRINGS}
+                                />
+                            )}
+                        </div>
 
-                                {/* 底部按钮 - Graph tab 不需要 */}
-                                {activeTab !== 'graph' && (
-                                    <div className="settings-footer">
-                                        <button className="settings-btn cancel" onClick={onClose}>
-                                            {STRINGS.BUTTONS.CANCEL}
-                                        </button>
-                                        <button
-                                            className="settings-btn save"
-                                            onClick={handleSave}
-                                            disabled={!hasChanges || isSaving}
-                                        >
-                                            {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
-                                        </button>
-                                    </div>
-                                )}
+                        {/* 底部按钮 - 仅 Embedding 面板需要手动保存 */}
+                        {activeTab === 'embedding' && (
+                            <div className="settings-footer">
+                                <button className="settings-btn cancel" onClick={onClose}>
+                                    {STRINGS.BUTTONS.CANCEL}
+                                </button>
+                                <button
+                                    className="settings-btn save"
+                                    onClick={handleSave}
+                                    disabled={!hasChanges || isSaving}
+                                >
+                                    {isSaving ? STRINGS.SETTINGS.SAVING : STRINGS.BUTTONS.SAVE}
+                                </button>
                             </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

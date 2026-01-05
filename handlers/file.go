@@ -305,26 +305,46 @@ func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
 
 // OpenFileWithSystem 使用系统默认应用打开文件
 func (h *FileHandler) OpenFileWithSystem(pathOrRelative string) error {
+	fmt.Println("[OpenFileWithSystem] called with:", pathOrRelative)
 	var fullPath string
-	if filepath.IsAbs(pathOrRelative) {
-		// 绝对路径（如 FolderBlock 的 folderPath）
+
+	// 检查是否是应用内相对路径（如 /files/xxx, /images/xxx）
+	isAppRelativePath := strings.HasPrefix(pathOrRelative, "/files/") ||
+		strings.HasPrefix(pathOrRelative, "/images/") ||
+		strings.HasPrefix(pathOrRelative, "/temp/")
+
+	if !isAppRelativePath && filepath.IsAbs(pathOrRelative) {
+		// 真正的绝对路径（如 FolderBlock 的 /Users/xxx/folderPath）
 		fullPath = pathOrRelative
 	} else {
-		// 相对路径（如 /files/xxx.md）
+		// 应用内相对路径（如 /files/xxx.md）
 		fullPath = filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(pathOrRelative, "/"))
 	}
+	fmt.Println("[OpenFileWithSystem] resolved fullPath:", fullPath)
 
-	return openWithSystemApp(fullPath)
+	err := openWithSystemApp(fullPath)
+	if err != nil {
+		fmt.Println("[OpenFileWithSystem] error:", err)
+	} else {
+		fmt.Println("[OpenFileWithSystem] success")
+	}
+	return err
 }
 
 // RevealInFinder 在文件管理器中显示文件
 func (h *FileHandler) RevealInFinder(pathOrRelative string) error {
 	var fullPath string
-	if filepath.IsAbs(pathOrRelative) {
-		// 绝对路径（如 FolderBlock 的 folderPath）
+
+	// 检查是否是应用内相对路径（如 /files/xxx, /images/xxx）
+	isAppRelativePath := strings.HasPrefix(pathOrRelative, "/files/") ||
+		strings.HasPrefix(pathOrRelative, "/images/") ||
+		strings.HasPrefix(pathOrRelative, "/temp/")
+
+	if !isAppRelativePath && filepath.IsAbs(pathOrRelative) {
+		// 真正的绝对路径（如 FolderBlock 的 /Users/xxx/folderPath）
 		fullPath = pathOrRelative
 	} else {
-		// 相对路径（如 /files/xxx.md）
+		// 应用内相对路径（如 /files/xxx.md）
 		fullPath = filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(pathOrRelative, "/"))
 	}
 
@@ -362,6 +382,7 @@ func randomString(n int) string {
 
 // openWithSystemApp 使用系统默认应用打开文件（跨平台）
 func openWithSystemApp(filePath string) error {
+	fmt.Println("[openWithSystemApp] opening:", filePath)
 	var cmd *exec.Cmd
 
 	switch goruntime.GOOS {
@@ -373,5 +394,7 @@ func openWithSystemApp(filePath string) error {
 		cmd = exec.Command("xdg-open", filePath)
 	}
 
-	return cmd.Start()
+	err := cmd.Start()
+	fmt.Println("[openWithSystemApp] cmd.Start() returned:", err)
+	return err
 }

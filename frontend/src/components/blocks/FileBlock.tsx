@@ -96,9 +96,17 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     }, [block.id, editor, filePath, activeId]);
 
     // 打开文件
-    const handleOpenFile = useCallback(() => {
+    const handleOpenFile = useCallback(async () => {
+        console.log("[FileBlock] handleOpenFile called, filePath:", filePath);
         if (filePath) {
-            OpenFileWithSystem(filePath);
+            try {
+                await OpenFileWithSystem(filePath);
+                console.log("[FileBlock] OpenFileWithSystem completed successfully");
+            } catch (err) {
+                console.error("[FileBlock] OpenFileWithSystem failed:", err);
+            }
+        } else {
+            console.warn("[FileBlock] No filePath available");
         }
     }, [filePath]);
 
