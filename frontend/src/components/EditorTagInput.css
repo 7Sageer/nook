@@ -299,16 +299,18 @@
 
 /* ===== Dark mode overrides for portal elements ===== */
 /* Dropdown is rendered via createPortal to document.body, so we need explicit dark mode styles */
+/* Using !important to ensure styles override any inline styles from react-aria */
 body[data-theme="dark"] .editor-tag-suggestions,
 body.dark .editor-tag-suggestions {
-    background: #1e2530;
-    border-color: #2a3545;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    background: #1e2530 !important;
+    border-color: #2a3545 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
 }
 
 body[data-theme="dark"] .editor-tag-suggestion-item,
 body.dark .editor-tag-suggestion-item {
-    color: #e5e7eb;
+    color: #e5e7eb !important;
+    background: transparent !important;
 }
 
 body[data-theme="dark"] .editor-tag-suggestion-item:hover,
@@ -319,15 +321,15 @@ body.dark .editor-tag-suggestion-item:hover,
 body.dark .editor-tag-suggestion-item.highlighted,
 body.dark .editor-tag-suggestion-item[data-focused],
 body.dark .editor-tag-suggestion-item[data-selected] {
-    background-color: rgba(74, 143, 217, 0.15);
+    background-color: rgba(74, 143, 217, 0.15) !important;
 }
 
 body[data-theme="dark"] .editor-tag-suggestion-count,
 body.dark .editor-tag-suggestion-count {
-    color: #6b7280;
+    color: #6b7280 !important;
 }
 
 body[data-theme="dark"] .editor-tag-suggestion-badge,
 body.dark .editor-tag-suggestion-badge {
-    background-color: rgba(74, 143, 217, 0.2);
+    background-color: rgba(74, 143, 217, 0.2) !important;
 }

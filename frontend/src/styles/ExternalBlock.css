@@ -158,10 +158,26 @@
     border-color: #4dabf7;
 }
 
-[data-theme="dark"] .external-error {
+[data-theme="dark"] .external-error,
+body.dark .external-error {
     background: rgba(255, 80, 80, 0.1);
     border-color: rgba(255, 80, 80, 0.3);
     color: #ff8787;
+}
+
+/* Dark mode action button hover */
+[data-theme="dark"] .external-action-btn,
+body.dark .external-action-btn {
+    background: #2a3545;
+    border-color: #3a4555;
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .external-action-btn:hover,
+body.dark .external-action-btn:hover {
+    background: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
 }
 
 @media (prefers-color-scheme: dark) {
