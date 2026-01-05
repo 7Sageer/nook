@@ -6,6 +6,14 @@ export function AddDocumentTag(arg1, arg2) {
   return window['go']['main']['App']['AddDocumentTag'](arg1, arg2);
 }
 
+export function ArchiveFile(arg1) {
+  return window['go']['main']['App']['ArchiveFile'](arg1);
+}
+
+export function CheckFileExists(arg1) {
+  return window['go']['main']['App']['CheckFileExists'](arg1);
+}
+
 export function CheckForUpdates() {
   return window['go']['main']['App']['CheckForUpdates']();
 }
@@ -60,6 +68,10 @@ export function GetDocumentGraph(arg1) {
 
 export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
+}
+
+export function GetEffectiveFilePath(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetEffectiveFilePath'](arg1, arg2, arg3);
 }
 
 export function GetExternalBlockContent(arg1, arg2) {
@@ -220,6 +232,14 @@ export function SetTagColor(arg1, arg2) {
 
 export function SuggestTags(arg1) {
   return window['go']['main']['App']['SuggestTags'](arg1);
+}
+
+export function SyncArchivedFile(arg1, arg2) {
+  return window['go']['main']['App']['SyncArchivedFile'](arg1, arg2);
+}
+
+export function UnarchiveFile(arg1) {
+  return window['go']['main']['App']['UnarchiveFile'](arg1);
 }
 
 export function UnpinTag(arg1) {

@@ -363,6 +363,33 @@ func (a *App) SelectFolderDialog() (string, error) {
 	})
 }
 
+// ========== 文件归档 API ==========
+
+// ArchiveFile 将文件归档到本地存储
+func (a *App) ArchiveFile(originalPath string) (*handlers.ArchiveResult, error) {
+	return a.fileHandler.ArchiveFile(originalPath)
+}
+
+// UnarchiveFile 删除归档的本地副本
+func (a *App) UnarchiveFile(archivedPath string) error {
+	return a.fileHandler.UnarchiveFile(archivedPath)
+}
+
+// SyncArchivedFile 从原始路径同步更新归档副本
+func (a *App) SyncArchivedFile(originalPath, archivedPath string) (*handlers.ArchiveResult, error) {
+	return a.fileHandler.SyncArchivedFile(originalPath, archivedPath)
+}
+
+// CheckFileExists 检查文件是否存在
+func (a *App) CheckFileExists(filePath string) bool {
+	return a.fileHandler.CheckFileExists(filePath)
+}
+
+// GetEffectiveFilePath 获取有效的文件路径（优先归档副本）
+func (a *App) GetEffectiveFilePath(originalPath, archivedPath string, archived bool) string {
+	return a.fileHandler.GetEffectiveFilePath(originalPath, archivedPath, archived)
+}
+
 // ========== 设置 API (委托给 SettingsHandler) ==========
 
 func (a *App) GetSettings() (handlers.Settings, error) {

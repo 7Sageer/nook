@@ -155,9 +155,22 @@ func (e *ExternalIndexer) IndexBookmarkContent(url, sourceDocID, blockID string)
 }
 
 // IndexFileContent 索引文件内容（分块存储）
+// filePath 可以是绝对路径（引用模式）或相对路径（归档模式，如 /files/xxx）
 func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string) error {
 	// 1. 获取完整文件路径
-	fullPath := filepath.Join(e.paths.DataPath(), strings.TrimPrefix(filePath, "/"))
+	var fullPath string
+	// 检查是否是应用内相对路径（如 /files/xxx, /images/xxx）
+	isAppRelativePath := strings.HasPrefix(filePath, "/files/") ||
+		strings.HasPrefix(filePath, "/images/") ||
+		strings.HasPrefix(filePath, "/temp/")
+
+	if !isAppRelativePath && filepath.IsAbs(filePath) {
+		// 真正的绝对路径（引用模式）
+		fullPath = filePath
+	} else {
+		// 应用内相对路径（归档模式）
+		fullPath = filepath.Join(e.paths.DataPath(), strings.TrimPrefix(filePath, "/"))
+	}
 
 	// 2. 提取文本内容
 	textContent, err := fileextract.ExtractText(fullPath)

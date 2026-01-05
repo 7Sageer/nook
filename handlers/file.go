@@ -221,11 +221,18 @@ func sanitizeFilename(name string) string {
 
 // FileInfo 文件信息（返回给前端）
 type FileInfo struct {
-	FilePath string `json:"filePath"`
-	FileName string `json:"fileName"`
-	FileSize int64  `json:"fileSize"`
-	FileType string `json:"fileType"`
-	MimeType string `json:"mimeType"`
+	// 引用信息
+	OriginalPath string `json:"originalPath"` // 原始绝对路径
+	FileName     string `json:"fileName"`
+	FileSize     int64  `json:"fileSize"`
+	FileType     string `json:"fileType"`
+	MimeType     string `json:"mimeType"`
+	// 归档信息
+	Archived     bool   `json:"archived"`
+	ArchivedPath string `json:"archivedPath"` // 归档后的本地路径 /files/xxx
+	ArchivedAt   int64  `json:"archivedAt"`   // 归档时间戳
+	// 兼容旧数据
+	FilePath string `json:"filePath"` // deprecated
 }
 
 // SaveFile 保存文件到 ~/.Nook/files/ 并返回文件信息
@@ -260,7 +267,7 @@ func (h *FileHandler) SaveFile(base64Data string, originalName string) (*FileInf
 	}, nil
 }
 
-// OpenFileDialog 打开文件选择对话框（支持 MD/TXT）
+// OpenFileDialog 打开文件选择对话框（返回引用，不复制文件）
 func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
 	filePath, err := runtime.OpenFileDialog(h.Context(), runtime.OpenDialogOptions{
 		Title: constant.DialogTitleSelectFile,
@@ -280,27 +287,40 @@ func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
 		return nil, nil // 用户取消
 	}
 
-	// 读取文件并保存到 files 目录
-	data, err := os.ReadFile(filePath)
+	// 获取文件信息（不复制）
+	info, err := os.Stat(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	base64Data := base64.StdEncoding.EncodeToString(data)
-	return h.SaveFile(base64Data, filepath.Base(filePath))
+	fileName := filepath.Base(filePath)
+	return &FileInfo{
+		OriginalPath: filePath,
+		FileName:     fileName,
+		FileSize:     info.Size(),
+		FileType:     fileextract.GetFileType(fileName),
+		MimeType:     fileextract.GetMimeType(fileName),
+		Archived:     false,
+	}, nil
 }
 
-// CopyFileToStorage 从源路径复制文件到 ~/.Nook/files/（用于拖拽上传）
+// CopyFileToStorage 获取文件信息（用于拖拽上传，返回引用不复制）
 func (h *FileHandler) CopyFileToStorage(sourcePath string) (*FileInfo, error) {
-	// 读取源文件
-	data, err := os.ReadFile(sourcePath)
+	// 获取文件信息
+	info, err := os.Stat(sourcePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read source file: %w", err)
+		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	// 保存到 files 目录
-	base64Data := base64.StdEncoding.EncodeToString(data)
-	return h.SaveFile(base64Data, filepath.Base(sourcePath))
+	fileName := filepath.Base(sourcePath)
+	return &FileInfo{
+		OriginalPath: sourcePath,
+		FileName:     fileName,
+		FileSize:     info.Size(),
+		FileType:     fileextract.GetFileType(fileName),
+		MimeType:     fileextract.GetMimeType(fileName),
+		Archived:     false,
+	}, nil
 }
 
 // OpenFileWithSystem 使用系统默认应用打开文件
@@ -397,4 +417,115 @@ func openWithSystemApp(filePath string) error {
 	err := cmd.Start()
 	fmt.Println("[openWithSystemApp] cmd.Start() returned:", err)
 	return err
+}
+
+// ========== 归档相关方法 ==========
+
+// ArchiveResult 归档操作结果
+type ArchiveResult struct {
+	ArchivedPath string `json:"archivedPath"`
+	ArchivedAt   int64  `json:"archivedAt"`
+}
+
+// ArchiveFile 将文件归档到本地存储
+func (h *FileHandler) ArchiveFile(originalPath string) (*ArchiveResult, error) {
+	// 检查源文件是否存在
+	if _, err := os.Stat(originalPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("source file not found: %s", originalPath)
+	}
+
+	// 读取源文件
+	data, err := os.ReadFile(originalPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source file: %w", err)
+	}
+
+	// 确保 files 目录存在
+	filesDir := h.Paths().FilesDir()
+	if err := os.MkdirAll(filesDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create files directory: %w", err)
+	}
+
+	// 生成唯一文件名
+	ext := filepath.Ext(originalPath)
+	filename := fmt.Sprintf("%d-%s%s", time.Now().UnixMilli(), randomString(6), ext)
+	archivedPath := filepath.Join(filesDir, filename)
+
+	// 写入文件
+	if err := os.WriteFile(archivedPath, data, 0644); err != nil {
+		return nil, fmt.Errorf("failed to archive file: %w", err)
+	}
+
+	return &ArchiveResult{
+		ArchivedPath: "/files/" + filename,
+		ArchivedAt:   time.Now().Unix(),
+	}, nil
+}
+
+// UnarchiveFile 删除归档的本地副本
+func (h *FileHandler) UnarchiveFile(archivedPath string) error {
+	if archivedPath == "" {
+		return nil
+	}
+
+	// 构建完整路径
+	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
+
+	// 检查文件是否存在
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		return nil // 文件已不存在，视为成功
+	}
+
+	// 删除文件
+	if err := os.Remove(fullPath); err != nil {
+		return fmt.Errorf("failed to delete archived file: %w", err)
+	}
+
+	return nil
+}
+
+// SyncArchivedFile 从原始路径同步更新归档副本
+func (h *FileHandler) SyncArchivedFile(originalPath, archivedPath string) (*ArchiveResult, error) {
+	// 检查源文件是否存在
+	if _, err := os.Stat(originalPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("source file not found: %s", originalPath)
+	}
+
+	// 读取源文件
+	data, err := os.ReadFile(originalPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read source file: %w", err)
+	}
+
+	// 构建归档文件完整路径
+	fullArchivedPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
+
+	// 覆盖写入
+	if err := os.WriteFile(fullArchivedPath, data, 0644); err != nil {
+		return nil, fmt.Errorf("failed to sync archived file: %w", err)
+	}
+
+	return &ArchiveResult{
+		ArchivedPath: archivedPath,
+		ArchivedAt:   time.Now().Unix(),
+	}, nil
+}
+
+// CheckFileExists 检查文件是否存在
+func (h *FileHandler) CheckFileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return err == nil
+}
+
+// GetEffectiveFilePath 获取有效的文件路径（优先归档副本）
+func (h *FileHandler) GetEffectiveFilePath(originalPath, archivedPath string, archived bool) string {
+	if archived && archivedPath != "" {
+		// 优先使用归档副本
+		fullArchivedPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
+		if _, err := os.Stat(fullArchivedPath); err == nil {
+			return fullArchivedPath
+		}
+	}
+	// 回退到原始路径
+	return originalPath
 }

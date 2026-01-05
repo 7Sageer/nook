@@ -45,13 +45,13 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
             }
 
             try {
-                // 调用 Go 端复制文件到存储目录
+                // 调用 Go 端获取文件信息（引用模式，不复制文件）
                 const fileInfo = await CopyFileToStorage(data.path);
                 if (fileInfo) {
                     const block = insertFileBlock(editor, fileInfo);
                     // 自动索引
                     if (docId) {
-                        indexFileBlock(editor, block.id, fileInfo.filePath, docId);
+                        indexFileBlock(editor, block.id, fileInfo.originalPath, docId);
                     }
                 }
             } catch (err) {

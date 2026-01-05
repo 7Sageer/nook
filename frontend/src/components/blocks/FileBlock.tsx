@@ -1,8 +1,8 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
-import { useCallback, useState } from "react";
-import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace } from "lucide-react";
-import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent, OpenFileDialog } from "../../../wailsjs/go/main/App";
+import { useCallback, useState, useEffect } from "react";
+import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace, Archive, ArchiveRestore, RefreshCcw, Link, AlertTriangle } from "lucide-react";
+import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent, OpenFileDialog, ArchiveFile, UnarchiveFile, SyncArchivedFile, CheckFileExists, RevealInFinder, GetEffectiveFilePath } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import { ContentViewerModal } from "../ContentViewerModal";
 import "../../styles/ExternalBlock.css";
@@ -31,7 +31,23 @@ const formatFileSize = (bytes: number): string => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const FileBlockComponent = (props: { block: any, editor: any }) => {
     const { block, editor } = props;
-    const { filePath, fileName, fileSize, fileType, loading, error, indexed, indexing, indexError } = block.props;
+    const {
+        originalPath,
+        fileName,
+        fileSize,
+        fileType,
+        loading,
+        error,
+        archived,
+        archivedPath,
+        archivedAt,
+        fileMissing,
+        indexed,
+        indexing,
+        indexError,
+        // 兼容旧数据
+        filePath: legacyFilePath,
+    } = block.props;
     const { activeId } = useDocumentContext();
 
     // 查看内容 Modal 状态
@@ -39,12 +55,35 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     const [contentLoading, setContentLoading] = useState(false);
     const [contentError, setContentError] = useState("");
     const [extractedContent, setExtractedContent] = useState("");
+    // 归档操作状态
+    const [archiving, setArchiving] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+
+    // 获取有效路径（兼容旧数据）
+    const effectivePath = originalPath || legacyFilePath;
+    const isLegacyData = !originalPath && legacyFilePath;
+
+    // 检查文件是否存在
+    useEffect(() => {
+        if (!effectivePath || isLegacyData) return;
+
+        const checkFile = async () => {
+            const exists = await CheckFileExists(effectivePath);
+            const currentBlock = editor.getBlock(block.id);
+            if (currentBlock && currentBlock.props.fileMissing !== !exists) {
+                editor.updateBlock(currentBlock, {
+                    props: { ...currentBlock.props, fileMissing: !exists },
+                });
+            }
+        };
+        checkFile();
+    }, [effectivePath, isLegacyData, block.id, editor]);
 
     // 选择新文件替换
     const handleSelectFile = useCallback(async () => {
         try {
             const fileInfo = await OpenFileDialog();
-            if (!fileInfo || !fileInfo.filePath) return;
+            if (!fileInfo || !fileInfo.originalPath) return;
 
             const currentBlock = editor.getBlock(block.id);
             if (!currentBlock) return;
@@ -52,13 +91,19 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
             editor.updateBlock(currentBlock, {
                 props: {
                     ...currentBlock.props,
-                    filePath: fileInfo.filePath,
+                    originalPath: fileInfo.originalPath,
                     fileName: fileInfo.fileName,
                     fileSize: fileInfo.fileSize,
                     fileType: fileInfo.fileType?.replace(".", "") || "",
                     mimeType: fileInfo.mimeType || "",
+                    archived: false,
+                    archivedPath: "",
+                    archivedAt: 0,
+                    fileMissing: false,
                     indexed: false,
                     indexError: "",
+                    // 清除旧数据
+                    filePath: "",
                 },
             });
         } catch (err) {
@@ -66,9 +111,16 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
         }
     }, [block.id, editor]);
 
-    // 索引文件内容
+    // 索引文件内容（优先使用归档副本）
     const handleIndex = useCallback(async () => {
-        if (!filePath || !activeId) return;
+        if (!activeId) return;
+
+        // 获取有效路径
+        let pathToIndex = effectivePath;
+        if (archived && archivedPath) {
+            pathToIndex = archivedPath;
+        }
+        if (!pathToIndex) return;
 
         const currentBlock = editor.getBlock(block.id);
         if (!currentBlock) return;
@@ -78,7 +130,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
         });
 
         try {
-            await IndexFileContent(filePath, activeId, block.id);
+            await IndexFileContent(pathToIndex, activeId, block.id);
             const latestBlock = editor.getBlock(block.id);
             if (latestBlock) {
                 editor.updateBlock(latestBlock, {
@@ -93,22 +145,35 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 });
             }
         }
-    }, [block.id, editor, filePath, activeId]);
+    }, [block.id, editor, effectivePath, archived, archivedPath, activeId]);
 
-    // 打开文件
+    // 打开文件（优先使用归档副本）
     const handleOpenFile = useCallback(async () => {
-        console.log("[FileBlock] handleOpenFile called, filePath:", filePath);
-        if (filePath) {
-            try {
-                await OpenFileWithSystem(filePath);
-                console.log("[FileBlock] OpenFileWithSystem completed successfully");
-            } catch (err) {
-                console.error("[FileBlock] OpenFileWithSystem failed:", err);
-            }
-        } else {
-            console.warn("[FileBlock] No filePath available");
+        // 获取有效路径
+        let pathToOpen = effectivePath;
+        if (archived && archivedPath) {
+            pathToOpen = archivedPath;
         }
-    }, [filePath]);
+        if (!pathToOpen) {
+            console.warn("[FileBlock] No path available");
+            return;
+        }
+
+        console.log("[FileBlock] handleOpenFile called, path:", pathToOpen);
+        try {
+            await OpenFileWithSystem(pathToOpen);
+            console.log("[FileBlock] OpenFileWithSystem completed successfully");
+        } catch (err) {
+            console.error("[FileBlock] OpenFileWithSystem failed:", err);
+        }
+    }, [effectivePath, archived, archivedPath]);
+
+    // 在 Finder 中显示
+    const handleRevealInFinder = useCallback(async () => {
+        if (effectivePath) {
+            await RevealInFinder(effectivePath);
+        }
+    }, [effectivePath]);
 
     // 查看提取的内容
     const handleViewContent = useCallback(async () => {
@@ -125,6 +190,83 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
             setContentLoading(false);
         }
     }, [activeId, block.id]);
+
+    // 归档文件
+    const handleArchive = useCallback(async () => {
+        if (!effectivePath) return;
+        setArchiving(true);
+
+        try {
+            const result = await ArchiveFile(effectivePath);
+            if (result) {
+                const currentBlock = editor.getBlock(block.id);
+                if (currentBlock) {
+                    editor.updateBlock(currentBlock, {
+                        props: {
+                            ...currentBlock.props,
+                            archived: true,
+                            archivedPath: result.archivedPath,
+                            archivedAt: result.archivedAt,
+                        },
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Failed to archive file:", err);
+        } finally {
+            setArchiving(false);
+        }
+    }, [effectivePath, block.id, editor]);
+
+    // 取消归档
+    const handleUnarchive = useCallback(async () => {
+        if (!archivedPath) return;
+        setArchiving(true);
+
+        try {
+            await UnarchiveFile(archivedPath);
+            const currentBlock = editor.getBlock(block.id);
+            if (currentBlock) {
+                editor.updateBlock(currentBlock, {
+                    props: {
+                        ...currentBlock.props,
+                        archived: false,
+                        archivedPath: "",
+                        archivedAt: 0,
+                    },
+                });
+            }
+        } catch (err) {
+            console.error("Failed to unarchive file:", err);
+        } finally {
+            setArchiving(false);
+        }
+    }, [archivedPath, block.id, editor]);
+
+    // 同步归档文件
+    const handleSync = useCallback(async () => {
+        if (!effectivePath || !archivedPath) return;
+        setSyncing(true);
+
+        try {
+            const result = await SyncArchivedFile(effectivePath, archivedPath);
+            if (result) {
+                const currentBlock = editor.getBlock(block.id);
+                if (currentBlock) {
+                    editor.updateBlock(currentBlock, {
+                        props: {
+                            ...currentBlock.props,
+                            archivedAt: result.archivedAt,
+                        },
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Failed to sync archived file:", err);
+        } finally {
+            setSyncing(false);
+        }
+    }, [effectivePath, archivedPath, block.id, editor]);
 
     // 加载状态
     if (loading) {
@@ -146,24 +288,55 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
         );
     }
 
+    // 文件丢失状态（未归档时）
+    if (fileMissing && !archived) {
+        return (
+            <div className="external-block external-error file-missing" contentEditable={false}>
+                <AlertTriangle size={18} />
+                <div className="file-missing-info">
+                    <span className="file-missing-name">{fileName}</span>
+                    <span className="file-missing-path">{effectivePath}</span>
+                </div>
+                <div className="external-actions">
+                    <button
+                        className="external-action-btn"
+                        title="Relocate file"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectFile();
+                        }}
+                    >
+                        <Replace size={14} />
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // 文件卡片
     return (
         <div
-            className={`external-block external-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""} file-card-custom`}
+            className={`external-block external-card ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""} ${archived ? "archived" : ""} file-card-custom`}
             contentEditable={false}
             onDoubleClick={handleOpenFile}
         >
             <div className="file-icon-wrapper">
                 <FileTypeIcon type={fileType} />
+                {archived && <Archive size={12} className="archive-badge" />}
+                {!archived && <Link size={12} className="link-badge" />}
             </div>
             <div className="file-info">
                 <div className="file-name">{fileName}</div>
                 <div className="file-meta">
-                    <span className="file-type">{fileType.toUpperCase()}</span>
+                    <span className="file-type">{fileType?.toUpperCase()}</span>
                     <span className="file-size">{formatFileSize(fileSize)}</span>
+                    {archived && <span className="file-archived-badge">Archived</span>}
                 </div>
+                <div className="file-path" title={effectivePath}>{effectivePath}</div>
             </div>
             <div className="external-actions">
+                {/* 索引按钮 */}
                 <button
                     className={`external-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
                     title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? "Indexing failed, retry?" : "Index content"}
@@ -184,6 +357,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         <RefreshCw size={14} />
                     )}
                 </button>
+                {/* 查看内容按钮 */}
                 {indexed && (
                     <button
                         className="external-action-btn"
@@ -197,6 +371,49 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         <Eye size={14} />
                     </button>
                 )}
+                {/* 归档/取消归档按钮 */}
+                {!archived ? (
+                    <button
+                        className="external-action-btn"
+                        title={archiving ? "Archiving..." : "Archive file"}
+                        disabled={archiving || fileMissing}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleArchive();
+                        }}
+                    >
+                        {archiving ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
+                    </button>
+                ) : (
+                    <>
+                        <button
+                            className="external-action-btn"
+                            title={syncing ? "Syncing..." : "Sync from original"}
+                            disabled={syncing || fileMissing}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleSync();
+                            }}
+                        >
+                            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                        </button>
+                        <button
+                            className="external-action-btn"
+                            title={archiving ? "Removing..." : "Remove archive"}
+                            disabled={archiving}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleUnarchive();
+                            }}
+                        >
+                            {archiving ? <Loader2 size={14} className="animate-spin" /> : <ArchiveRestore size={14} />}
+                        </button>
+                    </>
+                )}
+                {/* 替换文件按钮 */}
                 <button
                     className="external-action-btn"
                     title="Change file"
@@ -208,6 +425,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 >
                     <Replace size={14} />
                 </button>
+                {/* 打开文件按钮 */}
                 <button
                     className="external-action-btn"
                     title="Open file"
@@ -218,6 +436,18 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                     }}
                 >
                     <ExternalLink size={14} />
+                </button>
+                {/* 在 Finder 中显示 */}
+                <button
+                    className="external-action-btn"
+                    title="Reveal in Finder"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleRevealInFinder();
+                    }}
+                >
+                    <Eye size={14} />
                 </button>
             </div>
             <ContentViewerModal
@@ -239,16 +469,26 @@ export const FileBlock = createReactBlockSpec(
         type: "file",
         propSchema: {
             textAlignment: defaultProps.textAlignment,
-            filePath: { default: "" },
+            // 引用信息（始终保留）
+            originalPath: { default: "" },   // 原始绝对路径
             fileName: { default: "" },
             fileSize: { default: 0 },
             fileType: { default: "" },
             mimeType: { default: "" },
+            // 归档信息
+            archived: { default: false },    // 是否已归档
+            archivedPath: { default: "" },   // 归档后的本地路径 /files/xxx
+            archivedAt: { default: 0 },      // 归档时间戳
+            // 状态
             loading: { default: false },
             error: { default: "" },
+            fileMissing: { default: false }, // 原文件是否丢失
+            // 索引信息
             indexed: { default: false },
             indexing: { default: false },
             indexError: { default: "" },
+            // 兼容旧数据（deprecated，迁移后可删除）
+            filePath: { default: "" },
         },
         content: "none",
     },

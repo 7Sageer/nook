@@ -209,11 +209,18 @@ export function createBookmarkMenuItem(editor: InternalEditor, strings: StringsT
  * FileInfo 类型定义（与后端 handlers.FileInfo 对应）
  */
 export interface FileInfo {
-    filePath: string;
+    // 引用信息
+    originalPath: string;   // 原始绝对路径
     fileName: string;
     fileSize: number;
     fileType: string;
     mimeType: string;
+    // 归档信息
+    archived: boolean;
+    archivedPath: string;   // 归档后的本地路径 /files/xxx
+    archivedAt: number;     // 归档时间戳
+    // 兼容旧数据
+    filePath: string;       // deprecated
 }
 
 /**
@@ -313,13 +320,17 @@ export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
                 currentContent[0]?.text === "/"));
 
     const fileProps = {
-        filePath: fileInfo.filePath,
+        originalPath: fileInfo.originalPath,
         fileName: fileInfo.fileName,
         fileSize: fileInfo.fileSize,
         fileType: fileInfo.fileType,
         mimeType: fileInfo.mimeType,
+        archived: fileInfo.archived || false,
+        archivedPath: fileInfo.archivedPath || "",
+        archivedAt: fileInfo.archivedAt || 0,
         loading: false,
         error: "",
+        fileMissing: false,
         indexed: false,
         indexing: false,
         indexError: "",
@@ -359,7 +370,7 @@ export function createFileMenuItem(
                 const block = insertFileBlock(editor, fileInfo);
                 const docId = getDocId();
                 if (docId) {
-                    indexFileBlock(editor, block.id, fileInfo.filePath, docId);
+                    indexFileBlock(editor, block.id, fileInfo.originalPath, docId);
                 }
             }
         },

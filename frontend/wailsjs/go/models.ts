@@ -61,6 +61,20 @@ export namespace document {
 
 export namespace handlers {
 	
+	export class ArchiveResult {
+	    archivedPath: string;
+	    archivedAt: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ArchiveResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.archivedPath = source["archivedPath"];
+	        this.archivedAt = source["archivedAt"];
+	    }
+	}
 	export class ChunkMatch {
 	    blockId: string;
 	    sourceBlockId?: string;
@@ -140,11 +154,15 @@ export namespace handlers {
 	    }
 	}
 	export class FileInfo {
-	    filePath: string;
+	    originalPath: string;
 	    fileName: string;
 	    fileSize: number;
 	    fileType: string;
 	    mimeType: string;
+	    archived: boolean;
+	    archivedPath: string;
+	    archivedAt: number;
+	    filePath: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new FileInfo(source);
@@ -152,11 +170,15 @@ export namespace handlers {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.filePath = source["filePath"];
+	        this.originalPath = source["originalPath"];
 	        this.fileName = source["fileName"];
 	        this.fileSize = source["fileSize"];
 	        this.fileType = source["fileType"];
 	        this.mimeType = source["mimeType"];
+	        this.archived = source["archived"];
+	        this.archivedPath = source["archivedPath"];
+	        this.archivedAt = source["archivedAt"];
+	        this.filePath = source["filePath"];
 	    }
 	}
 	export class RAGStatus {
