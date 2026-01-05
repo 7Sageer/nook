@@ -272,6 +272,7 @@ func (h *FileHandler) OpenFileDialog() (*FileInfo, error) {
 	filePath, err := runtime.OpenFileDialog(h.Context(), runtime.OpenDialogOptions{
 		Title: constant.DialogTitleSelectFile,
 		Filters: []runtime.FileFilter{
+			{DisplayName: constant.FilterAll, Pattern: "*.*"},
 			{DisplayName: constant.FilterSupportedFiles, Pattern: "*.md;*.txt;*.pdf;*.docx;*.html;*.htm"},
 			{DisplayName: constant.FilterMarkdown, Pattern: "*.md"},
 			{DisplayName: constant.FilterText, Pattern: "*.txt"},

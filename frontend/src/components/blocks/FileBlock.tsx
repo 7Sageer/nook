@@ -1,7 +1,7 @@
 import { createReactBlockSpec } from "@blocknote/react";
 import { defaultProps } from "@blocknote/core";
 import { useCallback, useState, useEffect } from "react";
-import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace, Archive, ArchiveRestore, RefreshCcw, Link, AlertTriangle } from "lucide-react";
+import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace, Archive, ArchiveRestore, RefreshCcw, Link, AlertTriangle, FolderOpen } from "lucide-react";
 import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent, OpenFileDialog, ArchiveFile, UnarchiveFile, SyncArchivedFile, CheckFileExists, RevealInFinder, GetEffectiveFilePath } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
 import { ContentViewerModal } from "../ContentViewerModal";
@@ -447,7 +447,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         handleRevealInFinder();
                     }}
                 >
-                    <Eye size={14} />
+                    <FolderOpen size={14} />
                 </button>
             </div>
             <ContentViewerModal
