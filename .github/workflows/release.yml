@@ -89,9 +89,18 @@ jobs:
         env:
           CGO_ENABLED: 1
 
+      - name: List build output
+        run: Get-ChildItem -Path build/bin -Recurse
+
       - name: Rename installer
         run: |
-          Move-Item build/bin/Nook-amd64-installer.exe build/bin/Nook-${{ github.ref_name }}-windows-installer.exe
+          $installer = Get-ChildItem -Path build/bin -Filter "*-installer.exe" | Select-Object -First 1
+          if ($installer) {
+            Move-Item $installer.FullName build/bin/Nook-${{ github.ref_name }}-windows-installer.exe
+          } else {
+            Write-Error "No installer found in build/bin"
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
