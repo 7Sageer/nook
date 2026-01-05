@@ -17,7 +17,7 @@ func IsTextFile(filePath string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	// 读取前 8KB
 	buf := make([]byte, 8*1024)

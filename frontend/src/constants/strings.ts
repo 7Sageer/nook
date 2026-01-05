@@ -63,7 +63,7 @@ export const EN = {
         EXTERNAL_FILE: "External File",
         BOOKMARK: "Bookmark",
         FILE: "File",
-        FILE_SUBTEXT: "Embed MD, TXT file",
+        FILE_SUBTEXT: "Embed any text file (code, documents, etc.)",
         FOLDER: "Folder",
         FOLDER_SUBTEXT: "Index a folder for RAG",
         DOCUMENTS: "Documents",

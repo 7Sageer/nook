@@ -374,7 +374,7 @@ export function createFileMenuItem(
                 }
             }
         },
-        aliases: ["file", "document", "attachment", "pdf", "txt", "md"],
+        aliases: ["file", "document", "attachment", "pdf", "txt", "md", "code", "py", "js", "go", "json"],
         group: "Media",
         icon: (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -382,7 +382,7 @@ export function createFileMenuItem(
                 <polyline points="14 2 14 8 20 8" />
             </svg>
         ),
-        subtext: strings.LABELS.FILE_SUBTEXT || "Embed MD, TXT file",
+        subtext: strings.LABELS.FILE_SUBTEXT || "Embed any text file",
     };
 }
 
