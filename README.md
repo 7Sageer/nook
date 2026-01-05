@@ -6,6 +6,7 @@
 
 <p align="center">
   Write. Gather. Connect.
+  
   Nook is a local-first knowledge base that gathers your notes and files into one semantic memory for your own AI assistant.
 </p>
 
