@@ -75,9 +75,9 @@ catch {
 }
 Write-Host ""
 
-# run wails build
-Write-Host "Running wails build with version info..."
-wails build -ldflags $ldflags
+# run wails build with NSIS installer
+Write-Host "Running wails build with version info and NSIS installer..."
+wails build -ldflags $ldflags -nsis
 
 # Build MCP server
 Write-Host "Building MCP server..."

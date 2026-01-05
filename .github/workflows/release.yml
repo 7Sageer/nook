@@ -89,15 +89,15 @@ jobs:
         env:
           CGO_ENABLED: 1
 
-      - name: Create ZIP
+      - name: Rename installer
         run: |
-          Compress-Archive -Path build/bin/Nook.exe, build/bin/nook-mcp.exe -DestinationPath build/bin/Nook-${{ github.ref_name }}-windows.zip
+          Move-Item build/bin/Nook-amd64-installer.exe build/bin/Nook-${{ github.ref_name }}-windows-installer.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Nook-windows
-          path: build/bin/*.zip
+          path: build/bin/*-installer.exe
 
   # ==================== Linux 构建 ====================
   build-linux:

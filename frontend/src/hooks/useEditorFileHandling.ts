@@ -16,12 +16,14 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
 
     // Block browser default file opening behavior globally
     // This is critical to prevent PDF/images from opening in WebView
+    // Note: Only use preventDefault(), NOT stopPropagation() - Wails needs the events to propagate
     useEffect(() => {
         const blockFileDrop = (event: DragEvent) => {
             // Only block if Files are being dragged
             if (event.dataTransfer?.types?.includes("Files")) {
+                // Only prevent default browser behavior (opening file in WebView)
+                // Do NOT call stopPropagation() - Wails needs to receive these events
                 event.preventDefault();
-                event.stopPropagation();
             }
         };
 
