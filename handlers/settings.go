@@ -26,18 +26,19 @@ type Settings struct {
 	Theme        string `json:"theme"`
 	Language     string `json:"language"`
 	SidebarWidth int    `json:"sidebarWidth"`
+	WritingStyle string `json:"writingStyle"`
 }
 
 // GetSettings 获取用户设置
 func (h *SettingsHandler) GetSettings() (Settings, error) {
 	s, err := h.settingsService.Get()
 	if err != nil {
-		return Settings{Theme: "light", Language: "zh", SidebarWidth: 0}, nil
+		return Settings{Theme: "light", Language: "zh", SidebarWidth: 0, WritingStyle: ""}, nil
 	}
-	return Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth}, nil
+	return Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth, WritingStyle: s.WritingStyle}, nil
 }
 
 // SaveSettings 保存用户设置
 func (h *SettingsHandler) SaveSettings(s Settings) error {
-	return h.settingsService.Save(settings.Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth})
+	return h.settingsService.Save(settings.Settings{Theme: s.Theme, Language: s.Language, SidebarWidth: s.SidebarWidth, WritingStyle: s.WritingStyle})
 }

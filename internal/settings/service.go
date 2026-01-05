@@ -10,6 +10,7 @@ type Settings struct {
 	Theme        string `json:"theme"`
 	Language     string `json:"language"`
 	SidebarWidth int    `json:"sidebarWidth"` // 侧边栏宽度, 0 表示默认值
+	WritingStyle string `json:"writingStyle"` // 写作风格指南
 }
 
 // Service 设置服务

@@ -28,8 +28,8 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolRenameDocument(params.Arguments)
 	case "search_documents":
 		result = s.toolSearchDocuments(params.Arguments)
-	case "get_blocknote_schema":
-		result = s.toolGetBlockNoteSchema()
+	case "get_content_guide":
+		result = s.toolGetContentGuide()
 	// Tag tools
 	case "list_tags":
 		result = s.toolListTags()

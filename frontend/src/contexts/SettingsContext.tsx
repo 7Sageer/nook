@@ -14,10 +14,12 @@ interface SettingsContextType {
     themeSetting: ThemeSetting;
     language: LanguageSetting;
     sidebarWidth: number;
+    writingStyle: string;
     toggleTheme: () => void;
     setThemeSetting: (theme: ThemeSetting) => void;
     setLanguage: (lang: LanguageSetting) => void;
     setSidebarWidth: (width: number) => void;
+    setWritingStyle: (style: string) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -44,6 +46,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const themeSetting = (settings.theme as ThemeSetting) || 'light';
     const language = (settings.language as LanguageSetting) || getSystemLanguage();
     const sidebarWidth = (settings.sidebarWidth > 0) ? settings.sidebarWidth : DEFAULT_SIDEBAR_WIDTH;
+    const writingStyle = settings.writingStyle || '';
 
     // Resolve theme based on setting and system preference
     useEffect(() => {
@@ -98,6 +101,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateSettings({ sidebarWidth: clampedWidth });
     };
 
+    const handleSetWritingStyle = (style: string) => {
+        updateSettings({ writingStyle: style });
+    };
+
     if (!isLoaded) {
         return null; // or a loading spinner? returning null prevents flashing default styles incorrectly
     }
@@ -108,10 +115,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             themeSetting,
             language,
             sidebarWidth,
+            writingStyle,
             toggleTheme,
             setThemeSetting,
             setLanguage: handleSetLanguage,
-            setSidebarWidth: handleSetSidebarWidth
+            setSidebarWidth: handleSetSidebarWidth,
+            setWritingStyle: handleSetWritingStyle
         }}>
             {children}
         </SettingsContext.Provider>

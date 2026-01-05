@@ -203,6 +203,7 @@ export namespace handlers {
 	    theme: string;
 	    language: string;
 	    sidebarWidth: number;
+	    writingStyle: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -213,6 +214,7 @@ export namespace handlers {
 	        this.theme = source["theme"];
 	        this.language = source["language"];
 	        this.sidebarWidth = source["sidebarWidth"];
+	        this.writingStyle = source["writingStyle"];
 	    }
 	}
 

@@ -5,10 +5,12 @@ import type { MCPInfo } from '../../types/settings';
 
 interface MCPPanelProps {
     mcpInfo: MCPInfo;
+    writingStyle: string;
+    onWritingStyleChange: (style: string) => void;
     strings: ReturnType<typeof getStrings>;
 }
 
-export const MCPPanel: React.FC<MCPPanelProps> = ({ mcpInfo, strings }) => {
+export const MCPPanel: React.FC<MCPPanelProps> = ({ mcpInfo, writingStyle, onWritingStyleChange, strings }) => {
     const [copiedPath, setCopiedPath] = useState(false);
     const [copiedConfig, setCopiedConfig] = useState(false);
 
@@ -68,6 +70,19 @@ export const MCPPanel: React.FC<MCPPanelProps> = ({ mcpInfo, strings }) => {
                             {copiedConfig ? <Check size={14} /> : <Copy size={14} />}
                         </button>
                     </div>
+                </div>
+
+                {/* 写作风格编辑器 */}
+                <div className="form-group">
+                    <label>{strings.SETTINGS.WRITING_STYLE}</label>
+                    <textarea
+                        className="writing-style-textarea"
+                        value={writingStyle}
+                        onChange={(e) => onWritingStyleChange(e.target.value)}
+                        placeholder={strings.SETTINGS.WRITING_STYLE_PLACEHOLDER}
+                        rows={10}
+                    />
+                    <p className="form-hint">{strings.SETTINGS.WRITING_STYLE_HINT}</p>
                 </div>
 
                 {/* 功能列表 */}

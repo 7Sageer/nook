@@ -23,7 +23,7 @@ interface SettingsModalProps {
 export type SettingsTab = 'appearance' | 'knowledge' | 'graph' | 'embedding' | 'mcp' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
-    const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth } = useSettings();
+    const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth, writingStyle, setWritingStyle } = useSettings();
     const { showToast } = useToast();
     const STRINGS = getStrings(language);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -275,6 +275,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                                     {activeTab === 'mcp' && (
                                         <MCPPanel
                                             mcpInfo={mcpInfo}
+                                            writingStyle={writingStyle}
+                                            onWritingStyleChange={setWritingStyle}
                                             strings={STRINGS}
                                         />
                                     )}

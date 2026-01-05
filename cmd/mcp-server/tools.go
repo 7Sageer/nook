@@ -83,8 +83,8 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			},
 		},
 		{
-			Name:        "get_blocknote_schema",
-			Description: "Get the BlockNote JSON schema documentation. Call this before creating or updating document content to understand the correct format.",
+			Name:        "get_content_guide",
+			Description: "Get content creation guide including BlockNote JSON schema and writing style preferences. Call this before creating or updating document content.",
 			InputSchema: InputSchema{Type: "object"},
 		},
 		// Tag tools

@@ -10,6 +10,7 @@ import (
 	"notion-lite/internal/document"
 	"notion-lite/internal/rag"
 	"notion-lite/internal/search"
+	"notion-lite/internal/settings"
 	"notion-lite/internal/tag"
 	"notion-lite/internal/utils"
 )
@@ -37,12 +38,13 @@ type RPCError struct {
 
 // MCP Server
 type MCPServer struct {
-	docRepo       *document.Repository
-	docStorage    *document.Storage
-	tagStore      *tag.Store
-	searchService *search.Service
-	ragService    *rag.Service
-	paths         *utils.PathBuilder
+	docRepo         *document.Repository
+	docStorage      *document.Storage
+	tagStore        *tag.Store
+	searchService   *search.Service
+	ragService      *rag.Service
+	settingsService *settings.Service
+	paths           *utils.PathBuilder
 }
 
 func NewMCPServer() *MCPServer {
@@ -55,14 +57,16 @@ func NewMCPServer() *MCPServer {
 	docRepo := document.NewRepository(paths)
 	docStorage := document.NewStorage(paths)
 	tagStore := tag.NewStore(paths)
+	settingsService := settings.NewService(paths)
 
 	return &MCPServer{
-		docRepo:       docRepo,
-		docStorage:    docStorage,
-		tagStore:      tagStore,
-		searchService: search.NewService(docRepo, docStorage),
-		ragService:    rag.NewService(paths, docRepo, docStorage),
-		paths:         paths,
+		docRepo:         docRepo,
+		docStorage:      docStorage,
+		tagStore:        tagStore,
+		searchService:   search.NewService(docRepo, docStorage),
+		ragService:      rag.NewService(paths, docRepo, docStorage),
+		settingsService: settingsService,
+		paths:           paths,
 	}
 }
 

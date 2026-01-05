@@ -1,6 +1,6 @@
 package main
 
-func (s *MCPServer) toolGetBlockNoteSchema() ToolCallResult {
+func (s *MCPServer) toolGetContentGuide() ToolCallResult {
 	schema := `# BlockNote JSON Schema
 
 Document content is a JSON array of blocks. Each block must have:
@@ -122,5 +122,29 @@ Text styles in "styles" object:
 3. "children" is used for nested blocks (indented content)
 4. Default props can be omitted, but "id" and "type" are required`
 
-	return textResult(schema)
+	// 读取用户写作风格设置
+	settings, err := s.settingsService.Get()
+	writingStyle := ""
+	if err == nil && settings.WritingStyle != "" {
+		writingStyle = settings.WritingStyle
+	} else {
+		// 默认写作风格模板
+		writingStyle = `## 语言偏好
+- 默认使用中文
+- 技术术语保留英文
+
+## 格式约定
+- 标题：使用 H2 作为主要章节标题
+- 列表：优先使用无序列表
+- 代码：标注语言类型
+
+## 内容风格
+- 简洁直接，避免冗余
+- 使用主动语态`
+	}
+
+	// 拼接写作风格指南
+	guide := schema + "\n\n---\n\n# Writing Style Guide\n\n" + writingStyle
+
+	return textResult(guide)
 }

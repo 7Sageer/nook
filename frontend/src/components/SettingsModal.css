@@ -203,6 +203,30 @@
     border-color: var(--accent-color);
 }
 
+/* 写作风格编辑器 */
+.writing-style-textarea {
+    padding: 8px 12px;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.writing-style-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.form-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
 /* 操作按钮 */
 .settings-action-btn {
     display: inline-flex;
