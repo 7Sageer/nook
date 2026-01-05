@@ -84,11 +84,8 @@ jobs:
       - name: Install frontend dependencies
         run: cd frontend && npm ci
 
-      - name: Check NSIS installation
-        run: |
-          Write-Host "Checking NSIS..."
-          makensis /VERSION
-          Write-Host "NSIS is available"
+      - name: Install NSIS
+        run: choco install nsis -y
 
       - name: Build application
         run: ./scripts/fix_and_build.ps1
