@@ -44,7 +44,7 @@ func init() {
 
 	if len(pathsToAdd) > 0 {
 		newPath := strings.Join(pathsToAdd, ":") + ":" + currentPath
-		os.Setenv("PATH", newPath)
+		_ = os.Setenv("PATH", newPath)
 	}
 }
 
