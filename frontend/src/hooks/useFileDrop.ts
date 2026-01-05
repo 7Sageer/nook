@@ -11,9 +11,6 @@ interface UseFileDropProps {
     docId?: string;
 }
 
-// 支持的文件类型
-const SUPPORTED_FILE_EXTENSIONS = ['md', 'txt', 'pdf', 'docx', 'html', 'htm'];
-
 // Wails 事件数据类型
 interface FileDroppedData {
     path: string;
@@ -29,18 +26,17 @@ interface FolderDroppedData {
 
 /**
  * 监听 Wails 拖拽事件，统一处理文件和文件夹拖拽
+ * 注意：不再在前端过滤文件类型，让后端索引时自动检测是否为文本文件
  */
 export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
     useEffect(() => {
         if (!editor) return;
 
-        // 处理文件拖拽
+        // 处理文件拖拽 - 接受所有文件类型
         const handleFileDrop = async (data: FileDroppedData) => {
-            const ext = data.name.split('.').pop()?.toLowerCase();
-
-            // 只处理支持的文件类型
-            if (!SUPPORTED_FILE_EXTENSIONS.includes(ext || '')) {
-                console.log('Unsupported file type:', ext);
+            // 验证数据有效性
+            if (!data?.path || !data?.name) {
+                console.warn('[useFileDrop] Invalid file drop data:', data);
                 return;
             }
 
@@ -49,7 +45,7 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
                 const fileInfo = await CopyFileToStorage(data.path);
                 if (fileInfo) {
                     const block = insertFileBlock(editor, fileInfo);
-                    // 自动索引
+                    // 自动索引 - 后端会自动检测文件是否可索引
                     if (docId) {
                         indexFileBlock(editor, block.id, fileInfo.originalPath, docId);
                     }

@@ -14,22 +14,42 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
     // Handle Wails file drop events
     useFileDrop({ editor, docId });
 
-    // Handle native browser drag/drop events (prevent default file opening)
+    // Block browser default file opening behavior globally
+    // This is critical to prevent PDF/images from opening in WebView
+    useEffect(() => {
+        const blockFileDrop = (event: DragEvent) => {
+            // Only block if Files are being dragged
+            if (event.dataTransfer?.types?.includes("Files")) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+
+        // Use capture phase to intercept events before they reach any other handler
+        window.addEventListener("dragover", blockFileDrop, { capture: true });
+        window.addEventListener("drop", blockFileDrop, { capture: true });
+
+        return () => {
+            window.removeEventListener("dragover", blockFileDrop, { capture: true });
+            window.removeEventListener("drop", blockFileDrop, { capture: true });
+        };
+    }, []);
+
+    // Also block on the container for extra safety
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
-        const shouldBlockDefaultDrop = (event: DragEvent) =>
-            event.dataTransfer?.types?.includes("Files") ?? false;
-
         const handleDragOver = (event: DragEvent) => {
-            if (!shouldBlockDefaultDrop(event)) return;
-            event.preventDefault();
+            if (event.dataTransfer?.types?.includes("Files")) {
+                event.preventDefault();
+            }
         };
 
         const handleDrop = (event: DragEvent) => {
-            if (!shouldBlockDefaultDrop(event)) return;
-            event.preventDefault();
+            if (event.dataTransfer?.types?.includes("Files")) {
+                event.preventDefault();
+            }
         };
 
         container.addEventListener("dragover", handleDragOver);
@@ -38,12 +58,5 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
             container.removeEventListener("dragover", handleDragOver);
             container.removeEventListener("drop", handleDrop);
         };
-    }, [containerRef]); // Empty dependency array as containerRef.current logic usually inside effect needs ref in deps or assume stable? 
-    // Usually ref.current is mutable so effect running once is typically fine if ref attached initially.
-    // However, if strict mode/react behavior, better safe. 
-    // But ref updates don't trigger re-render. 
-    // If containerRef.current is null initially and set later, this effect might miss it if args empty.
-    // But `editorContainerRef` in Editor.tsx is attached to `div`. `Editor` renders `div`.
-    // So usually ref is populated when effect runs?
-    // Actually, ref is guaranteed populated after first render commit.
+    }, [containerRef]);
 }
