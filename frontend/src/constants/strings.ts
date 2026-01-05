@@ -144,8 +144,7 @@ export const EN = {
     ABOUT: {
         TITLE: "About",
         APP_NAME: "Nook",
-        VERSION: "v1.0.0",
-        DESCRIPTION: "Notebook, Knowledge Base, Second Brain",
+        DESCRIPTION: "Write. Gather. Connect.\nNook is a local-first knowledge base that gathers your notes and files into one semantic memory for your AI.",
         AUTHOR: "Author",
         LICENSE: "License",
         COPYRIGHT: "Copyright",

@@ -26,22 +26,26 @@ const {
 
 /**
  * Custom collision detection that prioritizes expanded groups over collapsed ones.
- * When dragging across collapsed groups, they won't be selected unless they are the
- * only match (i.e., pointer is directly on the collapsed group's header).
+ * For collapsed containers, uses closestCenter to select the nearest target
+ * instead of relying on pointerWithin's order (which may favor earlier DOM elements).
  */
 export const collisionDetectionWithExpandedPriority: CollisionDetection = (args) => {
     const activeType = args.active?.data?.current?.type;
-    let collisions = pointerWithin(args);
 
+    // Pinned Tag 拖放：使用 closestCenter 选择最近的 pinned-tag
     if (activeType === 'pinned-tag') {
         const pinnedTagTargets = closestCenter(args).filter(collision => {
             const data = collision.data?.droppableContainer?.data?.current;
             return data?.type === 'pinned-tag';
         });
-        return pinnedTagTargets.length > 0 ? pinnedTagTargets : collisions;
+        return pinnedTagTargets.length > 0 ? pinnedTagTargets : pointerWithin(args);
     }
 
+    // 文档拖放
+    let collisions = pointerWithin(args);
+
     if (activeType === 'document') {
+        // 过滤掉 pinned-tag 类型（文档不能直接拖到 pinned-tag 的 sortable 容器）
         collisions = collisions.filter(collision => {
             const data = collision.data?.droppableContainer?.data?.current;
             return data?.type !== 'pinned-tag';
@@ -52,6 +56,7 @@ export const collisionDetectionWithExpandedPriority: CollisionDetection = (args)
         return collisions;
     }
 
+    // 优先级 1：文档目标（用于同容器内排序）
     const documentTargets = collisions.filter(collision => {
         if (!isDocInstanceDndId(String(collision.id))) return false;
         const data = collision.data?.droppableContainer?.data?.current;
@@ -62,18 +67,34 @@ export const collisionDetectionWithExpandedPriority: CollisionDetection = (args)
         return documentTargets;
     }
 
-    // Check if any collision is with an expanded (non-collapsed) doc-container
+    // 优先级 2：展开的容器
     const expandedContainers = collisions.filter(collision => {
         const data = collision.data?.droppableContainer?.data?.current;
         return data?.type === 'doc-container' && !data?.collapsed;
     });
 
-    // If there are expanded containers, prefer them
     if (expandedContainers.length > 0) {
         return expandedContainers;
     }
 
-    // Otherwise return original collisions
+    // 优先级 3：折叠的容器 - 使用 closestCenter 选择最近的
+    const collapsedContainerIds = new Set(
+        collisions
+            .filter(c => {
+                const data = c.data?.droppableContainer?.data?.current;
+                return data?.type === 'doc-container' && data?.collapsed;
+            })
+            .map(c => c.id)
+    );
+
+    if (collapsedContainerIds.size > 0) {
+        // 使用 closestCenter 重新计算，只考虑已检测到的折叠容器
+        const closestCollisions = closestCenter(args).filter(c => collapsedContainerIds.has(c.id));
+        if (closestCollisions.length > 0) {
+            return closestCollisions;
+        }
+    }
+
     return collisions;
 };
 
