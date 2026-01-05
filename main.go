@@ -20,6 +20,34 @@ import (
 	"notion-lite/internal/constant"
 )
 
+// init 扩展 PATH 环境变量，使打包后的应用也能找到外部工具（如 pandoc, pdftotext）
+// macOS GUI 应用启动时不会继承终端的 PATH，只有精简的系统路径
+func init() {
+	// 常见的外部工具安装路径
+	additionalPaths := []string{
+		"/opt/homebrew/bin",              // macOS Apple Silicon (Homebrew)
+		"/usr/local/bin",                 // macOS Intel (Homebrew) / Linux common
+		"/home/linuxbrew/.linuxbrew/bin", // Linuxbrew
+	}
+
+	currentPath := os.Getenv("PATH")
+	var pathsToAdd []string
+
+	for _, p := range additionalPaths {
+		// 检查路径是否存在且不在当前 PATH 中
+		if _, err := os.Stat(p); err == nil {
+			if !strings.Contains(currentPath, p) {
+				pathsToAdd = append(pathsToAdd, p)
+			}
+		}
+	}
+
+	if len(pathsToAdd) > 0 {
+		newPath := strings.Join(pathsToAdd, ":") + ":" + currentPath
+		os.Setenv("PATH", newPath)
+	}
+}
+
 //go:embed all:frontend/dist
 var assets embed.FS
 

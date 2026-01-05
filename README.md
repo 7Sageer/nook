@@ -4,29 +4,40 @@
   <img src="logo.png" alt="Nook Logo" width="120">
 </p>
 
+<h3 align="center">Write. Gather. Connect.</h3>
+
 <p align="center">
-  Write. Gather. Connect.
-  
-  Nook is a local-first knowledge base that gathers your notes and files into one semantic memory for your own AI assistant.
+  The missing memory layer for your AI workflow. <br/>
+  Nook is a local-first knowledge base that indexes your files and feeds them to <b>Raycast</b>,  <b>Claude</b> or other agents via MCP.
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
+  <a href="#key-features">Key Features</a> •
+  <a href="#why-nook">Why Nook?</a> •
   <a href="#installation">Installation</a> •
-  <a href="#usage-guide">Usage Guide</a> •
   <a href="#license">License</a>
 </p>
 
+<br/>
+
+## Key Features
+
+- 🗂️ **Filesystem as First-Class Citizen** - Don't move your files. Nook indexes your local folders, PDFs, and code repositories where they are.
+- 🌐 **Web Archiver** - Paste a URL, and Nook saves the *content*, not just the link. Permanent context for your AI.
+- 🧠 **Local Semantic Search** - Powered by local vector embeddings. Search by meaning, not just keywords.
+- 🔌 **AI-Ready Context (MCP)** - Acts as a [Model Context Protocol](https://modelcontextprotocol.io) server. Connect your local knowledge directly to Cursor, Raycast, and Claude Desktop.
+- 🔒 **100% Local & Private** - Built with Wails (Go). No cloud servers, no data sniffing. Your data stays on your disk.
+- 📝 **Modern Block Editor** - A clean, Notion-like writing experience for when you need to capture thoughts.
+
+
+## Why Nook?
+
+Most knowledge bases force you to move your data into their silo. Nook is different:
+1.  **It Gathers:** It respects your existing file system.
+2.  **It Connects:** It believes your notes should be readable by your AI agents.
+3.  **It Stays Local:** It gives you the power of RAG without sending private docs to the cloud.
+
 ---
-
-## Features
-
-- 📝 **Block-based Editor** - Modern editing experience powered by BlockNote
-- 🔍 **Semantic Search** - Intelligent content retrieval using vector embeddings
-- 🗂️ **Local File Integration** - Support for embedding local folders, files, and bookmarks
-- 🏷️ **Tagging System** - Flexible document organization and categorization
-- 🌐 **Knowledge Graph** - Visualize semantic relationships between documents
-- 🌙 **Dark/Light Mode** - Automatically adapts to system themes
 
 ## Installation
 
@@ -36,35 +47,31 @@
 - Node.js 18+
 - [Wails CLI](https://wails.io/docs/gettingstarted/installation)
 
-### Optional Tools (Enhanced Features)
+### Optional Tools (For PDF/Doc Parsing)
 
-Install the following tools to enhance PDF and DOCX import capabilities:
+To enable full-text indexing for binary files, install the following:
 
 **macOS:**
 ```bash
 brew install pandoc poppler
+
 ```
 
 **Windows:**
+
 ```powershell
-# Using Chocolatey
 choco install pandoc poppler
 
-# Or using Scoop
-scoop install pandoc poppler
 ```
 
 **Linux (Debian/Ubuntu):**
+
 ```bash
 sudo apt install pandoc poppler-utils
+
 ```
 
-**Linux (Fedora/RHEL):**
-```bash
-sudo dnf install pandoc poppler-utils
-```
-
-### Development Environment
+### Development
 
 ```bash
 # Clone the repository
@@ -74,44 +81,38 @@ cd nook
 # Install frontend dependencies
 cd frontend && npm install && cd ..
 
-# Start the development server
+# Start the app in dev mode
 wails dev
+
 ```
 
 ### Build Distribution
 
 ```bash
 wails build
-```
 
-The build output will be generated in the `build/bin/` directory.
+```
 
 ## Usage Guide
 
-### Basic Operations
+### 🤖 Connecting to AI (MCP)
 
-1. **Create New Note** - Click the "+" button in the sidebar or use the shortcut.
-2. **Edit Content** - Use the block editor, which supports Markdown syntax.
-3. **Add Tags** - Add tags at the top of the document for categorization.
-4. **Search** - Use the top search bar for full-text or semantic search.
+You can run Nook as an MCP server locally. To use Nook with **Claude Desktop** or **Raycast**:
 
-### Embedding External Content
+1. Open Nook Settings -> MCP Integration.
+2. Copy the configuration JSON.
+3. Paste it into your `claude_desktop_config.json` or Raycast MCP settings.
 
-- **Folders** - Drag and drop folders into the editor.
-- **Files** - Drag and drop PDF, Word, and other files.
-- **Bookmarks** - Use the `/bookmark` command to add web links.
+### 📝 Core Workflow
 
-### Shortcuts
-
-| Shortcut | Function |
-|----------|----------|
-| `Cmd/Ctrl + N` | New Document |
-| `Cmd/Ctrl + F` | Search |
-| `Cmd/Ctrl + S` | Save |
+1. **Gather:** Drag your project folders, PDF library and bookmarks from internet into Nook.
+2. **Write:** Use the block editor to comment and capture your thoughts.
+3. **Index:** Nook will silently generate vector embeddings in the background.
+4. **Connect:** Open Raycast/Cursor and ask: *"Summarize the architecture document I added to Nook yesterday."*
 
 ## License
 
-This project is licensed under the [GNU AGPL v3](LICENSE).
+This project is licensed under the [GNU AGPL v3](https://www.google.com/search?q=LICENSE).
 
 ---
 

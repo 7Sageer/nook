@@ -1,8 +1,8 @@
 package main
 
-import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // 内容截断限制（约 10KB）
@@ -43,15 +43,38 @@ func (s *MCPServer) toolListDocuments(args json.RawMessage) ToolCallResult {
 	}
 
 	// 构建分页结果
+	type documentResponse struct {
+		ID        string   `json:"id"`
+		Title     string   `json:"title"`
+		FolderId  string   `json:"folderId,omitempty"`
+		Tags      []string `json:"tags,omitempty"`
+		Order     int      `json:"order"`
+		CreatedAt string   `json:"createdAt"`
+		UpdatedAt string   `json:"updatedAt"`
+	}
+
 	type paginatedResult struct {
-		Documents interface{} `json:"documents"`
-		Total     int         `json:"total"`
-		Offset    int         `json:"offset"`
-		Limit     int         `json:"limit"`
+		Documents []documentResponse `json:"documents"`
+		Total     int                `json:"total"`
+		Offset    int                `json:"offset"`
+		Limit     int                `json:"limit"`
+	}
+
+	docs := make([]documentResponse, 0, len(index.Documents[start:end]))
+	for _, d := range index.Documents[start:end] {
+		docs = append(docs, documentResponse{
+			ID:        d.ID,
+			Title:     d.Title,
+			FolderId:  d.FolderId,
+			Tags:      d.Tags,
+			Order:     d.Order,
+			CreatedAt: time.UnixMilli(d.CreatedAt).Format("2006-01-02"),
+			UpdatedAt: time.UnixMilli(d.UpdatedAt).Format("2006-01-02"),
+		})
 	}
 
 	result := paginatedResult{
-		Documents: index.Documents[start:end],
+		Documents: docs,
 		Total:     total,
 		Offset:    params.Offset,
 		Limit:     params.Limit,
