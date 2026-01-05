@@ -59,16 +59,37 @@ Write-Host "Version:    $version"
 Write-Host "BuildTime:  $buildTime"
 Write-Host "GitCommit:  $gitCommit"
 
+# 转换版本号为 NSIS 兼容格式 (X.X.X.X)
+# v0.0.16 -> 0.0.16.0
+# v0.0.10-15-gc936107 -> 0.0.10.15
+function ConvertTo-NsisVersion {
+    param([string]$ver)
+    # 移除 v 前缀和 -dirty 后缀
+    $clean = $ver -replace '^v', '' -replace '-dirty$', ''
+    # 匹配 X.X.X 或 X.X.X-N-gXXXX 格式
+    if ($clean -match '^(\d+)\.(\d+)\.(\d+)(?:-(\d+))?') {
+        $major = $matches[1]
+        $minor = $matches[2]
+        $patch = $matches[3]
+        $build = if ($matches[4]) { $matches[4] } else { "0" }
+        return "$major.$minor.$patch.$build"
+    }
+    return "0.0.0.0"
+}
+
+$nsisVersion = ConvertTo-NsisVersion $version
+Write-Host "NSIS Version: $nsisVersion"
+
 # 构建 ldflags
 $ldflags = "-X 'main.Version=$version' -X 'main.BuildTime=$buildTime' -X 'main.GitCommit=$gitCommit'"
 
-# 同步版本号到 wails.json
+# 同步版本号到 wails.json (使用 NSIS 兼容格式)
 Write-Host "Syncing version to wails.json..."
 try {
     $wailsConfig = Get-Content "wails.json" -Raw | ConvertFrom-Json
-    $wailsConfig.info.productVersion = $version
+    $wailsConfig.info.productVersion = $nsisVersion
     $wailsConfig | ConvertTo-Json -Depth 10 | Set-Content "wails.json"
-    Write-Host "✓ wails.json updated to version: $version"
+    Write-Host "✓ wails.json updated to version: $nsisVersion"
 }
 catch {
     Write-Host "⚠ Warning: Failed to update wails.json: $_"
