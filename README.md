@@ -5,38 +5,39 @@
 </p>
 
 <p align="center">
-  一个简洁优雅的本地笔记与知识库应用，支持语义搜索与知识图谱
+  Write. Gather. Connect.
+  Nook is a local-first knowledge base that gathers your notes and files into one semantic memory for your own AI assistant.
 </p>
 
 <p align="center">
-  <a href="#功能特性">功能特性</a> •
-  <a href="#安装部署">安装部署</a> •
-  <a href="#使用指南">使用指南</a> •
-  <a href="#许可证">许可证</a>
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#usage-guide">Usage Guide</a> •
+  <a href="#license">License</a>
 </p>
 
 ---
 
-## 功能特性
+## Features
 
-- 📝 **Block 式编辑器** - 基于 BlockNote 的现代化编辑体验
-- 🔍 **语义搜索** - 使用向量嵌入实现智能内容检索
-- 🗂️ **本地文件集成** - 支持嵌入本地文件夹、文件和书签
-- 🏷️ **标签系统** - 灵活的文档组织与分类
-- 🌐 **知识图谱** - 可视化文档之间的语义关系
-- 🌙 **深色/浅色主题** - 自动适应系统主题
+- 📝 **Block-based Editor** - Modern editing experience powered by BlockNote
+- 🔍 **Semantic Search** - Intelligent content retrieval using vector embeddings
+- 🗂️ **Local File Integration** - Support for embedding local folders, files, and bookmarks
+- 🏷️ **Tagging System** - Flexible document organization and categorization
+- 🌐 **Knowledge Graph** - Visualize semantic relationships between documents
+- 🌙 **Dark/Light Mode** - Automatically adapts to system themes
 
-## 安装部署
+## Installation
 
-### 前置要求
+### Prerequisites
 
 - Go 1.21+
 - Node.js 18+
 - [Wails CLI](https://wails.io/docs/gettingstarted/installation)
 
-### 可选工具（增强功能）
+### Optional Tools (Enhanced Features)
 
-安装以下工具可增强 PDF 和 DOCX 导入能力：
+Install the following tools to enhance PDF and DOCX import capabilities:
 
 **macOS:**
 ```bash
@@ -45,10 +46,10 @@ brew install pandoc poppler
 
 **Windows:**
 ```powershell
-# 使用 Chocolatey
+# Using Chocolatey
 choco install pandoc poppler
 
-# 或使用 Scoop
+# Or using Scoop
 scoop install pandoc poppler
 ```
 
@@ -62,54 +63,54 @@ sudo apt install pandoc poppler-utils
 sudo dnf install pandoc poppler-utils
 ```
 
-### 开发环境
+### Development Environment
 
 ```bash
-# 克隆项目
+# Clone the repository
 git clone https://github.com/7Sageer/nook.git
 cd nook
 
-# 安装前端依赖
+# Install frontend dependencies
 cd frontend && npm install && cd ..
 
-# 启动开发服务器
+# Start the development server
 wails dev
 ```
 
-### 构建发布版
+### Build Distribution
 
 ```bash
 wails build
 ```
 
-构建产物会生成在 `build/bin/` 目录下。
+The build output will be generated in the `build/bin/` directory.
 
-## 使用指南
+## Usage Guide
 
-### 基本操作
+### Basic Operations
 
-1. **创建新笔记** - 点击侧边栏的 "+" 按钮或使用快捷键
-2. **编辑内容** - 使用块编辑器，支持 Markdown 语法
-3. **添加标签** - 在文档顶部添加标签进行分类
-4. **搜索** - 使用顶部搜索栏进行全文或语义搜索
+1. **Create New Note** - Click the "+" button in the sidebar or use the shortcut.
+2. **Edit Content** - Use the block editor, which supports Markdown syntax.
+3. **Add Tags** - Add tags at the top of the document for categorization.
+4. **Search** - Use the top search bar for full-text or semantic search.
 
-### 嵌入外部内容
+### Embedding External Content
 
-- **文件夹** - 拖拽文件夹到编辑器中
-- **文件** - 拖拽 PDF、Word 等文件
-- **书签** - 使用 `/bookmark` 命令添加网页链接
+- **Folders** - Drag and drop folders into the editor.
+- **Files** - Drag and drop PDF, Word, and other files.
+- **Bookmarks** - Use the `/bookmark` command to add web links.
 
-### 快捷键
+### Shortcuts
 
-| 快捷键 | 功能 |
-|--------|------|
-| `Cmd/Ctrl + N` | 新建文档 |
-| `Cmd/Ctrl + F` | 搜索 |
-| `Cmd/Ctrl + S` | 保存 |
+| Shortcut | Function |
+|----------|----------|
+| `Cmd/Ctrl + N` | New Document |
+| `Cmd/Ctrl + F` | Search |
+| `Cmd/Ctrl + S` | Save |
 
-## 许可证
+## License
 
-本项目采用 [GNU AGPL v3](LICENSE) 许可证。
+This project is licensed under the [GNU AGPL v3](LICENSE).
 
 ---
 
