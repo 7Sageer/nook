@@ -4,12 +4,13 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 	tools := []Tool{
 		{
 			Name:        "list_documents",
-			Description: "List all documents in Nook with their metadata (id, title, tags, timestamps)",
+			Description: "List all documents in Nook with their metadata (id, title, tags, timestamps). Optionally filter by tag.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
 					"offset": {Type: "number", Description: "Skip first N documents (default: 0)"},
 					"limit":  {Type: "number", Description: "Maximum documents to return (default: 50, max: 100)"},
+					"tag":    {Type: "string", Description: "Optional: filter documents by tag name"},
 				},
 			},
 		},
@@ -47,18 +48,6 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 					"new_text": {Type: "string", Description: "Text to replace with"},
 				},
 				Required: []string{"id", "old_text", "new_text"},
-			},
-		},
-		{
-			Name:        "append_content",
-			Description: "Append blocks to the end of a document. Use this for adding new content without replacing existing content.",
-			InputSchema: InputSchema{
-				Type: "object",
-				Properties: map[string]Property{
-					"id":      {Type: "string", Description: "Document ID"},
-					"content": {Type: "string", Description: "Blocks to append as BlockNote JSON array"},
-				},
-				Required: []string{"id", "content"},
 			},
 		},
 		{
@@ -182,16 +171,44 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 				Required: []string{"name"},
 			},
 		},
+		// External Block tools
 		{
-			Name:        "list_documents_by_tag",
-			Description: "List all documents that have a specific tag",
+			Name:        "add_bookmark",
+			Description: "Add a bookmark block to a document. The bookmark will fetch webpage metadata (title, description, image) and can be indexed for RAG search. ⚠️ Note: Bookmarked content will be indexed, so only bookmark relevant resources to avoid cluttering the search index.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"tag":   {Type: "string", Description: "Tag name to filter by"},
-					"limit": {Type: "number", Description: "Maximum results to return (default: 50, max: 100)"},
+					"doc_id":         {Type: "string", Description: "Document ID"},
+					"url":            {Type: "string", Description: "URL to bookmark"},
+					"after_block_id": {Type: "string", Description: "Optional: Insert after this block ID. If not provided, appends to end of document."},
 				},
-				Required: []string{"tag"},
+				Required: []string{"doc_id", "url"},
+			},
+		},
+		{
+			Name:        "add_file_reference",
+			Description: "Add a file reference block to a document. The file content can be indexed for RAG search. ⚠️ Note: File content will be indexed, so only reference files that are relevant to avoid cluttering the search index. Supports PDF, DOCX, TXT, MD and other text-based formats.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id":         {Type: "string", Description: "Document ID"},
+					"file_path":      {Type: "string", Description: "Absolute path to the file"},
+					"after_block_id": {Type: "string", Description: "Optional: Insert after this block ID. If not provided, appends to end of document."},
+				},
+				Required: []string{"doc_id", "file_path"},
+			},
+		},
+		{
+			Name:        "add_folder_reference",
+			Description: "Add a folder reference block to a document. All files in the folder can be indexed for RAG search. ⚠️ Note: All folder contents will be indexed, so only reference folders with relevant files to avoid cluttering the search index.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"doc_id":         {Type: "string", Description: "Document ID"},
+					"folder_path":    {Type: "string", Description: "Absolute path to the folder"},
+					"after_block_id": {Type: "string", Description: "Optional: Insert after this block ID. If not provided, appends to end of document."},
+				},
+				Required: []string{"doc_id", "folder_path"},
 			},
 		},
 		// RAG tools

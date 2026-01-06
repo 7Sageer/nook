@@ -20,24 +20,64 @@ func errorResult(msg string) ToolCallResult {
 }
 
 // validateBlockNoteContent validates that content is a valid BlockNote JSON array
+// 采用分层验证策略：
+// 1. 验证 JSON 格式和必需字段（严格）
+// 2. 对未知 block type 记录警告但不拒绝（宽松）
 func validateBlockNoteContent(content string) error {
 	if content == "" {
 		return nil
 	}
-	var blocks []BlockNoteBlock
+
+	// 解析为通用 map 以支持灵活的字段检查
+	var blocks []map[string]interface{}
 	if err := json.Unmarshal([]byte(content), &blocks); err != nil {
-		return err
+		return fmt.Errorf("invalid JSON format: %w", err)
 	}
-	// Validate each block has required fields
+
+	// 验证每个 block 的基本结构
 	for i, block := range blocks {
-		if block.ID == "" {
-			return fmt.Errorf("block %d missing 'id' field", i)
+		// 检查 id 字段
+		id, hasID := block["id"].(string)
+		if !hasID || id == "" {
+			return fmt.Errorf("block %d: missing or invalid 'id' field", i)
 		}
-		if block.Type == "" {
-			return fmt.Errorf("block %d missing 'type' field", i)
+
+		// 检查 type 字段
+		blockType, hasType := block["type"].(string)
+		if !hasType || blockType == "" {
+			return fmt.Errorf("block %d (id: %s): missing or invalid 'type' field", i, id)
+		}
+
+		// 对未知 type 记录警告但不拒绝（向前兼容）
+		if !isKnownBlockType(blockType) {
+			fmt.Printf("Warning: block %d (id: %s) has unknown type '%s', but allowing it\n", i, id, blockType)
 		}
 	}
+
 	return nil
+}
+
+// isKnownBlockType 检查 block type 是否在已知列表中
+// 包括标准 BlockNote types 和自定义 types
+func isKnownBlockType(blockType string) bool {
+	knownTypes := map[string]bool{
+		// 标准 BlockNote block types
+		"paragraph":        true,
+		"heading":          true,
+		"bulletListItem":   true,
+		"numberedListItem": true,
+		"checkListItem":    true,
+		"image":            true,
+		"table":            true,
+		"tableRow":         true,
+		"tableCell":        true,
+		"codeBlock":        true,
+		// 自定义 block types
+		"file":     true,
+		"bookmark": true,
+		"folder":   true,
+	}
+	return knownTypes[blockType]
 }
 
 // BlockNoteBlock represents a minimal BlockNote block structure

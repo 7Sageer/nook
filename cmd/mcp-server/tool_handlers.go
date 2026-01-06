@@ -22,8 +22,6 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolUpdateDocument(params.Arguments)
 	case "edit_document":
 		result = s.toolEditDocument(params.Arguments)
-	case "append_content":
-		result = s.toolAppendContent(params.Arguments)
 	case "delete_document":
 		result = s.toolDeleteDocument(params.Arguments)
 	case "rename_document":
@@ -50,8 +48,13 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolRenameTag(params.Arguments)
 	case "delete_tag":
 		result = s.toolDeleteTag(params.Arguments)
-	case "list_documents_by_tag":
-		result = s.toolListDocumentsByTag(params.Arguments)
+	// External Block tools
+	case "add_bookmark":
+		result = s.toolAddBookmark(params.Arguments)
+	case "add_file_reference":
+		result = s.toolAddFileReference(params.Arguments)
+	case "add_folder_reference":
+		result = s.toolAddFolderReference(params.Arguments)
 	// RAG tools
 	case "semantic_search":
 		result = s.toolSemanticSearch(params.Arguments)

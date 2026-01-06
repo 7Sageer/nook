@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"notion-lite/internal/document"
 )
 
 // 内容截断限制（约 10KB）
@@ -11,8 +13,9 @@ const maxContentLength = 10000
 
 func (s *MCPServer) toolListDocuments(args json.RawMessage) ToolCallResult {
 	var params struct {
-		Offset int `json:"offset"`
-		Limit  int `json:"limit"`
+		Offset int    `json:"offset"`
+		Limit  int    `json:"limit"`
+		Tag    string `json:"tag"`
 	}
 	// 解析参数（可选）
 	if len(args) > 0 {
@@ -32,8 +35,24 @@ func (s *MCPServer) toolListDocuments(args json.RawMessage) ToolCallResult {
 		return errorResult(err.Error())
 	}
 
+	// Tag 过滤（如果提供了 tag 参数）
+	documents := index.Documents
+	if params.Tag != "" {
+		filtered := make([]document.Meta, 0)
+		for _, doc := range index.Documents {
+			// 检查文档是否包含指定的 tag
+			for _, tag := range doc.Tags {
+				if tag == params.Tag {
+					filtered = append(filtered, doc)
+					break
+				}
+			}
+		}
+		documents = filtered
+	}
+
 	// 分页处理
-	total := len(index.Documents)
+	total := len(documents)
 	start := params.Offset
 	if start > total {
 		start = total
@@ -61,8 +80,8 @@ func (s *MCPServer) toolListDocuments(args json.RawMessage) ToolCallResult {
 		Limit     int                `json:"limit"`
 	}
 
-	docs := make([]documentResponse, 0, len(index.Documents[start:end]))
-	for _, d := range index.Documents[start:end] {
+	docs := make([]documentResponse, 0, len(documents[start:end]))
+	for _, d := range documents[start:end] {
 		docs = append(docs, documentResponse{
 			ID:        d.ID,
 			Title:     d.Title,
@@ -232,6 +251,12 @@ func (s *MCPServer) toolEditDocument(args json.RawMessage) ToolCallResult {
 
 	// 保存修改后的文档
 	newContent, _ := json.Marshal(blocks)
+
+	// 验证编辑后的内容是否仍然有效
+	if err := validateBlockNoteContent(string(newContent)); err != nil {
+		return errorResult("Edit resulted in invalid content: " + err.Error())
+	}
+
 	if err := s.docStorage.Save(params.ID, string(newContent)); err != nil {
 		return errorResult("Failed to save: " + err.Error())
 	}
@@ -243,52 +268,4 @@ func (s *MCPServer) toolEditDocument(args json.RawMessage) ToolCallResult {
 	}
 
 	return textResult("Document edited successfully")
-}
-
-// toolAppendContent 在文档末尾追加内容
-func (s *MCPServer) toolAppendContent(args json.RawMessage) ToolCallResult {
-	var params struct {
-		ID      string `json:"id"`
-		Content string `json:"content"`
-	}
-	if err := json.Unmarshal(args, &params); err != nil {
-		return errorResult("Invalid arguments: " + err.Error())
-	}
-
-	// 验证新内容格式
-	if err := validateBlockNoteContent(params.Content); err != nil {
-		return errorResult("Invalid BlockNote content: " + err.Error())
-	}
-
-	// 加载现有文档
-	existingContent, err := s.docStorage.Load(params.ID)
-	if err != nil {
-		return errorResult("Document not found: " + params.ID)
-	}
-
-	// 解析现有内容和新内容
-	var existingBlocks, newBlocks []interface{}
-	if err := json.Unmarshal([]byte(existingContent), &existingBlocks); err != nil {
-		return errorResult("Failed to parse existing document: " + err.Error())
-	}
-	if err := json.Unmarshal([]byte(params.Content), &newBlocks); err != nil {
-		return errorResult("Failed to parse new content: " + err.Error())
-	}
-
-	// 追加新 blocks
-	existingBlocks = append(existingBlocks, newBlocks...)
-
-	// 保存
-	merged, _ := json.Marshal(existingBlocks)
-	if err := s.docStorage.Save(params.ID, string(merged)); err != nil {
-		return errorResult("Failed to save: " + err.Error())
-	}
-	_ = s.docRepo.UpdateTimestamp(params.ID)
-
-	// 触发 RAG 索引
-	if s.ragService != nil {
-		go func() { _ = s.ragService.IndexDocument(params.ID) }()
-	}
-
-	return textResult(fmt.Sprintf("Appended %d blocks successfully", len(newBlocks)))
 }
