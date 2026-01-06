@@ -44,6 +44,8 @@ type App struct {
 	settingsHandler *handlers.SettingsHandler
 	tagHandler      *handlers.TagHandler
 	fileHandler     *handlers.FileHandler
+	imageHandler    *handlers.ImageHandler
+	archiveHandler  *handlers.ArchiveHandler
 
 	pendingExternalOpensMu sync.Mutex
 	pendingExternalOpens   []string
@@ -94,6 +96,8 @@ func NewApp() *App {
 	app.settingsHandler = handlers.NewSettingsHandler(baseHandler, settingsService)
 	app.tagHandler = handlers.NewTagHandler(baseHandler, tagService)
 	app.fileHandler = handlers.NewFileHandler(baseHandler, markdownService)
+	app.imageHandler = handlers.NewImageHandler(baseHandler)
+	app.archiveHandler = handlers.NewArchiveHandler(baseHandler)
 
 	return app
 }
@@ -103,6 +107,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.markdownService.SetContext(ctx)
 	a.fileHandler.SetContext(ctx)
+	a.imageHandler.SetContext(ctx)
 	a.ragHandler.SetContext(ctx)
 
 	// 一次性迁移：将文件夹转换为标签组
@@ -367,27 +372,27 @@ func (a *App) SelectFolderDialog() (string, error) {
 
 // ArchiveFile 将文件归档到本地存储
 func (a *App) ArchiveFile(originalPath string) (*handlers.ArchiveResult, error) {
-	return a.fileHandler.ArchiveFile(originalPath)
+	return a.archiveHandler.ArchiveFile(originalPath)
 }
 
 // UnarchiveFile 删除归档的本地副本
 func (a *App) UnarchiveFile(archivedPath string) error {
-	return a.fileHandler.UnarchiveFile(archivedPath)
+	return a.archiveHandler.UnarchiveFile(archivedPath)
 }
 
 // SyncArchivedFile 从原始路径同步更新归档副本
 func (a *App) SyncArchivedFile(originalPath, archivedPath string) (*handlers.ArchiveResult, error) {
-	return a.fileHandler.SyncArchivedFile(originalPath, archivedPath)
+	return a.archiveHandler.SyncArchivedFile(originalPath, archivedPath)
 }
 
 // CheckFileExists 检查文件是否存在
 func (a *App) CheckFileExists(filePath string) bool {
-	return a.fileHandler.CheckFileExists(filePath)
+	return a.archiveHandler.CheckFileExists(filePath)
 }
 
 // GetEffectiveFilePath 获取有效的文件路径（优先归档副本）
 func (a *App) GetEffectiveFilePath(originalPath, archivedPath string, archived bool) string {
-	return a.fileHandler.GetEffectiveFilePath(originalPath, archivedPath, archived)
+	return a.archiveHandler.GetEffectiveFilePath(originalPath, archivedPath, archived)
 }
 
 // ========== 设置 API (委托给 SettingsHandler) ==========
@@ -481,15 +486,15 @@ func (a *App) LoadExternalFile(path string) (string, error) {
 }
 
 func (a *App) CopyImageToClipboard(base64Data string) error {
-	return a.fileHandler.CopyImageToClipboard(base64Data)
+	return a.imageHandler.CopyImageToClipboard(base64Data)
 }
 
 func (a *App) SaveImage(base64Data string, filename string) (string, error) {
-	return a.fileHandler.SaveImage(base64Data, filename)
+	return a.imageHandler.SaveImage(base64Data, filename)
 }
 
 func (a *App) SaveImageFile(base64Data string, defaultName string) error {
-	return a.fileHandler.SaveImageFile(base64Data, defaultName)
+	return a.imageHandler.SaveImageFile(base64Data, defaultName)
 }
 
 func (a *App) PrintHTML(htmlContent string, title string) error {

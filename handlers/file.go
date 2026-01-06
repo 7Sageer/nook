@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
-	goruntime "runtime"
 	"strings"
 	"time"
 
@@ -15,9 +13,9 @@ import (
 	"notion-lite/internal/fileextract"
 	"notion-lite/internal/markdown"
 	"notion-lite/internal/opengraph"
+	"notion-lite/internal/utils"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.design/x/clipboard"
 )
 
 // FileHandler 文件与图片处理器
@@ -103,79 +101,6 @@ func (h *FileHandler) LoadExternalFile(path string) (string, error) {
 	return string(data), nil
 }
 
-// CopyImageToClipboard 将 base64 编码的 PNG 图片复制到剪贴板
-func (h *FileHandler) CopyImageToClipboard(base64Data string) error {
-	// Initialize clipboard (required for golang.design/x/clipboard)
-	err := clipboard.Init()
-	if err != nil {
-		return err
-	}
-
-	// Decode base64 data
-	imgData, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return err
-	}
-
-	// Write image to clipboard
-	clipboard.Write(clipboard.FmtImage, imgData)
-	return nil
-}
-
-// SaveImage 保存图片到本地并返回文件路径
-func (h *FileHandler) SaveImage(base64Data string, filename string) (string, error) {
-	imagesDir := h.Paths().ImagesDir()
-	if err := os.MkdirAll(imagesDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create images directory: %w", err)
-	}
-
-	imgPath := filepath.Join(imagesDir, filename)
-
-	imgData, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return "", err
-	}
-
-	if err := os.WriteFile(imgPath, imgData, 0644); err != nil {
-		return "", err
-	}
-
-	// Return /images/ URL for use in the editor (served by ImageHandler)
-	return "/images/" + filename, nil
-}
-
-// SaveImageFile 保存图片到指定位置（通过文件对话框）
-func (h *FileHandler) SaveImageFile(base64Data string, defaultName string) error {
-	// Decode base64 data first to validate
-	imgData, err := base64.StdEncoding.DecodeString(base64Data)
-	if err != nil {
-		return err
-	}
-
-	// Open save dialog
-	filePath, err := runtime.SaveFileDialog(h.Context(), runtime.SaveDialogOptions{
-		Title:           "Save as Image",
-		DefaultFilename: defaultName + ".png",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "PNG Image (*.png)", Pattern: "*.png"},
-		},
-	})
-	if err != nil {
-		return err
-	}
-	if filePath == "" {
-		return nil // User cancelled
-	}
-
-	// Ensure .png extension
-	if !strings.HasSuffix(strings.ToLower(filePath), ".png") {
-		filePath += ".png"
-	}
-
-	// Write image to file
-	return os.WriteFile(filePath, imgData, 0644)
-}
-
 // PrintHTML 保存 HTML 到临时文件并在浏览器中打开
 func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 	// 创建临时目录
@@ -194,7 +119,7 @@ func (h *FileHandler) PrintHTML(htmlContent string, title string) error {
 	}
 
 	// 使用系统默认程序打开文件（跨平台）
-	return openWithSystemApp(filePath)
+	return utils.OpenWithSystemApp(filePath)
 }
 
 // FetchLinkMetadata 获取链接的 Open Graph 元数据
@@ -343,7 +268,7 @@ func (h *FileHandler) OpenFileWithSystem(pathOrRelative string) error {
 	}
 	fmt.Println("[OpenFileWithSystem] resolved fullPath:", fullPath)
 
-	err := openWithSystemApp(fullPath)
+	err := utils.OpenWithSystemApp(fullPath)
 	if err != nil {
 		fmt.Println("[OpenFileWithSystem] error:", err)
 	} else {
@@ -369,26 +294,7 @@ func (h *FileHandler) RevealInFinder(pathOrRelative string) error {
 		fullPath = filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(pathOrRelative, "/"))
 	}
 
-	return revealInFileManager(fullPath)
-}
-
-// revealInFileManager 在系统文件管理器中显示文件（跨平台）
-func revealInFileManager(filePath string) error {
-	var cmd *exec.Cmd
-
-	switch goruntime.GOOS {
-	case "darwin":
-		// macOS: open -R 会在 Finder 中显示并选中文件
-		cmd = exec.Command("open", "-R", filePath)
-	case "windows":
-		// Windows: explorer /select, 会在资源管理器中显示并选中文件
-		cmd = exec.Command("explorer", "/select,", filePath)
-	default: // linux and others
-		// Linux: 打开文件所在目录
-		cmd = exec.Command("xdg-open", filepath.Dir(filePath))
-	}
-
-	return cmd.Start()
+	return utils.RevealInFileManager(fullPath)
 }
 
 // randomString 生成随机字符串
@@ -399,134 +305,4 @@ func randomString(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
-}
-
-// openWithSystemApp 使用系统默认应用打开文件（跨平台）
-func openWithSystemApp(filePath string) error {
-	fmt.Println("[openWithSystemApp] opening:", filePath)
-	var cmd *exec.Cmd
-
-	switch goruntime.GOOS {
-	case "darwin":
-		cmd = exec.Command("open", filePath)
-	case "windows":
-		cmd = exec.Command("cmd", "/c", "start", "", filePath)
-	default: // linux and others
-		cmd = exec.Command("xdg-open", filePath)
-	}
-
-	err := cmd.Start()
-	fmt.Println("[openWithSystemApp] cmd.Start() returned:", err)
-	return err
-}
-
-// ========== 归档相关方法 ==========
-
-// ArchiveResult 归档操作结果
-type ArchiveResult struct {
-	ArchivedPath string `json:"archivedPath"`
-	ArchivedAt   int64  `json:"archivedAt"`
-}
-
-// ArchiveFile 将文件归档到本地存储
-func (h *FileHandler) ArchiveFile(originalPath string) (*ArchiveResult, error) {
-	// 检查源文件是否存在
-	if _, err := os.Stat(originalPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("source file not found: %s", originalPath)
-	}
-
-	// 读取源文件
-	data, err := os.ReadFile(originalPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read source file: %w", err)
-	}
-
-	// 确保 files 目录存在
-	filesDir := h.Paths().FilesDir()
-	if err := os.MkdirAll(filesDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create files directory: %w", err)
-	}
-
-	// 生成唯一文件名
-	ext := filepath.Ext(originalPath)
-	filename := fmt.Sprintf("%d-%s%s", time.Now().UnixMilli(), randomString(6), ext)
-	archivedPath := filepath.Join(filesDir, filename)
-
-	// 写入文件
-	if err := os.WriteFile(archivedPath, data, 0644); err != nil {
-		return nil, fmt.Errorf("failed to archive file: %w", err)
-	}
-
-	return &ArchiveResult{
-		ArchivedPath: "/files/" + filename,
-		ArchivedAt:   time.Now().Unix(),
-	}, nil
-}
-
-// UnarchiveFile 删除归档的本地副本
-func (h *FileHandler) UnarchiveFile(archivedPath string) error {
-	if archivedPath == "" {
-		return nil
-	}
-
-	// 构建完整路径
-	fullPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
-
-	// 检查文件是否存在
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return nil // 文件已不存在，视为成功
-	}
-
-	// 删除文件
-	if err := os.Remove(fullPath); err != nil {
-		return fmt.Errorf("failed to delete archived file: %w", err)
-	}
-
-	return nil
-}
-
-// SyncArchivedFile 从原始路径同步更新归档副本
-func (h *FileHandler) SyncArchivedFile(originalPath, archivedPath string) (*ArchiveResult, error) {
-	// 检查源文件是否存在
-	if _, err := os.Stat(originalPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("source file not found: %s", originalPath)
-	}
-
-	// 读取源文件
-	data, err := os.ReadFile(originalPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read source file: %w", err)
-	}
-
-	// 构建归档文件完整路径
-	fullArchivedPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
-
-	// 覆盖写入
-	if err := os.WriteFile(fullArchivedPath, data, 0644); err != nil {
-		return nil, fmt.Errorf("failed to sync archived file: %w", err)
-	}
-
-	return &ArchiveResult{
-		ArchivedPath: archivedPath,
-		ArchivedAt:   time.Now().Unix(),
-	}, nil
-}
-
-// CheckFileExists 检查文件是否存在
-func (h *FileHandler) CheckFileExists(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return err == nil
-}
-
-// GetEffectiveFilePath 获取有效的文件路径（优先归档副本）
-func (h *FileHandler) GetEffectiveFilePath(originalPath, archivedPath string, archived bool) string {
-	if archived && archivedPath != "" {
-		// 优先使用归档副本
-		fullArchivedPath := filepath.Join(h.Paths().DataPath(), strings.TrimPrefix(archivedPath, "/"))
-		if _, err := os.Stat(fullArchivedPath); err == nil {
-			return fullArchivedPath
-		}
-	}
-	// 回退到原始路径
-	return originalPath
 }
