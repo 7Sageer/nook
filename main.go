@@ -205,7 +205,9 @@ func main() {
 		},
 		DragAndDrop: &options.DragAndDrop{
 			EnableFileDrop:     true,
-			DisableWebViewDrop: false,
+			DisableWebViewDrop: false,                 // Windows 上无法禁用，保持 false
+			CSSDropProperty:    "--wails-drop-target", // macOS/Linux 需要
+			CSSDropValue:       "drop",
 		},
 		Mac: &mac.Options{
 			TitleBar:   mac.TitleBarHiddenInset(),

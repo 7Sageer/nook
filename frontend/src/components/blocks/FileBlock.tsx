@@ -58,6 +58,8 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
     // 归档操作状态
     const [archiving, setArchiving] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    // Windows 平台检测（Windows 上文件拖拽已自动归档，无需手动归档/取消归档按钮）
+    const isWindows = navigator.userAgent.includes("Windows");
 
     // 获取有效路径（兼容旧数据）
     const effectivePath = originalPath || legacyFilePath;
@@ -371,47 +373,49 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                         <Eye size={14} />
                     </button>
                 )}
-                {/* 归档/取消归档按钮 */}
-                {!archived ? (
-                    <button
-                        className="external-action-btn"
-                        title={archiving ? "Archiving..." : "Archive file"}
-                        disabled={archiving || fileMissing}
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleArchive();
-                        }}
-                    >
-                        {archiving ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
-                    </button>
-                ) : (
-                    <>
+                {/* 归档/取消归档按钮 - Windows 上隐藏（文件拖拽已自动归档） */}
+                {!isWindows && (
+                    !archived ? (
                         <button
                             className="external-action-btn"
-                            title={syncing ? "Syncing..." : "Sync from original"}
-                            disabled={syncing || fileMissing}
+                            title={archiving ? "Archiving..." : "Archive file"}
+                            disabled={archiving || fileMissing}
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleSync();
+                                handleArchive();
                             }}
                         >
-                            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                            {archiving ? <Loader2 size={14} className="animate-spin" /> : <Archive size={14} />}
                         </button>
-                        <button
-                            className="external-action-btn"
-                            title={archiving ? "Removing..." : "Remove archive"}
-                            disabled={archiving}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleUnarchive();
-                            }}
-                        >
-                            {archiving ? <Loader2 size={14} className="animate-spin" /> : <ArchiveRestore size={14} />}
-                        </button>
-                    </>
+                    ) : (
+                        <>
+                            <button
+                                className="external-action-btn"
+                                title={syncing ? "Syncing..." : "Sync from original"}
+                                disabled={syncing || fileMissing}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleSync();
+                                }}
+                            >
+                                {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                            </button>
+                            <button
+                                className="external-action-btn"
+                                title={archiving ? "Removing..." : "Remove archive"}
+                                disabled={archiving}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUnarchive();
+                                }}
+                            >
+                                {archiving ? <Loader2 size={14} className="animate-spin" /> : <ArchiveRestore size={14} />}
+                            </button>
+                        </>
+                    )
                 )}
                 {/* 替换文件按钮 */}
                 <button

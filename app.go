@@ -118,7 +118,7 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
-	// 注册拖拽处理回调
+	// 注册拖拽处理回调（macOS/Linux 使用，Windows 上由前端 HTML5 处理）
 	runtime.OnFileDrop(ctx, a.handleFileDrop)
 
 	runtime.EventsOn(ctx, "app:frontend-ready", func(_ ...interface{}) {
@@ -177,7 +177,7 @@ func (a *App) flushPendingExternalFileOpens() {
 	}
 }
 
-// handleFileDrop 处理文件/文件夹拖拽
+// handleFileDrop 处理文件/文件夹拖拽（macOS/Linux 使用，Windows 由前端处理）
 func (a *App) handleFileDrop(x, y int, paths []string) {
 	if len(paths) == 0 {
 		return

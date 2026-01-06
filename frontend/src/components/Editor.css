@@ -4,6 +4,8 @@
     padding: var(--space-8) var(--editor-padding-x);
     /* Shadow moved to .main-content for full-height coverage */
     background-color: transparent;
+    /* Wails 拖拽目标标识 - Windows 上必需 */
+    --wails-drop-target: drop;
 }
 
 /* Editor wrapper containing tags and BlockNote */
