@@ -18,10 +18,12 @@ func (s *MCPServer) handleToolCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = s.toolListDocuments(params.Arguments)
 	case "get_document":
 		result = s.toolGetDocument(params.Arguments)
-	case "create_document":
-		result = s.toolCreateDocument(params.Arguments)
 	case "update_document":
 		result = s.toolUpdateDocument(params.Arguments)
+	case "edit_document":
+		result = s.toolEditDocument(params.Arguments)
+	case "append_content":
+		result = s.toolAppendContent(params.Arguments)
 	case "delete_document":
 		result = s.toolDeleteDocument(params.Arguments)
 	case "rename_document":

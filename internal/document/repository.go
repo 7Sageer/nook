@@ -87,6 +87,40 @@ func (r *Repository) Create(title string) (Meta, error) {
 	return doc, nil
 }
 
+// CreateWithID 使用指定 ID 创建新文档（用于 MCP）
+func (r *Repository) CreateWithID(id, title string) (Meta, error) {
+	if title == "" {
+		title = constant.DefaultNewDocTitle
+	}
+	now := time.Now().UnixMilli()
+	doc := Meta{
+		ID:        id,
+		Title:     title,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	// 创建空文档文件
+	docPath := r.paths.Document(doc.ID)
+	emptyContent := make([]interface{}, 0)
+	if err := r.SaveJSON(docPath, emptyContent); err != nil {
+		return Meta{}, err
+	}
+
+	// 更新索引
+	index, err := r.GetAll()
+	if err != nil {
+		return Meta{}, err
+	}
+	index.Documents = append([]Meta{doc}, index.Documents...)
+	index.ActiveID = doc.ID
+	if err := r.saveIndex(index); err != nil {
+		return Meta{}, err
+	}
+
+	return doc, nil
+}
+
 // Delete 删除文档
 func (r *Repository) Delete(id string) error {
 	// 删除文档文件

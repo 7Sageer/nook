@@ -25,24 +25,38 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 			},
 		},
 		{
-			Name:        "create_document",
-			Description: "Create a new document with optional title and content. Use get_blocknote_schema to get the correct JSON format.",
+			Name:        "update_document",
+			Description: "Create or update a document. If the document ID exists, replaces its content; if not, creates a new document. Use get_content_guide to get the correct JSON format.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
-					"title":   {Type: "string", Description: "Document title (optional)"},
-					"content": {Type: "string", Description: "Initial content as BlockNote JSON (optional)"},
+					"id":      {Type: "string", Description: "Document ID (use existing ID to update, or new UUID to create)"},
+					"content": {Type: "string", Description: "Document content as BlockNote JSON"},
 				},
+				Required: []string{"id", "content"},
 			},
 		},
 		{
-			Name:        "update_document",
-			Description: "Update a document's content. Use get_blocknote_schema to get the correct JSON format.",
+			Name:        "edit_document",
+			Description: "Edit a document using str_replace. Finds old_text in the document and replaces it with new_text. The old_text must be unique in the document.",
+			InputSchema: InputSchema{
+				Type: "object",
+				Properties: map[string]Property{
+					"id":       {Type: "string", Description: "Document ID"},
+					"old_text": {Type: "string", Description: "Text to find (must be unique in document)"},
+					"new_text": {Type: "string", Description: "Text to replace with"},
+				},
+				Required: []string{"id", "old_text", "new_text"},
+			},
+		},
+		{
+			Name:        "append_content",
+			Description: "Append blocks to the end of a document. Use this for adding new content without replacing existing content.",
 			InputSchema: InputSchema{
 				Type: "object",
 				Properties: map[string]Property{
 					"id":      {Type: "string", Description: "Document ID"},
-					"content": {Type: "string", Description: "New content as BlockNote JSON"},
+					"content": {Type: "string", Description: "Blocks to append as BlockNote JSON array"},
 				},
 				Required: []string{"id", "content"},
 			},
