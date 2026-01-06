@@ -93,6 +93,15 @@
     /* Tag 和 Status 之间的间距 */
 }
 
+/* Windows 平台：给 header 右侧留出窗口控制按钮的空间，并调整垂直对齐 */
+.app-container.is-windows .app-header {
+    padding-right: 150px;
+    /* 3 个按钮 × 46px + 一些额外间距 */
+    padding-top: var(--space-2);
+    /* 8px，让内容上移以对齐窗口按钮 */
+    padding-bottom: var(--space-2);
+}
+
 /* Header center - contains title and tags */
 .header-center {
     flex: 1;

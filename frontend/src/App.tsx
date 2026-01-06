@@ -44,6 +44,14 @@ function AppContent() {
   const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
 
+  // 检测 Windows 系统
+  const [isWindows, setIsWindows] = useState(false);
+  useEffect(() => {
+    window.go?.main?.App?.GetOS().then((os: string) => {
+      setIsWindows(os === 'windows');
+    });
+  }, []);
+
   // 空闲时预热 RAG 服务
   useRAGWarmup();
 
@@ -312,7 +320,7 @@ function AppContent() {
 
 
   return (
-    <div className={`app-container ${theme}`}>
+    <div className={`app-container ${theme} ${isWindows ? 'is-windows' : ''}`}>
       <WindowToolbar
         sidebarCollapsed={sidebarCollapsed}
         onToggleSidebar={handleToggleSidebar}
