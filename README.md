@@ -93,6 +93,23 @@ wails build
 
 ```
 
+### macOS First Run
+
+Since the app is not signed with an Apple Developer certificate, macOS may block it from running. Use one of the following methods:
+
+**Option 1: Right-click to Open**
+1. Locate Nook.app in Finder
+2. Hold `Control` and click the app icon
+3. Select "Open"
+4. Click "Open" again in the dialog
+
+**Option 2: Remove Quarantine Attribute (Recommended)**
+```bash
+xattr -cr /Applications/Nook.app
+```
+
+After this, the app will open normally.
+
 ## Usage Guide
 
 ### 🤖 Connecting to AI (MCP)
