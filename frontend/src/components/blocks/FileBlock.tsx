@@ -139,11 +139,13 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                     props: { ...latestBlock.props, indexed: true, indexing: false },
                 });
             }
-        } catch {
+        } catch (err) {
             const latestBlock = editor.getBlock(block.id);
             if (latestBlock) {
+                // Wails 返回的错误是字符串类型
+                const errorMsg = typeof err === "string" ? err : (err instanceof Error ? err.message : "Index failed");
                 editor.updateBlock(latestBlock, {
-                    props: { ...latestBlock.props, indexing: false, indexError: "Index failed" },
+                    props: { ...latestBlock.props, indexing: false, indexError: errorMsg },
                 });
             }
         }
@@ -341,7 +343,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 {/* 索引按钮 */}
                 <button
                     className={`external-action-btn ${indexed ? "indexed" : ""} ${indexError ? "index-error" : ""}`}
-                    title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? "Indexing failed, retry?" : "Index content"}
+                    title={indexing ? "Indexing..." : indexed ? "Re-index" : indexError ? `Index failed: ${indexError}` : "Index content"}
                     disabled={indexing}
                     onClick={(e) => {
                         e.preventDefault();

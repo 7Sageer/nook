@@ -87,8 +87,10 @@ export const useBookmarkState = (block: any, editor: any, activeId: string | nul
                             console.error("[BookmarkBlock] Auto-index failed:", err);
                             const errorBlock = editor.getBlock(block.id);
                             if (errorBlock) {
+                                // Wails 返回的错误可能是字符串
+                                const errorMsg = typeof err === "string" ? err : (err instanceof Error ? err.message : "Indexing failed");
                                 editor.updateBlock(errorBlock, {
-                                    props: { ...errorBlock.props, indexing: false, indexError: "Indexing failed" },
+                                    props: { ...errorBlock.props, indexing: false, indexError: errorMsg },
                                 });
                             }
                         }
@@ -137,8 +139,10 @@ export const useBookmarkState = (block: any, editor: any, activeId: string | nul
             console.error("[BookmarkBlock] Index failed:", err);
             const latestBlock = editor.getBlock(block.id);
             if (latestBlock) {
+                // Wails 返回的错误可能是字符串
+                const errorMsg = typeof err === "string" ? err : (err instanceof Error ? err.message : "Failed to index");
                 editor.updateBlock(latestBlock, {
-                    props: { ...latestBlock.props, indexing: false, indexError: "Failed to index" },
+                    props: { ...latestBlock.props, indexing: false, indexError: errorMsg },
                 });
             }
         }

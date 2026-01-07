@@ -62,7 +62,11 @@
 }
 
 .external-card.indexed {
-    border-left-color: var(--success, #52c41a);
+    border-left-color: var(--primary-alpha-30, rgba(74, 143, 217, 0.3));
+}
+
+.external-card.indexed:hover {
+    border-left-color: var(--primary, #4a8fd9);
 }
 
 .external-card.index-error {
@@ -117,7 +121,7 @@
 }
 
 .external-action-btn.indexed {
-    color: var(--success, #52c41a);
+    color: var(--text-tertiary, #6b7280);
 }
 
 .external-action-btn.index-error {
@@ -125,8 +129,7 @@
 }
 
 .external-action-btn.indexed:hover {
-    color: var(--success, #52c41a);
-    filter: brightness(0.85);
+    color: var(--primary, #4a8fd9);
 }
 
 .external-action-btn.index-error:hover {

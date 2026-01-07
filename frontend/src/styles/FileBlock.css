@@ -43,7 +43,7 @@
 }
 
 .archive-badge {
-    color: #43a047;
+    color: var(--primary, #4a8fd9);
 }
 
 .link-badge {
@@ -86,8 +86,8 @@
 
 /* Archived Badge */
 .file-archived-badge {
-    background: #e8f5e9;
-    color: #43a047;
+    background: var(--primary-alpha-10, rgba(74, 143, 217, 0.1));
+    color: var(--primary, #4a8fd9);
     padding: 1px 6px;
     border-radius: 4px;
     font-size: 10px;
@@ -96,7 +96,7 @@
 
 /* Archived Card Style */
 .file-card-custom.archived {
-    border-color: #c8e6c9;
+    border-color: var(--primary-alpha-20, rgba(74, 143, 217, 0.2));
 }
 
 /* File Missing State */
@@ -129,12 +129,12 @@
 
 /* Dark mode */
 [data-mantine-color-scheme="dark"] .file-archived-badge {
-    background: #1b5e20;
-    color: #a5d6a7;
+    background: var(--primary-alpha-15, rgba(74, 143, 217, 0.15));
+    color: var(--primary, #4a8fd9);
 }
 
 [data-mantine-color-scheme="dark"] .file-card-custom.archived {
-    border-color: #2e7d32;
+    border-color: var(--primary-alpha-25, rgba(74, 143, 217, 0.25));
 }
 
 [data-mantine-color-scheme="dark"] .file-missing {

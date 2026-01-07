@@ -70,7 +70,7 @@ export const BookmarkCard = ({
             <div className="external-actions">
                 <button
                     className={`external-action-btn ${indexed ? 'indexed' : ''} ${indexError ? 'index-error' : ''}`}
-                    title={indexing ? "Indexing..." : indexed ? "Re-index content" : indexError ? "Indexing failed, retry?" : "Index content"}
+                    title={indexing ? "Indexing..." : indexed ? "Re-index content" : indexError ? `Index failed: ${indexError}` : "Index content"}
                     disabled={indexing}
                     onClick={(e) => {
                         e.preventDefault();
