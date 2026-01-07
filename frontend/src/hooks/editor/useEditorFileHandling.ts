@@ -1,5 +1,5 @@
 import { useEffect, RefObject, useState } from "react";
-import { useFileDrop } from "../file/useFileDrop";
+import { useFileDrop, findBlockNearPosition } from "../file/useFileDrop";
 import { SaveFile } from "../../../wailsjs/go/main/App";
 import { insertFileBlock, indexFileBlock } from "../../utils/editorExtensions";
 
@@ -70,6 +70,9 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
             const files = event.dataTransfer.files;
             if (files.length === 0) return;
 
+            // 根据拖放坐标找到目标 block
+            const targetBlock = findBlockNearPosition(editor, event.clientX, event.clientY);
+
             // 处理第一个文件
             const file = files[0];
             console.log("[Windows FileDrop] Processing file:", file.name, file.size);
@@ -91,7 +94,7 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
                         originalPath: file.name, // HTML5 API 无法获取原始路径
                     };
 
-                    const block = insertFileBlock(editor, enrichedFileInfo);
+                    const block = insertFileBlock(editor, enrichedFileInfo, targetBlock);
 
                     // 自动索引
                     if (docId && block?.id) {

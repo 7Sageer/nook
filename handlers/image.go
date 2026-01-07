@@ -93,3 +93,13 @@ func (h *ImageHandler) SaveImageFile(base64Data string, defaultName string) erro
 	// Write image to file
 	return os.WriteFile(filePath, imgData, 0644)
 }
+
+// ReadFileAsBase64 读取文件内容并返回 base64 编码
+// 用于前端拖放图片时读取本地文件
+func (h *ImageHandler) ReadFileAsBase64(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
+}

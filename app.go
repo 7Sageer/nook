@@ -211,6 +211,8 @@ func (a *App) handleFileDrop(x, y int, paths []string) {
 		runtime.EventsEmit(a.ctx, "folder:dropped", map[string]interface{}{
 			"path": path,
 			"name": filepath.Base(path),
+			"x":    x,
+			"y":    y,
 		})
 	} else {
 		// 文件：发送 file:dropped 事件
@@ -219,6 +221,8 @@ func (a *App) handleFileDrop(x, y int, paths []string) {
 			"name":     filepath.Base(path),
 			"size":     info.Size(),
 			"mimeType": getMimeType(path),
+			"x":        x,
+			"y":        y,
 		})
 	}
 }
@@ -227,6 +231,54 @@ func (a *App) handleFileDrop(x, y int, paths []string) {
 func getMimeType(path string) string {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
+	// 图片类型
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".svg":
+		return "image/svg+xml"
+	case ".ico":
+		return "image/x-icon"
+	case ".bmp":
+		return "image/bmp"
+	case ".tiff", ".tif":
+		return "image/tiff"
+	case ".heic", ".heif":
+		return "image/heic"
+	// 视频类型
+	case ".mp4":
+		return "video/mp4"
+	case ".webm":
+		return "video/webm"
+	case ".mov":
+		return "video/quicktime"
+	case ".avi":
+		return "video/x-msvideo"
+	case ".mkv":
+		return "video/x-matroska"
+	case ".m4v":
+		return "video/x-m4v"
+	// 音频类型
+	case ".mp3":
+		return "audio/mpeg"
+	case ".wav":
+		return "audio/wav"
+	case ".ogg":
+		return "audio/ogg"
+	case ".flac":
+		return "audio/flac"
+	case ".aac":
+		return "audio/aac"
+	case ".m4a":
+		return "audio/mp4"
+	case ".wma":
+		return "audio/x-ms-wma"
+	// 文档类型
 	case ".pdf":
 		return "application/pdf"
 	case ".md":
@@ -237,6 +289,29 @@ func getMimeType(path string) string {
 		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 	case ".html", ".htm":
 		return "text/html"
+	case ".json":
+		return "application/json"
+	case ".xml":
+		return "application/xml"
+	// 代码文件
+	case ".js", ".ts", ".jsx", ".tsx":
+		return "text/javascript"
+	case ".py":
+		return "text/x-python"
+	case ".go":
+		return "text/x-go"
+	case ".rs":
+		return "text/x-rust"
+	case ".java":
+		return "text/x-java"
+	case ".c", ".h":
+		return "text/x-c"
+	case ".cpp", ".hpp", ".cc":
+		return "text/x-c++"
+	case ".css":
+		return "text/css"
+	case ".yaml", ".yml":
+		return "text/yaml"
 	default:
 		return "application/octet-stream"
 	}
@@ -495,6 +570,10 @@ func (a *App) SaveImage(base64Data string, filename string) (string, error) {
 
 func (a *App) SaveImageFile(base64Data string, defaultName string) error {
 	return a.imageHandler.SaveImageFile(base64Data, defaultName)
+}
+
+func (a *App) ReadFileAsBase64(filePath string) (string, error) {
+	return a.imageHandler.ReadFileAsBase64(filePath)
 }
 
 func (a *App) PrintHTML(htmlContent string, title string) error {

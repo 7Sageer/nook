@@ -150,6 +150,10 @@ export function PrintHTML(arg1, arg2) {
   return window['go']['main']['App']['PrintHTML'](arg1, arg2);
 }
 
+export function ReadFileAsBase64(arg1) {
+  return window['go']['main']['App']['ReadFileAsBase64'](arg1);
+}
+
 export function RebuildIndex() {
   return window['go']['main']['App']['RebuildIndex']();
 }

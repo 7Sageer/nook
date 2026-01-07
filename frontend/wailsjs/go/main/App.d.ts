@@ -82,6 +82,8 @@ export function PinTag(arg1:string):Promise<void>;
 
 export function PrintHTML(arg1:string,arg2:string):Promise<void>;
 
+export function ReadFileAsBase64(arg1:string):Promise<string>;
+
 export function RebuildIndex():Promise<number>;
 
 export function RemoveDocumentTag(arg1:string,arg2:string):Promise<void>;

@@ -307,17 +307,18 @@ export async function indexFolderBlock(
 
 /**
  * 插入 FileBlock
+ * @param targetBlock 可选的目标 block，如果不提供则使用当前光标位置
  */
-export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo) {
-    const currentBlock = editor.getTextCursorPosition().block;
-    const currentContent = currentBlock.content;
+export function insertFileBlock(editor: InternalEditor, fileInfo: FileInfo, targetBlock?: unknown) {
+    const currentBlock = targetBlock || editor.getTextCursorPosition().block;
+    const currentContent = (currentBlock as { content?: unknown[] }).content;
 
     const isEmptyOrSlash =
         Array.isArray(currentContent) &&
         (currentContent.length === 0 ||
             (currentContent.length === 1 &&
-                currentContent[0]?.type === "text" &&
-                currentContent[0]?.text === "/"));
+                (currentContent[0] as { type?: string })?.type === "text" &&
+                (currentContent[0] as { text?: string })?.text === "/"));
 
     const fileProps = {
         originalPath: fileInfo.originalPath,
@@ -456,17 +457,18 @@ export function insertFolderBlock(editor: InternalEditor) {
 
 /**
  * 插入 FolderBlock（带路径，用于拖拽上传）
+ * @param targetBlock 可选的目标 block，如果不提供则使用当前光标位置
  */
-export function insertFolderBlockWithPath(editor: InternalEditor, folderInfo: FolderInfo) {
-    const currentBlock = editor.getTextCursorPosition().block;
-    const currentContent = currentBlock.content;
+export function insertFolderBlockWithPath(editor: InternalEditor, folderInfo: FolderInfo, targetBlock?: unknown) {
+    const currentBlock = targetBlock || editor.getTextCursorPosition().block;
+    const currentContent = (currentBlock as { content?: unknown[] }).content;
 
     const isEmptyOrSlash =
         Array.isArray(currentContent) &&
         (currentContent.length === 0 ||
             (currentContent.length === 1 &&
-                currentContent[0]?.type === "text" &&
-                currentContent[0]?.text === "/"));
+                (currentContent[0] as { type?: string })?.type === "text" &&
+                (currentContent[0] as { text?: string })?.text === "/"));
 
     const folderProps = {
         folderPath: folderInfo.path,
