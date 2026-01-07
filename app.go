@@ -24,6 +24,7 @@ import (
 	"notion-lite/internal/tag"
 	"notion-lite/internal/utils"
 	"notion-lite/internal/watcher"
+	"notion-lite/internal/welcome"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -64,6 +65,10 @@ func NewApp() *App {
 	// Create all services
 	docRepo := document.NewRepository(paths)
 	docStorage := document.NewStorage(paths)
+
+	// 首次启动时创建欢迎文档
+	_ = welcome.CreateWelcomeDocument(paths, docRepo, docStorage)
+
 	folderRepo := folder.NewRepository(paths)
 	searchService := search.NewService(docRepo, docStorage)
 	settingsService := settings.NewService(paths)
