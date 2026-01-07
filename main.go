@@ -205,7 +205,7 @@ func main() {
 		},
 		DragAndDrop: &options.DragAndDrop{
 			EnableFileDrop:     true,
-			DisableWebViewDrop: false,                 // Windows 上无法禁用，保持 false
+			DisableWebViewDrop: false,                 // 不能设为 true，否则会影响 BlockNote 的 block 拖拽排序
 			CSSDropProperty:    "--wails-drop-target", // macOS/Linux 需要
 			CSSDropValue:       "drop",
 		},

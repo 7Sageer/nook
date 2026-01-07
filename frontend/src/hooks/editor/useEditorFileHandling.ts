@@ -122,9 +122,15 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
     useEffect(() => {
         if (isWindowsPlatform) return; // Windows uses the custom handler above
 
+        console.log('[blockFileDrop] Registering global drop prevention listeners');
+
         const blockFileDrop = (event: DragEvent) => {
-            if (event.dataTransfer?.types?.includes("Files")) {
+            const hasFiles = event.dataTransfer?.types?.includes("Files");
+            console.log(`[blockFileDrop] ${event.type} event, hasFiles=${hasFiles}, defaultPrevented=${event.defaultPrevented}`);
+            if (hasFiles) {
                 event.preventDefault();
+                event.stopPropagation();
+                console.log(`[blockFileDrop] Prevented default for ${event.type}`);
             }
         };
 
@@ -132,6 +138,7 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
         window.addEventListener("drop", blockFileDrop, { capture: true });
 
         return () => {
+            console.log('[blockFileDrop] Removing global drop prevention listeners');
             window.removeEventListener("dragover", blockFileDrop, { capture: true });
             window.removeEventListener("drop", blockFileDrop, { capture: true });
         };

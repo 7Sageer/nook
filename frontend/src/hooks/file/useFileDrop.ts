@@ -141,6 +141,8 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
 
         // 处理文件拖拽 - 根据类型分发
         const handleFileDrop = async (data: FileDroppedData) => {
+            console.log('[useFileDrop] file:dropped event received:', data);
+
             // 验证数据有效性
             if (!data?.path || !data?.name) {
                 console.warn('[useFileDrop] Invalid file drop data:', data);
@@ -148,6 +150,7 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
             }
 
             const mimeType = data.mimeType || "";
+            console.log(`[useFileDrop] Processing file: ${data.name}, mimeType: ${mimeType}`);
             // 根据拖放坐标找到目标 block
             const targetBlock = findBlockNearPosition(editor, data.x, data.y);
 
@@ -177,15 +180,18 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
                 // 其他类型 - 使用 FileBlock（可索引）
                 const fileInfo = await CopyFileToStorage(data.path);
                 if (fileInfo) {
+                    console.log('[useFileDrop] FileBlock created, starting index...');
                     const block = insertFileBlock(editor, fileInfo, targetBlock);
                     // 自动索引 - 后端会自动检测文件是否可索引
                     if (docId) {
                         indexFileBlock(editor, block.id, fileInfo.originalPath, docId);
                     }
+                    console.log('[useFileDrop] FileBlock insert complete, blockId:', block.id);
                 }
             } catch (err) {
-                console.error('Failed to handle file drop:', err);
+                console.error('[useFileDrop] Failed to handle file drop:', err);
             }
+            console.log('[useFileDrop] handleFileDrop completed');
         };
 
         // 处理文件夹拖拽
@@ -207,10 +213,12 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
         };
 
         // 注册 Wails 事件监听
+        console.log('[useFileDrop] Registering Wails event listeners, docId:', docId);
         EventsOn("file:dropped", handleFileDrop);
         EventsOn("folder:dropped", handleFolderDrop);
 
         return () => {
+            console.log('[useFileDrop] Removing Wails event listeners');
             EventsOff("file:dropped");
             EventsOff("folder:dropped");
         };
