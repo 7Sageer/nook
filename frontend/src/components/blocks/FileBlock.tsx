@@ -132,7 +132,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
         });
 
         try {
-            await IndexFileContent(pathToIndex, activeId, block.id);
+            await IndexFileContent(pathToIndex, activeId, block.id, fileName || "");
             const latestBlock = editor.getBlock(block.id);
             if (latestBlock) {
                 editor.updateBlock(latestBlock, {
@@ -149,7 +149,7 @@ const FileBlockComponent = (props: { block: any, editor: any }) => {
                 });
             }
         }
-    }, [block.id, editor, effectivePath, archived, archivedPath, activeId]);
+    }, [block.id, editor, effectivePath, archived, archivedPath, activeId, fileName]);
 
     // 打开文件（优先使用归档副本）
     const handleOpenFile = useCallback(async () => {

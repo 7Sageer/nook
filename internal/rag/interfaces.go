@@ -35,7 +35,8 @@ type ExternalContentIndexer interface {
 	IndexBookmarkContent(url, sourceDocID, blockID string) error
 
 	// IndexFileContent indexes file content (PDF, DOCX, etc.)
-	IndexFileContent(filePath, sourceDocID, blockID string) error
+	// fileName is the original file name for display (optional, falls back to path basename)
+	IndexFileContent(filePath, sourceDocID, blockID, fileName string) error
 
 	// IndexFolderContent indexes all supported files in a folder
 	IndexFolderContent(folderPath, sourceDocID, blockID string, maxDepth int) (*FolderIndexResult, error)

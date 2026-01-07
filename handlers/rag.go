@@ -142,8 +142,8 @@ func (h *RAGHandler) IndexBookmarkContent(url, sourceDocID, blockID string) erro
 }
 
 // IndexFileContent 索引文件内容
-func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID string) error {
-	err := h.ragService.IndexFileContent(filePath, sourceDocID, blockID)
+func (h *RAGHandler) IndexFileContent(filePath, sourceDocID, blockID, fileName string) error {
+	err := h.ragService.IndexFileContent(filePath, sourceDocID, blockID, fileName)
 	if err == nil && h.Context() != nil {
 		runtime.EventsEmit(h.Context(), "rag:status-updated", nil)
 	}

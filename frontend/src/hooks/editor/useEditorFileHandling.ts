@@ -98,8 +98,8 @@ export function useEditorFileHandling({ editor, docId, containerRef }: UseEditor
 
                     // 自动索引
                     if (docId && block?.id) {
-                        // 对于归档文件，使用归档路径进行索引
-                        indexFileBlock(editor, block.id, enrichedFileInfo.archivedPath, docId);
+                        // 对于归档文件，使用归档路径进行索引，传递原始文件名
+                        indexFileBlock(editor, block.id, enrichedFileInfo.archivedPath, docId, file.name);
                     }
                 }
             } catch (err) {

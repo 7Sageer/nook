@@ -64,7 +64,7 @@ export function ImportMarkdownFile():Promise<markdown.ImportResult>;
 
 export function IndexBookmarkContent(arg1:string,arg2:string,arg3:string):Promise<void>;
 
-export function IndexFileContent(arg1:string,arg2:string,arg3:string):Promise<void>;
+export function IndexFileContent(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
 
 export function IndexFolderContent(arg1:string,arg2:string,arg3:string):Promise<rag.FolderIndexResult>;
 

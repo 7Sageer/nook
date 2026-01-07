@@ -427,8 +427,8 @@ func (a *App) RevealInFinder(relativePath string) error {
 }
 
 // IndexFileContent 索引文件内容
-func (a *App) IndexFileContent(filePath, sourceDocID, blockID string) error {
-	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID)
+func (a *App) IndexFileContent(filePath, sourceDocID, blockID, fileName string) error {
+	return a.ragHandler.IndexFileContent(filePath, sourceDocID, blockID, fileName)
 }
 
 // GetExternalBlockContent 获取外部块的完整提取内容

@@ -247,11 +247,11 @@ func (s *Service) IndexBookmarkContent(url, sourceDocID, blockID string) error {
 }
 
 // IndexFileContent 索引文件内容
-func (s *Service) IndexFileContent(filePath, sourceDocID, blockID string) error {
+func (s *Service) IndexFileContent(filePath, sourceDocID, blockID, fileName string) error {
 	if err := s.init(); err != nil {
 		return err
 	}
-	return s.externalIndexer.IndexFileContent(filePath, sourceDocID, blockID)
+	return s.externalIndexer.IndexFileContent(filePath, sourceDocID, blockID, fileName)
 }
 
 // GetExternalBlockContent 获取外部块的完整提取内容

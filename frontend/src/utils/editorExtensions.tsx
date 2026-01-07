@@ -231,7 +231,8 @@ export async function indexFileBlock(
     editor: InternalEditor,
     blockId: string,
     filePath: string,
-    docId: string
+    docId: string,
+    fileName: string = ""
 ): Promise<void> {
     // 设置索引中状态
     const currentBlock = editor.getBlock(blockId);
@@ -242,7 +243,7 @@ export async function indexFileBlock(
     });
 
     try {
-        await IndexFileContent(filePath, docId, blockId);
+        await IndexFileContent(filePath, docId, blockId, fileName);
         const latestBlock = editor.getBlock(blockId);
         if (latestBlock) {
             editor.updateBlock(latestBlock, {

@@ -25,6 +25,7 @@ var listTypes = map[string]bool{
 type FileBlockInfo struct {
 	BlockID  string // BlockNote 块 ID
 	FilePath string // 文件路径（如 /files/xxx.pdf）
+	FileName string // 原始文件名（用于显示）
 }
 
 // BookmarkBlockInfo bookmark 块信息（包含 ID 和 URL）
@@ -83,16 +84,21 @@ func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs)
 						})
 					case "file":
 						result.FileIDs = append(result.FileIDs, id)
-						// 提取文件路径
+						// 提取文件路径和文件名
 						filePath := ""
+						fileName := ""
 						if props, ok := blockMap["props"].(map[string]interface{}); ok {
 							if fp, ok := props["filePath"].(string); ok {
 								filePath = fp
+							}
+							if fn, ok := props["fileName"].(string); ok {
+								fileName = fn
 							}
 						}
 						result.FileBlocks = append(result.FileBlocks, FileBlockInfo{
 							BlockID:  id,
 							FilePath: filePath,
+							FileName: fileName,
 						})
 					case "folder":
 						// 提取文件夹路径

@@ -184,7 +184,7 @@ export const useFileDrop = ({ editor, docId }: UseFileDropProps) => {
                     const block = insertFileBlock(editor, fileInfo, targetBlock);
                     // 自动索引 - 后端会自动检测文件是否可索引
                     if (docId) {
-                        indexFileBlock(editor, block.id, fileInfo.originalPath, docId);
+                        indexFileBlock(editor, block.id, fileInfo.originalPath, docId, fileInfo.fileName);
                     }
                     console.log('[useFileDrop] FileBlock insert complete, blockId:', block.id);
                 }

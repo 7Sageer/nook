@@ -156,7 +156,8 @@ func (e *ExternalIndexer) IndexBookmarkContent(url, sourceDocID, blockID string)
 
 // IndexFileContent 索引文件内容（分块存储）
 // filePath 可以是绝对路径（引用模式）或相对路径（归档模式，如 /files/xxx）
-func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string) error {
+// fileName 是原始文件名（用于显示），如果为空则从路径提取
+func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID, fileName string) error {
 	// 1. 获取完整文件路径
 	var fullPath string
 	// 检查是否是应用内相对路径（如 /files/xxx, /images/xxx）
@@ -182,9 +183,12 @@ func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string
 		return fmt.Errorf("no text content extracted from file")
 	}
 
-	// 3. 构建上下文（使用文件名）
-	fileName := filepath.Base(fullPath)
-	headingContext := fileName
+	// 3. 构建上下文（优先使用传入的文件名，否则从路径提取）
+	displayName := fileName
+	if displayName == "" {
+		displayName = filepath.Base(fullPath)
+	}
+	headingContext := displayName
 
 	// 4. 生成基础 ID
 	baseID := fmt.Sprintf("%s_%s_file", sourceDocID, blockID)
@@ -201,7 +205,7 @@ func (e *ExternalIndexer) IndexFileContent(filePath, sourceDocID, blockID string
 		BlockID:     blockID,
 		BlockType:   "file",
 		FilePath:    filePath,
-		Title:       fileName,
+		Title:       displayName,
 		RawContent:  textContent,
 		ExtractedAt: time.Now().Unix(),
 	}); err != nil {
@@ -520,7 +524,7 @@ func (e *ExternalIndexer) ReindexAll() (int, error) {
 			if file.FilePath == "" {
 				continue
 			}
-			if err := e.IndexFileContent(file.FilePath, doc.ID, file.BlockID); err != nil {
+			if err := e.IndexFileContent(file.FilePath, doc.ID, file.BlockID, file.FileName); err != nil {
 				fmt.Printf("⚠️ [RAG] Failed to reindex file %s: %v\n", file.BlockID, err)
 			} else {
 				totalCount++
@@ -619,7 +623,7 @@ func (e *ExternalIndexer) ReindexAllWithProgress(onProgress func(current, total 
 				fmt.Printf("✅ [RAG] Reindexed bookmark: %s\n", block.bookmark.URL)
 			}
 		} else if block.file != nil {
-			if err := e.IndexFileContent(block.file.FilePath, block.docID, block.file.BlockID); err != nil {
+			if err := e.IndexFileContent(block.file.FilePath, block.docID, block.file.BlockID, block.file.FileName); err != nil {
 				fmt.Printf("⚠️ [RAG] Failed to reindex file %s: %v\n", block.file.BlockID, err)
 			} else {
 				successCount++
