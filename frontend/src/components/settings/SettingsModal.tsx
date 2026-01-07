@@ -23,7 +23,7 @@ interface SettingsModalProps {
 export type SettingsTab = 'appearance' | 'knowledge' | 'graph' | 'embedding' | 'mcp' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
-    const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth, writingStyle, setWritingStyle } = useSettings();
+    const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth, fontSize, setFontSize, writingStyle, setWritingStyle } = useSettings();
     const { showToast } = useToast();
     const STRINGS = getStrings(language);
     const modalRef = useRef<HTMLDivElement>(null);
@@ -241,8 +241,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                                 <AppearancePanel
                                     themeSetting={themeSetting}
                                     sidebarWidth={sidebarWidth}
+                                    fontSize={fontSize}
                                     onThemeChange={setThemeSetting}
                                     onSidebarWidthChange={setSidebarWidth}
+                                    onFontSizeChange={setFontSize}
                                     strings={STRINGS}
                                 />
                             )}

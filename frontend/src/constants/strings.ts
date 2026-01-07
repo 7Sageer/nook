@@ -121,6 +121,7 @@ export const EN = {
         THEME_DARK: "Dark",
         THEME_SYSTEM: "Follow System",
         SIDEBAR_WIDTH: "Sidebar Width",
+        FONT_SIZE: "Font Size",
         WRITING_STYLE: "Writing Style Guide",
         WRITING_STYLE_PLACEHOLDER: "Example:\n- Use concise and professional language\n- Prefer functional programming patterns\n- Always add type definitions in TypeScript\n- Avoid using third-party libraries unless necessary",
         WRITING_STYLE_HINT: "This guide will be used by AI assistants (like Claude Code MCP) when creating or editing content.",

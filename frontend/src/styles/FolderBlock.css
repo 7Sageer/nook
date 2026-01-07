@@ -83,7 +83,7 @@
 }
 
 .folder-stats {
-    color: var(--success-color, #52c41a);
+    color: var(--primary-alpha-60, rgba(74, 143, 217, 0.6));
     font-weight: 500;
 }
 

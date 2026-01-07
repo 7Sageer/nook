@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThemeSetting, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH } from '../../contexts/SettingsContext';
+import { ThemeSetting, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH, MIN_FONT_SIZE, MAX_FONT_SIZE } from '../../contexts/SettingsContext';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { Slider } from '@mantine/core';
 import { getStrings } from '../../constants/strings';
@@ -7,16 +7,20 @@ import { getStrings } from '../../constants/strings';
 interface AppearancePanelProps {
     themeSetting: ThemeSetting;
     sidebarWidth: number;
+    fontSize: number;
     onThemeChange: (theme: ThemeSetting) => void;
     onSidebarWidthChange: (width: number) => void;
+    onFontSizeChange: (size: number) => void;
     strings: ReturnType<typeof getStrings>;
 }
 
 export const AppearancePanel: React.FC<AppearancePanelProps> = ({
     themeSetting,
     sidebarWidth,
+    fontSize,
     onThemeChange,
     onSidebarWidthChange,
+    onFontSizeChange,
     strings,
 }) => {
     const themeOptions: { value: ThemeSetting; label: string; icon: React.ReactNode }[] = [
@@ -75,7 +79,37 @@ export const AppearancePanel: React.FC<AppearancePanelProps> = ({
                         }}
                     />
                 </div>
+
+                {/* 字体大小滑块 */}
+                <div className="form-group">
+                    <label>{strings.SETTINGS.FONT_SIZE}: {fontSize}%</label>
+                    <Slider
+                        min={MIN_FONT_SIZE}
+                        max={MAX_FONT_SIZE}
+                        step={5}
+                        value={fontSize}
+                        onChange={onFontSizeChange}
+                        marks={[
+                            { value: MIN_FONT_SIZE, label: `${MIN_FONT_SIZE}%` },
+                            { value: 100, label: '100%' },
+                            { value: MAX_FONT_SIZE, label: `${MAX_FONT_SIZE}%` },
+                        ]}
+                        styles={{
+                            track: { backgroundColor: 'var(--border-primary)' },
+                            bar: { backgroundColor: 'var(--primary)' },
+                            thumb: {
+                                backgroundColor: 'var(--primary)',
+                                borderColor: 'var(--bg-modal)',
+                            },
+                            markLabel: {
+                                color: 'var(--text-muted)',
+                                fontSize: '11px',
+                            },
+                        }}
+                    />
+                </div>
             </div>
         </div>
     );
 };
+

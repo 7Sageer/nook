@@ -11,6 +11,7 @@ type Settings struct {
 	Language     string `json:"language"`
 	SidebarWidth int    `json:"sidebarWidth"` // 侧边栏宽度, 0 表示默认值
 	WritingStyle string `json:"writingStyle"` // 写作风格指南
+	FontSize     int    `json:"fontSize"`     // 字体大小缩放百分比, 0 表示默认值 (100%)
 }
 
 // Service 设置服务

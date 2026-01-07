@@ -228,7 +228,7 @@ export function createFolderPreview(blockElement: Element, isDark: boolean): HTM
             </div>
             <div style="min-width: 0; flex: 1;">
                 <div style="font-weight: 500; font-size: 13px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(folderName)}</div>
-                ${folderStats ? `<div style="font-size: 11px; opacity: 0.6; margin-top: 2px; color: ${isDark ? '#52c41a' : '#389e0d'};">${escapeHtml(folderStats)}</div>` : ''}
+                ${folderStats ? `<div style="font-size: 11px; opacity: 0.6; margin-top: 2px; color: ${isDark ? 'rgba(74, 143, 217, 0.7)' : 'rgba(74, 143, 217, 0.6)'};">${escapeHtml(folderStats)}</div>` : ''}
             </div>
         </div>
     `;

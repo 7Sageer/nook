@@ -27,6 +27,8 @@ import { getStrings } from "./constants/strings";
 import "./App.css";
 import "./styles/print.css";
 
+import { useZoomPrevention } from "./hooks/app/useZoomPrevention";
+
 // 空闲时预热 RAG 服务，减少首次使用 tag 建议时的冷启动延迟
 function useRAGWarmup() {
   useEffect(() => {
@@ -43,6 +45,9 @@ function useRAGWarmup() {
 function AppContent() {
   const { theme, language } = useSettings();
   const STRINGS = useMemo(() => getStrings(language), [language]);
+
+  // 禁用 WebView 缩放
+  useZoomPrevention();
 
   // 检测 Windows 系统
   const [isWindows, setIsWindows] = useState(false);

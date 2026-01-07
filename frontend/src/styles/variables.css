@@ -65,12 +65,13 @@
     --radius-lg: 12px;
     --radius-full: 9999px;
 
-    /* ===== 字号 ===== */
-    --text-xs: 11px;
-    --text-sm: 12px;
-    --text-base: 14px;
-    --text-lg: 16px;
-    --text-xl: 18px;
+    /* ===== 字号 (使用 --font-size-scale 缩放) ===== */
+    --font-size-scale: 1;
+    --text-xs: calc(11px * var(--font-size-scale));
+    --text-sm: calc(12px * var(--font-size-scale));
+    --text-base: calc(14px * var(--font-size-scale));
+    --text-lg: calc(16px * var(--font-size-scale));
+    --text-xl: calc(18px * var(--font-size-scale));
 
     /* ===== 间距 ===== */
     --space-1: 4px;

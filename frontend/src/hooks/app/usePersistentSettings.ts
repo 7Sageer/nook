@@ -9,6 +9,7 @@ export function usePersistentSettings() {
         theme: '', // will be set on load
         language: '',
         sidebarWidth: 0,
+        fontSize: 0,
         writingStyle: '',
     });
     const [isLoaded, setIsLoaded] = useState(false);

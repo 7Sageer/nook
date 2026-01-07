@@ -9,16 +9,22 @@ const DEFAULT_SIDEBAR_WIDTH = 280;
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 400;
 
+const DEFAULT_FONT_SIZE = 100;
+const MIN_FONT_SIZE = 80;
+const MAX_FONT_SIZE = 120;
+
 interface SettingsContextType {
     theme: ResolvedTheme;
     themeSetting: ThemeSetting;
     language: LanguageSetting;
     sidebarWidth: number;
+    fontSize: number;
     writingStyle: string;
     toggleTheme: () => void;
     setThemeSetting: (theme: ThemeSetting) => void;
     setLanguage: (lang: LanguageSetting) => void;
     setSidebarWidth: (width: number) => void;
+    setFontSize: (size: number) => void;
     setWritingStyle: (style: string) => void;
 }
 
@@ -46,6 +52,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const themeSetting = (settings.theme as ThemeSetting) || 'light';
     const language = (settings.language as LanguageSetting) || getSystemLanguage();
     const sidebarWidth = (settings.sidebarWidth > 0) ? settings.sidebarWidth : DEFAULT_SIDEBAR_WIDTH;
+    const fontSize = (settings.fontSize > 0) ? settings.fontSize : DEFAULT_FONT_SIZE;
     const writingStyle = settings.writingStyle || '';
 
     // Resolve theme based on setting and system preference
@@ -75,6 +82,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         document.documentElement.style.setProperty('--sidebar-width', `${sidebarWidth}px`);
     }, [sidebarWidth]);
 
+    // Apply font size CSS variable
+    useEffect(() => {
+        document.documentElement.style.setProperty('--font-size-scale', `${fontSize / 100}`);
+    }, [fontSize]);
+
     // Sync theme to body for portal elements (dropdowns, modals, etc.)
     useEffect(() => {
         document.body.classList.remove('light', 'dark');
@@ -101,6 +113,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         updateSettings({ sidebarWidth: clampedWidth });
     };
 
+    const handleSetFontSize = (size: number) => {
+        const clampedSize = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, size));
+        updateSettings({ fontSize: clampedSize });
+    };
+
     const handleSetWritingStyle = (style: string) => {
         updateSettings({ writingStyle: style });
     };
@@ -115,11 +132,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
             themeSetting,
             language,
             sidebarWidth,
+            fontSize,
             writingStyle,
             toggleTheme,
             setThemeSetting,
             setLanguage: handleSetLanguage,
             setSidebarWidth: handleSetSidebarWidth,
+            setFontSize: handleSetFontSize,
             setWritingStyle: handleSetWritingStyle
         }}>
             {children}
@@ -136,3 +155,4 @@ export function useSettings() {
 }
 
 export { DEFAULT_SIDEBAR_WIDTH, MIN_SIDEBAR_WIDTH, MAX_SIDEBAR_WIDTH };
+export { DEFAULT_FONT_SIZE, MIN_FONT_SIZE, MAX_FONT_SIZE };
