@@ -57,7 +57,7 @@ export const AboutPanel: React.FC<AboutPanelProps> = ({ strings }) => {
                 <div className="about-title">
                     <h2>{appInfo?.name || strings.ABOUT.APP_NAME}</h2>
                     <div className="about-version-container">
-                        <span className="about-version">v{appInfo?.version || '1.0.0'}</span>
+                        <span className="about-version">{appInfo?.version || 'v1.0.0'}</span>
                         <button
                             className={`check-update-btn ${checking ? 'loading' : ''}`}
                             onClick={handleCheckUpdate}

@@ -22,6 +22,7 @@ import { useFileWatcher } from "./hooks/file/useFileWatcher";
 import { useKeyboardNavigation, useFocusZone } from "./hooks/ui/useKeyboardNavigation";
 import { useExternalFileHandler } from "./hooks/file/useExternalFileHandler";
 import { WarmupRAG } from "../wailsjs/go/main/App";
+import { useUpdateCheck } from "./hooks/app/useUpdateCheck";
 
 import { getStrings } from "./constants/strings";
 import "./App.css";
@@ -59,6 +60,9 @@ function AppContent() {
 
   // 空闲时预热 RAG 服务
   useRAGWarmup();
+
+  // 启动时自动检查更新
+  useUpdateCheck();
 
   const {
     documents,

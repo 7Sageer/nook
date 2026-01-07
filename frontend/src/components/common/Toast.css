@@ -92,3 +92,18 @@
     border-color: #374151;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+/* Clickable toast */
+.toast-clickable {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.toast-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .toast-clickable:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
