@@ -4,7 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import { FileText, File, Loader2, Check, AlertCircle, RefreshCw, ExternalLink, Eye, Replace, Archive, ArchiveRestore, RefreshCcw, Link, AlertTriangle, FolderOpen } from "lucide-react";
 import { OpenFileWithSystem, IndexFileContent, GetExternalBlockContent, OpenFileDialog, ArchiveFile, UnarchiveFile, SyncArchivedFile, CheckFileExists, RevealInFinder, GetEffectiveFilePath } from "../../../wailsjs/go/main/App";
 import { useDocumentContext } from "../../contexts/DocumentContext";
-import { ContentViewerModal } from "../ContentViewerModal";
+import { ContentViewerModal } from "../modals/ContentViewerModal";
 import "../../styles/ExternalBlock.css";
 import "../../styles/FileBlock.css";
 

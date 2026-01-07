@@ -5,12 +5,12 @@
 @import './styles/scrollbar.css';
 
 /* 组件样式 */
-@import './components/WindowToolbar.css';
-@import './components/WindowControls.css';
-@import './components/Sidebar.css';
-@import './components/DocumentList.css';
-@import './components/PinnedTagItem.css';
-@import './components/TagContextMenu.css';
-@import './components/Header.css';
-@import './components/Editor.css';
-@import './components/ConfirmModal.css';
+@import './components/common/WindowToolbar.css';
+@import './components/common/WindowControls.css';
+@import './components/sidebar/Sidebar.css';
+@import './components/sidebar/DocumentList.css';
+@import './components/sidebar/PinnedTagItem.css';
+@import './components/tags/TagContextMenu.css';
+@import './components/common/Header.css';
+@import './components/editor/Editor.css';
+@import './components/modals/ConfirmModal.css';

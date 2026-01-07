@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { usePersistentSettings } from '../hooks/usePersistentSettings';
+import { usePersistentSettings } from '../hooks/app/usePersistentSettings';
 
 export type ThemeSetting = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
