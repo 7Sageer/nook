@@ -85,11 +85,22 @@ func extractExternalIDsRecursive(blocks []interface{}, result *ExternalBlockIDs)
 					case "file":
 						result.FileIDs = append(result.FileIDs, id)
 						// 提取文件路径和文件名
+						// 优先使用 originalPath（新属性），否则回退到 filePath（旧数据兼容）
 						filePath := ""
 						fileName := ""
 						if props, ok := blockMap["props"].(map[string]interface{}); ok {
-							if fp, ok := props["filePath"].(string); ok {
+							// 优先检查新属性 originalPath
+							if op, ok := props["originalPath"].(string); ok && op != "" {
+								filePath = op
+							} else if fp, ok := props["filePath"].(string); ok {
+								// 回退到旧属性 filePath
 								filePath = fp
+							}
+							// 如果是归档文件且 originalPath 为空，还需要检查 archivedPath
+							if filePath == "" {
+								if ap, ok := props["archivedPath"].(string); ok && ap != "" {
+									filePath = ap
+								}
 							}
 							if fn, ok := props["fileName"].(string); ok {
 								fileName = fn
