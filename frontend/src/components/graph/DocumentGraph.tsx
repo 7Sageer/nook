@@ -67,8 +67,26 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('graph');
     const [umapProgress, setUmapProgress] = useState(0);
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
     const graphRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(undefined);
+    const containerRef = useRef<HTMLDivElement>(null);
     const isInitialLoad = useRef(true);
+
+    // 监听容器尺寸变化
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                const { width, height } = entry.contentRect;
+                setContainerSize({ width, height });
+            }
+        });
+
+        resizeObserver.observe(container);
+        return () => resizeObserver.disconnect();
+    }, []);
 
     // 计算有连接的节点 ID 集合（用于 fitToView 时排除孤儿节点）
     const connectedNodeIds = useMemo(() => {
@@ -406,7 +424,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             </div>
 
             {/* 图谱容器 */}
-            <div className="graph-container">
+            <div className="graph-container" ref={containerRef}>
                 {loading ? (
                     <div className="graph-loading">
                         {viewMode === 'cluster' && umapProgress > 0
@@ -421,6 +439,8 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                     <ForceGraph2D
                         ref={graphRef}
                         graphData={graphData}
+                        width={containerSize.width || undefined}
+                        height={containerSize.height || undefined}
                         nodeLabel={(node: GraphNode) => `${NODE_TYPE_CONFIG[node.type]?.label || ''} ${node.title}`}
                         nodeColor={(node: GraphNode) => node.color || '#6366f1'}
                         nodeRelSize={4}
