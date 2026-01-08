@@ -37,7 +37,7 @@ func ListOllamaModels(baseURL string) ([]string, error) {
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Ollama returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("ollama returned status %d", resp.StatusCode)
 	}
 
 	var result struct {
@@ -54,9 +54,7 @@ func ListOllamaModels(baseURL string) ([]string, error) {
 	for _, m := range result.Models {
 		// Clean up model names (remove :latest suffix for cleaner display)
 		name := m.Name
-		if strings.HasSuffix(name, ":latest") {
-			name = strings.TrimSuffix(name, ":latest")
-		}
+		name = strings.TrimSuffix(name, ":latest")
 		models = append(models, name)
 	}
 
