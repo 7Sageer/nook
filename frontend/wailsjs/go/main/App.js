@@ -126,6 +126,10 @@ export function IndexFolderContent(arg1, arg2, arg3) {
   return window['go']['main']['App']['IndexFolderContent'](arg1, arg2, arg3);
 }
 
+export function ListModels(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ListModels'](arg1, arg2, arg3);
+}
+
 export function LoadDocumentContent(arg1) {
   return window['go']['main']['App']['LoadDocumentContent'](arg1);
 }

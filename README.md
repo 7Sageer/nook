@@ -22,7 +22,7 @@
 
 ## Key Features
 
-- 🗂️ **Filesystem as First-Class Citizen** - Don't move your files. Nook indexes your local folders, PDFs, and code repositories where they are.
+- 🗂️ **Filesystem as First-Class Citizen** - Nook *mounts* your folders rather than importing them. Your files stay exactly where they are—Nook only indexes, never copies.
 - 🌐 **Web Archiver** - Paste a URL, and Nook saves the *content*, not just the link. Permanent context for your AI.
 - 🧠 **Local Semantic Search** - Powered by local vector embeddings. Search by meaning, not just keywords.
 - 🔌 **AI-Ready Context (MCP)** - Acts as a [Model Context Protocol](https://modelcontextprotocol.io) server. Connect your local knowledge directly to Cursor, Raycast, and Claude Desktop.
@@ -122,7 +122,7 @@ You can run Nook as an MCP server locally. To use Nook with **Claude Desktop** o
 
 ### 📝 Core Workflow
 
-1. **Gather:** Drag your project folders, PDF library and bookmarks from internet into Nook.
+1. **Gather:** Mount your project folders, PDF library and bookmarks from internet into Nook. (Files are indexed in place, not copied.)
 2. **Write:** Use the block editor to comment and capture your thoughts.
 3. **Index:** Nook will silently generate vector embeddings in the background.
 4. **Connect:** Open Raycast/Cursor and ask: *"Summarize the architecture document I added to Nook yesterday."*

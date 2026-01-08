@@ -769,3 +769,57 @@
 .view-release-btn:hover {
     opacity: 0.9;
 }
+
+/* Model selector styles */
+.model-select-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.model-select-wrapper input,
+.model-select-wrapper select {
+    flex: 1;
+    min-width: 0;
+}
+
+.refresh-models-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.refresh-models-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-secondary);
+}
+
+.refresh-models-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.refresh-models-btn .spinning {
+    animation: spin 1s linear infinite;
+}
+
+.model-error {
+    font-size: 11px;
+    color: #ef4444;
+}
+
+.model-loading {
+    font-size: 11px;
+    color: var(--text-muted);
+}

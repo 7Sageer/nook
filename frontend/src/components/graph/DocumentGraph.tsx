@@ -202,8 +202,10 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         }
     }, [viewMode, loadGraphData, loadClusterData]);
 
-    // 配置力导向模拟：相似度越高，距离越近
+    // 配置力导向模拟：相似度越高，距离越近（仅 graph 模式）
     useEffect(() => {
+        // cluster 模式已固定位置，无需力模拟
+        if (viewMode !== 'graph') return;
         if (graphRef.current && graphData.nodes.length > 0) {
             // 配置链接力：距离基于相似度
             graphRef.current.d3Force('link')?.distance((link: GraphLink) => {
@@ -219,7 +221,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             // 重新加热模拟
             graphRef.current.d3ReheatSimulation();
         }
-    }, [graphData]);
+    }, [graphData, viewMode]);
 
     // 根据节点类型获取颜色
     const getNodeColor = (type: NodeType): string => {
@@ -456,7 +458,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
                         onNodeClick={handleNodeClick}
                         onNodeHover={(node: GraphNode | null) => setHoveredNode(node)}
                         backgroundColor={theme === 'dark' ? '#1a1a2e' : '#f8fafc'}
-                        cooldownTicks={150}
+                        cooldownTicks={viewMode === 'cluster' ? 0 : 150}
                         onEngineStop={() => {
                             // 只在初始加载时自动居中，避免用户拖动后强制重新居中
                             if (isInitialLoad.current) {

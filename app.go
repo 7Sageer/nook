@@ -446,6 +446,11 @@ func (a *App) IndexFolderContent(folderPath, sourceDocID, blockID string) (*hand
 	return a.ragHandler.IndexFolderContent(folderPath, sourceDocID, blockID)
 }
 
+// ListModels 获取指定 Provider 的可用模型列表
+func (a *App) ListModels(provider, baseURL, apiKey string) ([]string, error) {
+	return a.ragHandler.ListModels(provider, baseURL, apiKey)
+}
+
 // SelectFolderDialog 文件夹选择对话框
 func (a *App) SelectFolderDialog() (string, error) {
 	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{

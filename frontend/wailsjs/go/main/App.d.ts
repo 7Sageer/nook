@@ -70,6 +70,8 @@ export function IndexFileContent(arg1:string,arg2:string,arg3:string,arg4:string
 
 export function IndexFolderContent(arg1:string,arg2:string,arg3:string):Promise<rag.FolderIndexResult>;
 
+export function ListModels(arg1:string,arg2:string,arg3:string):Promise<Array<string>>;
+
 export function LoadDocumentContent(arg1:string):Promise<string>;
 
 export function LoadExternalFile(arg1:string):Promise<string>;

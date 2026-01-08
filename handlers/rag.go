@@ -185,3 +185,8 @@ func (h *RAGHandler) IndexFolderContent(folderPath, sourceDocID, blockID string)
 	}
 	return result, err
 }
+
+// ListModels 获取指定 Provider 的可用模型列表
+func (h *RAGHandler) ListModels(provider, baseURL, apiKey string) ([]string, error) {
+	return rag.ListModels(provider, baseURL, apiKey)
+}

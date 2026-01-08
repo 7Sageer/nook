@@ -114,6 +114,11 @@ export const EN = {
         API_KEY: "API Key",
         API_KEY_PLACEHOLDER: "Required for OpenAI",
         MODEL_CHANGED: "Model changed. Please rebuild the index for semantic search to work correctly.",
+        REFRESH_MODELS: "Refresh",
+        LOADING_MODELS: "Loading...",
+        NO_MODELS_FOUND: "No models found",
+        FETCH_MODELS_FAILED: "Failed to fetch models",
+        MANUAL_INPUT: "Manual input",
         // Appearance settings
         APPEARANCE: "Appearance",
         THEME_SETTING: "Theme",
