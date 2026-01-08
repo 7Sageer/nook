@@ -166,6 +166,14 @@ func (h *RAGHandler) GetDocumentGraph(threshold float32) (*GraphData, error) {
 	return h.ragService.GetDocumentGraph(threshold)
 }
 
+// VectorGraphData 带向量的图谱数据（前端用）
+type VectorGraphData = rag.VectorGraphData
+
+// GetDocumentVectors 获取文档向量（供前端 UMAP 降维）
+func (h *RAGHandler) GetDocumentVectors() (*VectorGraphData, error) {
+	return h.ragService.GetDocumentVectors()
+}
+
 // FolderIndexResult 文件夹索引结果（前端用）
 type FolderIndexResult = rag.FolderIndexResult
 

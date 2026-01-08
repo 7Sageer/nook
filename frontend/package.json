@@ -26,6 +26,7 @@
     "react-aria-components": "^1.14.0",
     "react-dom": "^18.2.0",
     "react-force-graph-2d": "^1.29.0",
+    "umap-js": "^1.4.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

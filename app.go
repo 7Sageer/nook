@@ -389,6 +389,11 @@ func (a *App) GetDocumentGraph(threshold float32) (*handlers.GraphData, error) {
 	return a.ragHandler.GetDocumentGraph(threshold)
 }
 
+// GetDocumentVectors 获取文档向量（供前端 UMAP 降维）
+func (a *App) GetDocumentVectors() (*handlers.VectorGraphData, error) {
+	return a.ragHandler.GetDocumentVectors()
+}
+
 // WarmupRAG 预热 RAG 服务（用于空闲时初始化，减少冷启动延迟）
 func (a *App) WarmupRAG() error {
 	return a.ragHandler.Warmup()

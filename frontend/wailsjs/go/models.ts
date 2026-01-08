@@ -496,6 +496,63 @@ export namespace rag {
 		}
 	}
 	
+	
+	export class VectorGraphNode {
+	    id: string;
+	    type: string;
+	    title: string;
+	    tags?: string[];
+	    val: number;
+	    parentDocId?: string;
+	    parentBlockId?: string;
+	    vector: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new VectorGraphNode(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.type = source["type"];
+	        this.title = source["title"];
+	        this.tags = source["tags"];
+	        this.val = source["val"];
+	        this.parentDocId = source["parentDocId"];
+	        this.parentBlockId = source["parentBlockId"];
+	        this.vector = source["vector"];
+	    }
+	}
+	export class VectorGraphData {
+	    nodes: VectorGraphNode[];
+	
+	    static createFrom(source: any = {}) {
+	        return new VectorGraphData(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nodes = this.convertValues(source["nodes"], VectorGraphNode);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 

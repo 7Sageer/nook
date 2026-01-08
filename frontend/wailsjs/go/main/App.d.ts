@@ -42,6 +42,8 @@ export function GetDocumentGraph(arg1:number):Promise<rag.GraphData>;
 
 export function GetDocumentList():Promise<document.Index>;
 
+export function GetDocumentVectors():Promise<rag.VectorGraphData>;
+
 export function GetEffectiveFilePath(arg1:string,arg2:string,arg3:boolean):Promise<string>;
 
 export function GetExternalBlockContent(arg1:string,arg2:string):Promise<rag.ExternalBlockContent>;

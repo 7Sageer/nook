@@ -70,6 +70,10 @@ export function GetDocumentList() {
   return window['go']['main']['App']['GetDocumentList']();
 }
 
+export function GetDocumentVectors() {
+  return window['go']['main']['App']['GetDocumentVectors']();
+}
+
 export function GetEffectiveFilePath(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetEffectiveFilePath'](arg1, arg2, arg3);
 }

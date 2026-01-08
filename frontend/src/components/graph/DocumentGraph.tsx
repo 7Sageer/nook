@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import ForceGraph2D, { ForceGraphMethods } from 'react-force-graph-2d';
-import { ZoomIn, ZoomOut, Maximize2, HelpCircle } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, HelpCircle, Network, Sparkles } from 'lucide-react';
 import { forceX, forceY } from 'd3-force';
-import { GetDocumentGraph } from '../../../wailsjs/go/main/App';
+import { UMAP } from 'umap-js';
+import { GetDocumentGraph, GetDocumentVectors } from '../../../wailsjs/go/main/App';
 import { useSettings } from '../../contexts/SettingsContext';
 import './DocumentGraph.css';
+
+type ViewMode = 'graph' | 'cluster';
 
 // 节点类型定义
 type NodeType = 'document' | 'bookmark' | 'file' | 'folder';
@@ -62,6 +65,8 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
     const [threshold, setThreshold] = useState(0.75);
     const [loading, setLoading] = useState(true);
     const [hoveredNode, setHoveredNode] = useState<GraphNode | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('graph');
+    const [umapProgress, setUmapProgress] = useState(0);
     const graphRef = useRef<ForceGraphMethods<GraphNode, GraphLink> | undefined>(undefined);
     const isInitialLoad = useRef(true);
 
@@ -77,7 +82,7 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         return ids;
     }, [graphData.links]);
 
-    // 加载图谱数据
+    // 加载图谱数据（force-directed mode）
     const loadGraphData = useCallback(async () => {
         setLoading(true);
         try {
@@ -102,10 +107,82 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         }
     }, [threshold]);
 
+    // 加载聚类数据（UMAP cluster mode）
+    const loadClusterData = useCallback(async () => {
+        setLoading(true);
+        setUmapProgress(0);
+        try {
+            const data = await GetDocumentVectors();
+            if (!data || !data.nodes || data.nodes.length === 0) {
+                setGraphData({ nodes: [], links: [] });
+                return;
+            }
+
+            // 提取向量用于 UMAP
+            const vectors = data.nodes.map((n: { vector: number[] }) => n.vector);
+
+            // 至少需要 2 个节点才能进行降维
+            if (vectors.length < 2) {
+                const nodes = data.nodes.map((node: { id: string; type: string; title: string; tags?: string[]; val: number; parentDocId?: string; parentBlockId?: string }) => ({
+                    ...node,
+                    type: (node.type || 'document') as NodeType,
+                    color: getNodeColor((node.type || 'document') as NodeType),
+                    x: 0,
+                    y: 0,
+                }));
+                setGraphData({ nodes, links: [] });
+                return;
+            }
+
+            // 运行 UMAP 降维（使用 fitAsync 以避免阻塞 UI）
+            const nNeighbors = Math.min(15, Math.max(2, Math.floor(vectors.length / 2)));
+            const umap = new UMAP({
+                nComponents: 2,
+                nNeighbors,
+                minDist: 0.1,
+                spread: 1.0,
+            });
+
+            // 使用 fitAsync 获取异步执行和进度回调
+            // 注意：epochNumber 是当前迭代次数，默认 nEpochs 约 200-500
+            let maxEpoch = 200; // 预估值，会在回调中更新
+            const embedding = await umap.fitAsync(vectors, (epochNumber: number) => {
+                if (epochNumber > maxEpoch) maxEpoch = epochNumber + 50;
+                const progress = Math.min(99, Math.round((epochNumber / maxEpoch) * 100));
+                setUmapProgress(progress);
+                return true; // 继续执行
+            });
+
+            // 缩放坐标以适应画布
+            const scale = 100;
+            const nodes = data.nodes.map((node: { id: string; type: string; title: string; tags?: string[]; val: number; parentDocId?: string; parentBlockId?: string }, i: number) => ({
+                ...node,
+                type: (node.type || 'document') as NodeType,
+                color: getNodeColor((node.type || 'document') as NodeType),
+                x: embedding[i][0] * scale,
+                y: embedding[i][1] * scale,
+                fx: embedding[i][0] * scale, // 固定位置
+                fy: embedding[i][1] * scale,
+            }));
+
+            setGraphData({ nodes, links: [] });
+            setUmapProgress(100);
+        } catch (err) {
+            console.error('Failed to load cluster data:', err);
+            setGraphData({ nodes: [], links: [] });
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        isInitialLoad.current = true; // 数据变化时重置，以便新数据加载后居中
-        loadGraphData();
-    }, [loadGraphData]);
+        isInitialLoad.current = true;
+        if (viewMode === 'graph') {
+            loadGraphData();
+        } else {
+            loadClusterData();
+        }
+    }, [viewMode, loadGraphData, loadClusterData]);
 
     // 配置力导向模拟：相似度越高，距离越近
     useEffect(() => {
@@ -231,18 +308,44 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
         <div className="graph-panel">
             {/* 工具栏 */}
             <div className="graph-toolbar">
-                <div className="threshold-control">
-                    <label>Similarity:</label>
-                    <input
-                        type="range"
-                        min="0.3"
-                        max="0.9"
-                        step="0.05"
-                        value={threshold}
-                        onChange={(e) => setThreshold(parseFloat(e.target.value))}
-                    />
-                    <span>{threshold.toFixed(2)}</span>
+                {/* 模式切换按钮 */}
+                <div className="view-mode-toggle">
+                    <button
+                        className={viewMode === 'graph' ? 'active' : ''}
+                        onClick={() => setViewMode('graph')}
+                        title="Force Graph View"
+                    >
+                        <Network size={16} />
+                    </button>
+                    <button
+                        className={viewMode === 'cluster' ? 'active' : ''}
+                        onClick={() => setViewMode('cluster')}
+                        title="UMAP Cluster View"
+                    >
+                        <Sparkles size={16} />
+                    </button>
                 </div>
+                {/* 阈值控制（仅 graph 模式） */}
+                {viewMode === 'graph' && (
+                    <div className="threshold-control">
+                        <label>Similarity:</label>
+                        <input
+                            type="range"
+                            min="0.3"
+                            max="0.9"
+                            step="0.05"
+                            value={threshold}
+                            onChange={(e) => setThreshold(parseFloat(e.target.value))}
+                        />
+                        <span>{threshold.toFixed(2)}</span>
+                    </div>
+                )}
+                {/* UMAP 进度（cluster 模式加载中） */}
+                {viewMode === 'cluster' && loading && umapProgress > 0 && (
+                    <div className="umap-progress">
+                        <span>UMAP: {umapProgress}%</span>
+                    </div>
+                )}
                 <div className="zoom-controls">
                     <button onClick={handleZoomOut} title="Zoom Out">
                         <ZoomOut size={16} />
@@ -305,7 +408,11 @@ export const DocumentGraph: React.FC<DocumentGraphProps> = ({
             {/* 图谱容器 */}
             <div className="graph-container">
                 {loading ? (
-                    <div className="graph-loading">Loading graph...</div>
+                    <div className="graph-loading">
+                        {viewMode === 'cluster' && umapProgress > 0
+                            ? `Computing UMAP... ${umapProgress}%`
+                            : 'Loading...'}
+                    </div>
                 ) : graphData.nodes.length === 0 ? (
                     <div className="graph-empty">
                         No indexed documents found. Please rebuild the index first.
