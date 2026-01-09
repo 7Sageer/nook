@@ -20,7 +20,7 @@ interface SettingsModalProps {
     initialTab?: SettingsTab;
 }
 
-export type SettingsTab = 'appearance' | 'knowledge' | 'graph' | 'embedding' | 'mcp' | 'about';
+export type SettingsTab = 'appearance' | 'embedding' | 'knowledge' | 'graph' | 'mcp' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, initialTab }) => {
     const { theme, themeSetting, setThemeSetting, language, sidebarWidth, setSidebarWidth, fontSize, setFontSize, writingStyle, setWritingStyle } = useSettings();
@@ -197,6 +197,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                             <span>{STRINGS.SETTINGS.APPEARANCE}</span>
                         </button>
                         <button
+                            className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('embedding')}
+                        >
+                            <Bot size={18} />
+                            <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
+                        </button>
+                        <button
                             className={`settings-nav-item ${activeTab === 'knowledge' ? 'active' : ''}`}
                             onClick={() => setActiveTab('knowledge')}
                         >
@@ -209,13 +216,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, i
                         >
                             <Network size={18} />
                             <span>Graph</span>
-                        </button>
-                        <button
-                            className={`settings-nav-item ${activeTab === 'embedding' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('embedding')}
-                        >
-                            <Bot size={18} />
-                            <span>{STRINGS.SETTINGS.EMBEDDING_MODEL}</span>
                         </button>
                         <button
                             className={`settings-nav-item ${activeTab === 'mcp' ? 'active' : ''}`}

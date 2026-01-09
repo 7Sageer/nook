@@ -119,6 +119,10 @@ export const EN = {
         NO_MODELS_FOUND: "No models found",
         FETCH_MODELS_FAILED: "Failed to fetch models",
         MANUAL_INPUT: "Manual input",
+        TEST_CONNECTION: "Test",
+        TESTING_CONNECTION: "Testing...",
+        CONNECTION_SUCCESS: "Connected",
+        CONNECTION_FAILED: "Connection failed",
         // Appearance settings
         APPEARANCE: "Appearance",
         THEME_SETTING: "Theme",

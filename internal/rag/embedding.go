@@ -39,6 +39,8 @@ type EmbeddingClient interface {
 	Embed(text string) ([]float32, error)
 	EmbedBatch(texts []string) ([][]float32, error)
 	Dimension() int
+	// DetectDimension 通过实际嵌入检测维度（用于未知模型）
+	DetectDimension() (int, error)
 }
 
 // NewEmbeddingClient 根据配置创建客户端
@@ -53,13 +55,36 @@ func NewEmbeddingClient(config *EmbeddingConfig) (EmbeddingClient, error) {
 	}
 }
 
+// TestConnectionResult 连接测试结果
+type TestConnectionResult struct {
+	Success   bool   `json:"success"`
+	Dimension int    `json:"dimension"`
+	Error     string `json:"error,omitempty"`
+}
+
+// TestConnection 测试嵌入服务连接
+func TestConnection(config *EmbeddingConfig) TestConnectionResult {
+	client, err := NewEmbeddingClient(config)
+	if err != nil {
+		return TestConnectionResult{Success: false, Error: err.Error()}
+	}
+
+	dim, err := client.DetectDimension()
+	if err != nil {
+		return TestConnectionResult{Success: false, Error: err.Error()}
+	}
+
+	return TestConnectionResult{Success: true, Dimension: dim}
+}
+
 // ========== Ollama 实现 ==========
 
 // OllamaClient Ollama 嵌入客户端
 type OllamaClient struct {
-	baseURL string
-	model   string
-	client  *http.Client
+	baseURL     string
+	model       string
+	client      *http.Client
+	detectedDim int
 }
 
 // NewOllamaClient 创建 Ollama 客户端
@@ -127,33 +152,30 @@ func (c *OllamaClient) EmbedBatch(texts []string) ([][]float32, error) {
 	return results, nil
 }
 
-// Dimension 返回向量维度
+// Dimension 返回已检测的向量维度
 func (c *OllamaClient) Dimension() int {
-	// 根据模型返回对应的向量维度
-	switch c.model {
-	case "bge-m3":
-		return 1024
-	case "mxbai-embed-large":
-		return 1024
-	case "nomic-embed-text":
-		return 768
-	case "all-minilm":
-		return 384
-	case "snowflake-arctic-embed":
-		return 1024
-	default:
-		return 768 // 默认维度
+	return c.detectedDim
+}
+
+// DetectDimension 通过实际嵌入检测维度
+func (c *OllamaClient) DetectDimension() (int, error) {
+	vec, err := c.Embed("test")
+	if err != nil {
+		return 0, err
 	}
+	c.detectedDim = len(vec)
+	return c.detectedDim, nil
 }
 
 // ========== OpenAI 兼容实现 ==========
 
 // OpenAIClient OpenAI 兼容嵌入客户端
 type OpenAIClient struct {
-	baseURL string
-	model   string
-	apiKey  string
-	client  *http.Client
+	baseURL     string
+	model       string
+	apiKey      string
+	client      *http.Client
+	detectedDim int
 }
 
 // NewOpenAIClient 创建 OpenAI 兼容客户端
@@ -226,15 +248,17 @@ func (c *OpenAIClient) EmbedBatch(texts []string) ([][]float32, error) {
 	return embeddings, nil
 }
 
-// Dimension 返回向量维度
+// Dimension 返回已检测的向量维度
 func (c *OpenAIClient) Dimension() int {
-	// 根据模型返回对应的向量维度
-	switch c.model {
-	case "text-embedding-3-large":
-		return 3072
-	case "text-embedding-3-small", "text-embedding-ada-002":
-		return 1536
-	default:
-		return 1536 // 默认维度
+	return c.detectedDim
+}
+
+// DetectDimension 通过实际嵌入检测维度
+func (c *OpenAIClient) DetectDimension() (int, error) {
+	vec, err := c.Embed("test")
+	if err != nil {
+		return 0, err
 	}
+	c.detectedDim = len(vec)
+	return c.detectedDim, nil
 }

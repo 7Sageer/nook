@@ -38,28 +38,29 @@ func (s *Service) init() error {
 		return nil // 已初始化
 	}
 
-	// 加载配置
 	config, err := LoadConfig(s.paths)
 	if err != nil {
 		return err
 	}
 
-	// 创建 Embedding 客户端
 	embedder, err := NewEmbeddingClient(config)
 	if err != nil {
 		return err
 	}
+
+	dimension, err := embedder.DetectDimension()
+	if err != nil {
+		return fmt.Errorf("failed to detect embedding dimension: %w", err)
+	}
 	s.embedder = embedder
 
-	// 创建向量存储
 	dbPath := s.paths.RAGDatabase()
-	store, err := NewVectorStore(dbPath, embedder.Dimension())
+	store, err := NewVectorStore(dbPath, dimension)
 	if err != nil {
 		return err
 	}
 	s.store = store
 
-	// 创建索引器和搜索器
 	s.indexer = NewIndexer(store, embedder, s.docRepo, s.docStorage, s.paths)
 	s.searcher = NewSearcher(store, embedder, s.docRepo)
 	s.externalIndexer = NewExternalIndexer(store, embedder, s.docRepo, s.docStorage, s.indexer, s.paths)
@@ -143,28 +144,23 @@ func (s *Service) GetIndexedStats() (int, int, int, int, error) {
 }
 
 // Reinitialize 重新初始化（配置变更后调用）
-// 如果新模型的维度与旧模型不同，会自动删除向量数据库
 func (s *Service) Reinitialize() error {
-	// 获取旧的维度
 	oldDimension := 0
 	if s.embedder != nil {
 		oldDimension = s.embedder.Dimension()
 	}
 
-	// 关闭旧的存储
 	if s.store != nil {
 		if err := s.store.Close(); err != nil {
 			fmt.Printf("⚠️ [RAG] Failed to close store: %v\n", err)
 		}
 	}
 
-	// 重置所有组件
 	s.store = nil
 	s.indexer = nil
 	s.searcher = nil
 	s.embedder = nil
 
-	// 加载新配置，检查维度是否变化
 	config, err := LoadConfig(s.paths)
 	if err != nil {
 		return err
@@ -174,12 +170,14 @@ func (s *Service) Reinitialize() error {
 	if err != nil {
 		return err
 	}
-	newDimension := newEmbedder.Dimension()
 
-	// 检查维度是否变化
+	newDimension, err := newEmbedder.DetectDimension()
+	if err != nil {
+		return fmt.Errorf("failed to detect embedding dimension: %w", err)
+	}
+
 	dimensionChanged := oldDimension > 0 && oldDimension != newDimension
 
-	// 如果维度变化，删除旧的向量数据库
 	if dimensionChanged {
 		dbPath := s.paths.RAGDatabase()
 		fmt.Printf("🔄 [RAG] Dimension changed (%d → %d), removing old database...\n", oldDimension, newDimension)
@@ -188,7 +186,6 @@ func (s *Service) Reinitialize() error {
 		}
 	}
 
-	// 重新初始化
 	s.embedder = newEmbedder
 
 	dbPath := s.paths.RAGDatabase()
@@ -202,7 +199,6 @@ func (s *Service) Reinitialize() error {
 	s.searcher = NewSearcher(store, s.embedder, s.docRepo)
 	s.externalIndexer = NewExternalIndexer(store, s.embedder, s.docRepo, s.docStorage, s.indexer, s.paths)
 
-	// 如果维度变化，自动触发全量重建索引（包括 bookmark 和 file 块）
 	if dimensionChanged {
 		go func() {
 			fmt.Println("🔄 [RAG] Starting automatic reindex due to dimension change...")

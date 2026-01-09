@@ -451,6 +451,11 @@ func (a *App) ListModels(provider, baseURL, apiKey string) ([]string, error) {
 	return a.ragHandler.ListModels(provider, baseURL, apiKey)
 }
 
+// TestConnection 测试嵌入服务连接
+func (a *App) TestConnection(config handlers.EmbeddingConfig) handlers.TestConnectionResult {
+	return a.ragHandler.TestConnection(config)
+}
+
 // SelectFolderDialog 文件夹选择对话框
 func (a *App) SelectFolderDialog() (string, error) {
 	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{

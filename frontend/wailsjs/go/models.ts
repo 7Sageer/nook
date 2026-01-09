@@ -497,6 +497,22 @@ export namespace rag {
 	}
 	
 	
+	export class TestConnectionResult {
+	    success: boolean;
+	    dimension: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TestConnectionResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.dimension = source["dimension"];
+	        this.error = source["error"];
+	    }
+	}
 	export class VectorGraphNode {
 	    id: string;
 	    type: string;

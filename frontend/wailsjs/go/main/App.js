@@ -250,6 +250,10 @@ export function SyncArchivedFile(arg1, arg2) {
   return window['go']['main']['App']['SyncArchivedFile'](arg1, arg2);
 }
 
+export function TestConnection(arg1) {
+  return window['go']['main']['App']['TestConnection'](arg1);
+}
+
 export function UnarchiveFile(arg1) {
   return window['go']['main']['App']['UnarchiveFile'](arg1);
 }

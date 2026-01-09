@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
-import { ListModels } from '../../../wailsjs/go/main/App';
+import { RefreshCw, Zap } from 'lucide-react';
+import { ListModels, TestConnection } from '../../../wailsjs/go/main/App';
 import { getStrings } from '../../constants/strings';
 import type { EmbeddingConfig } from '../../types/settings';
 
@@ -19,6 +19,8 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [useManualInput, setUseManualInput] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+    const [testResult, setTestResult] = useState<{ success: boolean; dimension?: number; error?: string } | null>(null);
 
     const handleFetchModels = useCallback(async () => {
         setIsLoadingModels(true);
@@ -45,6 +47,19 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
         }
         onChange('model', value);
     };
+
+    const handleTestConnection = useCallback(async () => {
+        setIsTesting(true);
+        setTestResult(null);
+        try {
+            const result = await TestConnection(config);
+            setTestResult(result);
+        } catch (err) {
+            setTestResult({ success: false, error: String(err) });
+        } finally {
+            setIsTesting(false);
+        }
+    }, [config]);
 
     return (
         <div className="settings-panel">
@@ -134,12 +149,29 @@ export const EmbeddingPanel: React.FC<EmbeddingPanelProps> = ({
                         >
                             <RefreshCw size={16} className={isLoadingModels ? 'spinning' : ''} />
                         </button>
+                        <button
+                            type="button"
+                            className={`test-connection-btn ${testResult?.success ? 'success' : testResult?.error ? 'error' : ''}`}
+                            onClick={handleTestConnection}
+                            disabled={isTesting || !config.model}
+                            title={strings.SETTINGS.TEST_CONNECTION}
+                        >
+                            <Zap size={16} className={isTesting ? 'spinning' : ''} />
+                        </button>
                     </div>
                     {fetchError && (
                         <span className="model-error">{fetchError}</span>
                     )}
                     {isLoadingModels && (
                         <span className="model-loading">{strings.SETTINGS.LOADING_MODELS}</span>
+                    )}
+                    {testResult && (
+                        <span className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+                            {testResult.success 
+                                ? `${strings.SETTINGS.CONNECTION_SUCCESS} (dim: ${testResult.dimension})`
+                                : `${strings.SETTINGS.CONNECTION_FAILED}: ${testResult.error}`
+                            }
+                        </span>
                     )}
                 </div>
             </div>

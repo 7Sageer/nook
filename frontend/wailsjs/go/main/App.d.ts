@@ -132,6 +132,8 @@ export function SuggestTags(arg1:string):Promise<Array<tag.TagSuggestion>>;
 
 export function SyncArchivedFile(arg1:string,arg2:string):Promise<handlers.ArchiveResult>;
 
+export function TestConnection(arg1:rag.EmbeddingConfig):Promise<rag.TestConnectionResult>;
+
 export function UnarchiveFile(arg1:string):Promise<void>;
 
 export function UnpinTag(arg1:string):Promise<void>;

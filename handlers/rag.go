@@ -190,3 +190,11 @@ func (h *RAGHandler) IndexFolderContent(folderPath, sourceDocID, blockID string)
 func (h *RAGHandler) ListModels(provider, baseURL, apiKey string) ([]string, error) {
 	return rag.ListModels(provider, baseURL, apiKey)
 }
+
+// TestConnectionResult 连接测试结果（前端用）
+type TestConnectionResult = rag.TestConnectionResult
+
+// TestConnection 测试嵌入服务连接
+func (h *RAGHandler) TestConnection(config EmbeddingConfig) TestConnectionResult {
+	return rag.TestConnection(&config)
+}

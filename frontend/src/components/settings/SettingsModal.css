@@ -823,3 +823,56 @@
     font-size: 11px;
     color: var(--text-muted);
 }
+
+.test-connection-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.test-connection-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-secondary);
+}
+
+.test-connection-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.test-connection-btn .spinning {
+    animation: spin 1s linear infinite;
+}
+
+.test-connection-btn.success {
+    border-color: #10b981;
+    color: #10b981;
+}
+
+.test-connection-btn.error {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.test-result {
+    font-size: 12px;
+}
+
+.test-result.success {
+    color: #10b981;
+}
+
+.test-result.error {
+    color: #ef4444;
+}
