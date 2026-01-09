@@ -68,6 +68,10 @@ async function captureEditorElement(
     backgroundColor: string,
     pixelRatio: number
 ): Promise<Blob | null> {
+    // Wait for all fonts to be loaded before capturing
+    // This fixes the issue where fonts don't render on the first export attempt
+    await document.fonts.ready;
+
     return toBlob(editorElement, {
         backgroundColor,
         pixelRatio,
